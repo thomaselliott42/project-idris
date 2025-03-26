@@ -18,26 +18,52 @@ public class TerrainLoader {
 
         try {
             TerrainDataWrapper data = objectMapper.readValue(new File(TERRAIN_JSON_PATH), TerrainDataWrapper.class);
-
             TerrainManager terrainManager = TerrainManager.getInstance();
 
             for (TerrainData terrainData : data.terrains) {
-                Texture texture = new Texture(terrainData.texturePath);
-                List<Texture> damagedTextures = loadDamagedTextures(terrainData); // Load damaged textures
-                terrainManager.addTerrain(terrainData.id, terrainData.terrainName, texture, terrainData.defense, terrainData.speed, terrainData.canBeDestroyed, damagedTextures);
+                List<Texture> textures = loadTextures(terrainData.texturePath);
+                List<Texture> damagedTextures = loadDamagedTextures(terrainData);
+
+                // Log loaded terrains for debugging
+                Gdx.app.log("TerrainLoader", "Loading terrain: " + terrainData.id + " (" + terrainData.terrainName + ")");
+
+                // Register terrain
+                terrainManager.addTerrain(
+                    terrainData.id,
+                    terrainData.terrainName,
+                    terrainData.excludeTilePicker,
+                    textures,
+                    terrainData.defense,
+                    terrainData.speed,
+                    terrainData.canBeDestroyed,
+                    damagedTextures
+                );
             }
 
             Gdx.app.log("TerrainLoader", "Terrains loaded successfully!");
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Gdx.app.error("TerrainLoader", "Failed to load terrains", e);
         }
+    }
+
+    private static List<Texture> loadTextures(Object textureData) {
+        List<Texture> textures = new ArrayList<>();
+
+        if (textureData instanceof String) {
+            textures.add(new Texture((String) textureData));
+        } else if (textureData instanceof List) {
+            for (String path : (List<String>) textureData) {
+                textures.add(new Texture(path));
+            }
+        }
+
+        return textures;
     }
 
     private static List<Texture> loadDamagedTextures(TerrainData data) {
         List<Texture> dT = new ArrayList<>();
         if (data.canBeDestroyed) {
-            // Loop through the damaged textures paths and add to the list
             for (String damagedTexture : data.damagedTextures) {
                 dT.add(new Texture(damagedTexture));
             }
@@ -54,10 +80,11 @@ public class TerrainLoader {
     private static class TerrainData {
         public String id;
         public String terrainName;
-        public String texturePath;
+        public boolean excludeTilePicker;
+        public Object texturePath; // Supports both String and List<String>
         public float defense;
         public float speed;
         public boolean canBeDestroyed;
-        public String[] damagedTextures; // Array of damaged textures
+        public List<String> damagedTextures;
     }
 }

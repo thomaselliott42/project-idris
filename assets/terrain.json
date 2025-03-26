@@ -2,6 +2,7 @@
   "terrains": [
     {
       "id": "P",
+      "excludeTilePicker": false,
       "terrainName": "Plains",
       "texturePath": "plain.png",
       "defense": 1.0,
@@ -11,6 +12,7 @@
     },
     {
       "id": "D",
+      "excludeTilePicker": false,
       "terrainName": "Desert",
       "texturePath": "desert.png",
       "defense": 1.0,
@@ -20,6 +22,7 @@
     },
     {
       "id": "FP",
+      "excludeTilePicker": false,
       "terrainName": "Forest",
       "texturePath": "plainForest.png",
       "defense": 1.0,
@@ -32,16 +35,17 @@
     },
     {
       "id": "FD",
+      "excludeTilePicker": false,
       "terrainName": "Forest",
       "texturePath": "desertForest.png",
       "defense": 1.0,
       "speed": 1.0,
       "canBeDestroyed": true,
-      "damagedTextures": [
-      ]
+      "damagedTextures": []
     },
     {
       "id": "MP",
+      "excludeTilePicker": false,
       "terrainName": "Mountains",
       "texturePath": "plainMountain.png",
       "defense": 3.0,
@@ -51,6 +55,7 @@
     },
     {
       "id": "MD",
+      "excludeTilePicker": false,
       "terrainName": "Mountains",
       "texturePath": "desertMountain.png",
       "defense": 3.0,
@@ -60,6 +65,7 @@
     },
     {
       "id": "S",
+      "excludeTilePicker": false,
       "terrainName": "Sea",
       "texturePath": "sea/sea.png",
       "defense": 0.0,
@@ -68,14 +74,28 @@
       "damagedTextures": []
     },
     {
+      "id": "SS",
+      "excludeTilePicker": true,
+      "terrainName": "Single Sea",
+      "texturePath": [
+        "sea/plains/ss.png",
+        "sea/desert/ss.png",
+        "sea/winter/ss.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
       "id": "R",
+      "excludeTilePicker": true,
       "terrainName": "Ruptured",
       "texturePath": "earthquake.png",
       "defense": 1.0,
       "speed": 0.0,
       "canBeDestroyed": false,
-      "damagedTextures": [
-      ]
+      "damagedTextures": []
     }
   ]
 }

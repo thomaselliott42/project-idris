@@ -19,6 +19,7 @@ public class MapMaker implements Screen {
     private final int TILE_SIZE = 32;
     private final int MAP_WIDTH = 20;
     private final int MAP_HEIGHT = 20;
+
     private final float EARTHQUAKE_INTERVAL = 2.0f; // Time between earthquakes in seconds
     private final float SHAKE_DURATION = 0.5f; // How long the shake lasts in seconds
     private final float SHAKE_INTENSITY = 10f; // Max intensity of shake (pixels)
@@ -110,69 +111,8 @@ public class MapMaker implements Screen {
         if (!switchRender) {
             // First, render all tiles except mountain tiles
             // First, render all tiles except the mountains
-            for (int y = 0; y < MAP_HEIGHT; y++) {
-                for (int x = 0; x < MAP_WIDTH; x++) {
-                    Tile tile = map.getTile(x, y);
-
-                    // Position tiles, offset to center the map
-                    float drawX = (x * TILE_SIZE) + (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2;
-                    float drawY = (y * TILE_SIZE) + (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2;
-
-                    // Render non-mountain tiles
-                    if (!tile.getTerrain().getId().startsWith("M")) {
-
-//                        if (tile.getTerrain().getId().endsWith("P")) {
-//                            batch.draw(TerrainManager.getInstance().getTerrain("P").getTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
-//                        }else if(tile.getTerrain().getId().endsWith("D")) {
-//                            batch.draw(TerrainManager.getInstance().getTerrain("D").getTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
-//                        }
-                        if(tile.getTerrain().getId().startsWith("F")) {
-                            if (tile.getTerrain().getId().endsWith("P")) {
-                                batch.draw(TerrainManager.getInstance().getTerrain("P").getTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
-                            }else if (tile.getTerrain().getId().endsWith("D")) {
-                                batch.draw(TerrainManager.getInstance().getTerrain("D").getTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
-                            }
-                        }
-                        batch.draw(tile.getTerrainTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
-
-                        if(tile.hasFire()){
-                            batch.draw(fire, drawX, drawY, TILE_SIZE, TILE_SIZE);
-                        }
-                    }
-                }
-            }
-
-// Then, render the mountain tiles starting from bottom-right to top-left
-            for (int y = MAP_HEIGHT - 1; y >= 0; y--) { // Start from the bottom row
-                for (int x = MAP_WIDTH - 1; x >= 0; x--) { // Start from the rightmost column
-                    Tile tile = map.getTile(x, y);
-                    if (tile.getTerrain().getId().startsWith("M")) {
-                        if (tile.getTerrain().getId().endsWith("P")) {
-                            float drawX = (x * TILE_SIZE) + (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2;
-                            float drawY = (y * TILE_SIZE) + (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2;
-                            batch.draw(TerrainManager.getInstance().getTerrain("P").getTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
-                            batch.draw(tile.getTerrainTexture(), drawX, drawY, TILE_SIZE, tile.getTerrain().getTexture().getHeight() * (TILE_SIZE / 16f));
-                        }
-                        else if (tile.getTerrain().getId().endsWith("D")) {
-                            float drawX = (x * TILE_SIZE) + (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2;
-                            float drawY = (y * TILE_SIZE) + (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2;
-                            batch.draw(TerrainManager.getInstance().getTerrain("D").getTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
-                            batch.draw(tile.getTerrainTexture(), drawX, drawY, TILE_SIZE, tile.getTerrain().getTexture().getHeight() * (TILE_SIZE / 16f));
-                        }
-
-                    }
-
-
-//                    else if(map[y][x].equals("SDO")) {
-//                        Texture tex = getTileTexture(map[y][x]);
-//                        float drawX = (x * TILE_SIZE) + (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2;
-//                        float drawY = (y * TILE_SIZE) + (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2;
-//                        batch.draw(getTileTexture("D"), drawX, drawY, TILE_SIZE, TILE_SIZE);
-//                        batch.draw(tex, drawX, drawY, TILE_SIZE, tex.getHeight() * (TILE_SIZE / 16f));
-//
-//                    }
-                }
-            }
+            map.renderMap(TILE_SIZE, batch, fire);
+            //map.printMapToTerminal();
         }
 //        else {
 //
@@ -317,7 +257,6 @@ public class MapMaker implements Screen {
         }
     }
 
-
     private void drawDamageRadius(int mouseX, int mouseY) {
         // Radius of damage effect in tiles
         int radius = TILE_SIZE;  // Radius in tiles (adjustable)
@@ -459,8 +398,11 @@ public class MapMaker implements Screen {
         // Draw the tiles dynamically based on terrain
         int terrainIndex = 0;
         for (Terrain terrain : terrainManager.getTerrains()) {
-            batch.draw(terrain.getTexture(), startX + terrainIndex * TILE_SIZE, startY, TILE_SIZE, TILE_PICKER_HEIGHT); // Draw the terrain
-            terrainIndex++;
+            if(!terrain.isExcludeTilePicker()){
+                batch.draw(terrain.getTexture().get(0), startX + terrainIndex * TILE_SIZE, startY, TILE_SIZE, TILE_PICKER_HEIGHT); // Draw the terrain
+                terrainIndex++;
+            }
+
         }
 
         batch.end();
@@ -505,7 +447,6 @@ public class MapMaker implements Screen {
         }
         return 0;
     }
-
 
     @Override
     public void resize(int width, int height) {

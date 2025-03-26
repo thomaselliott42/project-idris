@@ -15,6 +15,7 @@ public class Tile {
     private float damageSwitchPercentage = 0.0f;
     private int damagedStateIndex = -1;
     private boolean fire= false;
+    private String terrainBaseType = "Plain";
 
     public Tile(Terrain terrain, Unit unit, Building building) {
         this.terrain = terrain;
@@ -29,7 +30,16 @@ public class Tile {
         damagedStateIndex = -1;
         removeFire();
         this.terrain = terrain;
+        updateTerrainBaseType();
 
+    }
+
+    private void updateTerrainBaseType(){
+        if(terrain.getId().equals("P")){
+            terrainBaseType = "Plain";
+        }else if(terrain.getId().equals("D")){
+            terrainBaseType = "Desert";
+        }
     }
 
     public float getTileHealth() {
@@ -92,11 +102,35 @@ public class Tile {
         return terrain;
     }
 
+    public String getBaseType() {
+        return terrainBaseType;
+    }
+
+    public Texture getBaseTerrainTexture(){
+        if(terrainBaseType.equals("Plain")){
+            return TerrainManager.getInstance().getTerrain("P").getTexture().get(0);
+        }else if(terrainBaseType.equals("Desert")){
+            return TerrainManager.getInstance().getTerrain("D").getTexture().get(0);
+        }
+        return null;
+    }
+
     public Texture getTerrainTexture() {
         if(terrain.canBeDestroyed() && damagedStateIndex >= 0){
             return terrain.getDamagedTextures().get(damagedStateIndex);
         }else{
-            return terrain.getTexture();
+            if(terrain.getTexture().size() == 1){
+                return terrain.getTexture().get(0);
+            }else{
+                if(terrainBaseType.equals("Plain")){
+                    return terrain.getTexture().get(0);
+                }else if(terrainBaseType.equals("Desert")){
+                    return terrain.getTexture().get(1);
+                }else if(terrainBaseType.equals("Winter")){
+                    return terrain.getTexture().get(2);
+                }
+            }
         }
+        return null;
     }
 }

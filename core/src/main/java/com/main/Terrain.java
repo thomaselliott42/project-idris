@@ -9,13 +9,14 @@ public class Terrain implements Serializable {
 
     private String id;
     private String terrainName;
-    private transient Texture texture; // Marked as transient since Texture isn't serializable
+    private boolean excludeTilePicker;
+    private transient List<Texture> texture; // Marked as transient since Texture isn't serializable
     private float defense;
     private float speed;
     private boolean canBeDestroyed;
     private transient List<Texture> damagedTextures;
 
-    public Terrain(String id, String terrainName, Texture texture, float defense, float speed, boolean canBeDestroyed, List<Texture> damagedTextures) {
+    public Terrain(String id, String terrainName, boolean excludeTilePicker, List<Texture> texture, float defense, float speed, boolean canBeDestroyed, List<Texture> damagedTextures) {
         this.id = id;
         this.terrainName = terrainName;
         this.texture = texture;
@@ -29,17 +30,18 @@ public class Terrain implements Serializable {
         return id;
     }
 
+    public boolean isExcludeTilePicker() {
+        return excludeTilePicker;
+    }
+
     public String getTerrainName() {
         return terrainName;
     }
 
-    public Texture getTexture() {
+    public List<Texture> getTexture() {
         return texture;
     }
 
-    public void setTexture(Texture texture) {
-        this.texture = texture;
-    }
 
     public float getDefense() {
         return defense;
