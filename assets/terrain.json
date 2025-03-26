@@ -1,0 +1,81 @@
+{
+  "terrains": [
+    {
+      "id": "P",
+      "terrainName": "Plains",
+      "texturePath": "plain.png",
+      "defense": 1.0,
+      "speed": 1.0,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "D",
+      "terrainName": "Desert",
+      "texturePath": "desert.png",
+      "defense": 1.0,
+      "speed": 1.0,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "FP",
+      "terrainName": "Forest",
+      "texturePath": "plainForest.png",
+      "defense": 1.0,
+      "speed": 1.0,
+      "canBeDestroyed": true,
+      "damagedTextures": [
+        "plainForestDamaged1.png",
+        "plainForestDamaged2.png"
+      ]
+    },
+    {
+      "id": "FD",
+      "terrainName": "Forest",
+      "texturePath": "desertForest.png",
+      "defense": 1.0,
+      "speed": 1.0,
+      "canBeDestroyed": true,
+      "damagedTextures": [
+      ]
+    },
+    {
+      "id": "MP",
+      "terrainName": "Mountains",
+      "texturePath": "plainMountain.png",
+      "defense": 3.0,
+      "speed": 0.5,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "MD",
+      "terrainName": "Mountains",
+      "texturePath": "desertMountain.png",
+      "defense": 3.0,
+      "speed": 0.5,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S",
+      "terrainName": "Sea",
+      "texturePath": "sea/sea.png",
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "R",
+      "terrainName": "Ruptured",
+      "texturePath": "earthquake.png",
+      "defense": 1.0,
+      "speed": 0.0,
+      "canBeDestroyed": false,
+      "damagedTextures": [
+      ]
+    }
+  ]
+}

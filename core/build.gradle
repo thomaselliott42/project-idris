@@ -13,6 +13,9 @@ dependencies {
   api "de.golfgl.gdxcontrollerutils:gdx-controllerutils-scene2d:$controllerScene2DVersion"
   implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
 
+  api "com.fasterxml.jackson.core:jackson-databind:2.14.0"  // For JSON processing
+  api "com.fasterxml.jackson.core:jackson-core:2.14.0"      // Core dependency
+  api "com.fasterxml.jackson.core:jackson-annotations:2.14.0"  // Optional for annotations support
 
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"
