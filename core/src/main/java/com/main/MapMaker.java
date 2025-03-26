@@ -10,6 +10,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class MapMaker implements Screen {
@@ -277,7 +279,9 @@ public class MapMaker implements Screen {
 
     private void triggerForestFire() {
         Random rand = new Random();
-        int num = 0;
+
+        List<int[]> storeData = new ArrayList<>(); // Store fire spread locations
+
 
         for (int x = 0; x < MAP_WIDTH; x++) {
             for (int y = 0; y < MAP_HEIGHT; y++) {
@@ -286,8 +290,8 @@ public class MapMaker implements Screen {
                         map.getTile(x, y).updateTileHealth(0.5f);
 
                         int[][] directions = {
-                            {1, 0}, {-1, 0}, {0, 1}, {0, -1}  // Up, Down, Left, Right
-                            //{1, 1}, {1, -1}, {-1, 1}, {-1, -1} // Diagonals
+                            {1, 0}, {-1, 0}, {0, 1}, {0, -1},  // Up, Down, Left, Right
+                            {1, 1}, {1, -1}, {-1, 1}, {-1, -1} // Diagonals
                         };
 
                         for (int i = 0; i < directions.length; i++) {
@@ -299,13 +303,17 @@ public class MapMaker implements Screen {
 
                             if (map.checkBounds(newX, newY) && map.getTile(newX, newY).getTerrain().getId().startsWith("F")) {
                                 if (rand.nextDouble() < 0.4) {
-                                    if(!map.getTile(newX, newY).isDestroyed()){map.getTile(newX, newY).attachFire();}
+                                    if(!map.getTile(newX, newY).isDestroyed()){storeData.add(new int[]{newX, newY});}
                                 }
                             }
                         }
                     }
                 }
 
+        }
+
+        for (int[] coord : storeData) {
+            map.getTile(coord[0], coord[1]).attachFire();
         }
     }
 
