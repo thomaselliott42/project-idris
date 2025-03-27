@@ -673,33 +673,6 @@
       "damagedTextures": []
     },
     {
-      "id": "S47",
-      "excludeTilePicker": true,
-      "terrainName": "S47",
-      "texturePath": [
-        "sea/plains/s47.png",
-        "sea/desert/s47.png"
-      ],
-      "defense": 0.0,
-      "speed": 0.2,
-      "canBeDestroyed": false,
-      "damagedTextures": []
-    },
-    {
-      "id": "S48",
-      "excludeTilePicker": true,
-      "terrainName": "S48",
-      "texturePath": [
-        "sea/plains/s48.png",
-        "sea/desert/s48.png"
-      ],
-      "defense": 0.0,
-      "speed": 0.2,
-      "canBeDestroyed": false,
-      "damagedTextures": []
-    },
-
-    {
       "id": "R",
       "excludeTilePicker": true,
       "terrainName": "Ruptured",
