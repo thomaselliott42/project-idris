@@ -73,14 +73,92 @@
       "canBeDestroyed": false,
       "damagedTextures": []
     },
+
     {
       "id": "SS",
       "excludeTilePicker": true,
       "terrainName": "Single Sea",
       "texturePath": [
         "sea/plains/ss.png",
-        "sea/desert/ss.png",
-        "sea/winter/ss.png"
+        "sea/desert/ss.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "SSCL",
+      "excludeTilePicker": true,
+      "terrainName": "Sea Semicircular Left",
+      "texturePath": [
+        "sea/plains/sscl.png",
+        "sea/desert/sscl.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "SSCR",
+      "excludeTilePicker": true,
+      "terrainName": "Sea Semicircular Right",
+      "texturePath": [
+        "sea/plains/sscr.png",
+        "sea/desert/sscr.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "SHS",
+      "excludeTilePicker": true,
+      "terrainName": "Sea Horizontal Straight",
+      "texturePath": [
+        "sea/plains/shs.png",
+        "sea/desert/shs.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "SSCT",
+      "excludeTilePicker": true,
+      "terrainName": "Sea Semicircular Top",
+      "texturePath": [
+        "sea/plains/ssct.png",
+        "sea/desert/ssct.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "SSCB",
+      "excludeTilePicker": true,
+      "terrainName": "Sea Semicircular Bottom",
+      "texturePath": [
+        "sea/plains/sscb.png",
+        "sea/desert/sscb.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "SVS",
+      "excludeTilePicker": true,
+      "terrainName": "Sea Vertical Straight",
+      "texturePath": [
+        "sea/plains/svs.png",
+        "sea/desert/svs.png"
       ],
       "defense": 0.0,
       "speed": 0.2,

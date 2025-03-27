@@ -35,9 +35,9 @@ public class Tile {
     }
 
     private void updateTerrainBaseType(){
-        if(terrain.getId().equals("P")){
+        if(terrain.getId().contains("P")){
             terrainBaseType = "Plain";
-        }else if(terrain.getId().equals("D")){
+        }else if(terrain.getId().contains("D")){
             terrainBaseType = "Desert";
         }
     }
@@ -113,6 +113,10 @@ public class Tile {
             return TerrainManager.getInstance().getTerrain("D").getTexture().get(0);
         }
         return null;
+    }
+
+    public String getTerrainId(){
+        return terrain.getId();
     }
 
     public Texture getTerrainTexture() {

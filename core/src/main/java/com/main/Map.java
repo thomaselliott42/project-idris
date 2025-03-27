@@ -38,8 +38,11 @@ public class Map {
 
     public boolean checkBounds(int x, int y) {
         if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT){
+            Gdx.app.log("Map", "Inbounds");
             return true;
         }
+        Gdx.app.log("Map", "Outbounds");
+
         return false;
     }
 

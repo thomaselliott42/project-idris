@@ -112,7 +112,6 @@ public class MapMaker implements Screen {
             // First, render all tiles except mountain tiles
             // First, render all tiles except the mountains
             map.renderMap(TILE_SIZE, batch, fire);
-            //map.printMapToTerminal();
         }
 //        else {
 //
@@ -176,14 +175,16 @@ public class MapMaker implements Screen {
             if(isPlacing){
 
                 if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
-//                if (selectedTile.equals("S")) {
-//                    //smartPlaceSea(gridX, gridY);
-//                }
+                    if(selectedTile.equals("S")){
+                        smartPlaceSea(gridX, gridY);
+                    }else{
+                        map.getTile(gridX, gridY).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
+
+                    }
+
 //                else if  (selectedTile.equals("RH")) {
 //                    smartPlaceRoad(gridX, gridY);
 //                }
-
-                    map.getTile(gridX, gridY).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
 
                     //updateBoard();
                 }
@@ -214,6 +215,142 @@ public class MapMaker implements Screen {
 //        ImGuiHandler.startImGui();
 //        ImGuiHandler.renderUI();
 //        ImGuiHandler.endImGui();
+
+    }
+
+
+    private void smartPlaceSea(int x, int y) {
+        int count = 0;
+
+        // Define the directional labels and corresponding (dx, dy) offsets
+        int[][] directions = {
+            {-1, 1}, // TL: Top-left
+            {0, 1},  // T: Top
+            {1, 1},  // TR: Top-right
+            {-1, 0}, // L: Left
+            {1, 0},  // R: Right
+            {-1, -1}, // BL: Bottom-left
+            {0, -1}, // B: Bottom
+            {1, -1}  // BR: Bottom-right
+        };
+
+        boolean allPlains = true; // Flag to track if all surrounding tiles are plain
+
+        boolean seaLeft = false;  // Flag to track if there is a sea tile to the left
+        boolean seaRight = false; // Flag to track if there is a sea tile to the right
+        boolean seaDown = false;  // Flag for sea tile down
+        boolean seaUp = false;    // Flag for sea tile up
+
+        boolean extendSeaLeft = false;
+        boolean extendSeaRight = false;
+        boolean extendSeaUp = false;
+        boolean extendSeaDown = false;
+
+        // Loop through each direction
+        for (int i = 0; i < directions.length; i++) {
+            Gdx.app.log("SmartPlacement", "Checking direction: dx = " + directions[i][0] + ", dy = " + directions[i][1]);
+
+            int dx = directions[i][0];
+            int dy = directions[i][1];
+            int checkX = x + dx;
+            int checkY = y + dy;
+
+            // Skip out-of-bound tiles
+            if (!map.checkBounds(checkX, checkY)) { continue; }
+
+            String terrainId = map.getTile(checkX, checkY).getTerrainId();
+
+            // Check left and right directions for specific terrain condition
+            if (dy == 0 && (dx == -1 || dx == 1)) {
+                if (!terrainId.contains("S")) {
+                    count++;
+                } else {
+                    allPlains = false;
+                }
+            }
+
+            // Check for sea tiles to the left and right
+            if (dy == 0) {
+                if (dx == -1 && terrainId.contains("SS")) {
+                    Gdx.app.log("SmartPlacement", "Found sea left");
+                    seaLeft = true;
+                } else if (dx == 1 && terrainId.contains("SS")) {
+                    Gdx.app.log("SmartPlacement", "Found sea right");
+                    seaRight = true;
+                }
+
+                if (dx == 1 && terrainId.contains("SSCL")) {
+                    extendSeaLeft = true;
+                } else if (dx == -1 && terrainId.contains("SSCR")) {
+                    extendSeaRight = true;
+                }
+            }
+
+            // Check for sea tiles up and down
+            if (dx == 0) {
+                if (dy == -1 && terrainId.contains("SS")) {
+                    seaUp = true;
+                } else if (dy == 1 && terrainId.contains("SS")) {
+                    seaDown = true;
+                }
+
+                if (dy == -1 && terrainId.contains("SSCB")) {
+                    extendSeaUp = true;
+                } else if (dy == 1 && terrainId.contains("SSCT")) {
+                    extendSeaDown = true;
+                }
+            }
+        }
+
+        // If all surrounding tiles are plain, set the current tile to "SS"
+        if (allPlains) {
+            if (!map.checkBounds(x, y + 1)) {
+                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCB"));
+            } else if (!map.checkBounds(x, y - 1)) {
+                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCT"));
+            } else if (!map.checkBounds(x + 1, y)) {
+                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCL"));
+            } else if (!map.checkBounds(x - 1, y)) {
+                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCR"));
+            } else {
+                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SS"));
+            }
+        }
+
+        // Check for sea tiles to the left or right and update map
+        if (seaLeft && x > 0) {
+            if (!map.checkBounds(x - 2, y)) {
+                Gdx.app.log("SmartPlacement", "Updating sea left edge");
+                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCR"));
+                map.getTile(x - 1, y).updateTerrain(TerrainManager.getInstance().getTerrain("SHS"));
+            } else {
+                Gdx.app.log("SmartPlacement", "Updating sea left");
+                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCR"));
+                map.getTile(x - 1, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCL"));
+            }
+        } else if (seaRight && x < MAP_WIDTH - 1) {
+            if (!map.checkBounds(x + 2, y)) {
+                Gdx.app.log("SmartPlacement", "Updating sea right edge");
+                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCL"));
+                map.getTile(x + 1, y).updateTerrain(TerrainManager.getInstance().getTerrain("SHS"));
+            } else {
+                Gdx.app.log("SmartPlacement", "Updating sea right");
+                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCL"));
+                map.getTile(x + 1, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCR"));
+            }
+        }
+        // Extend the sea in the left or right directions if needed
+        if (extendSeaLeft && x > 0) {
+            Gdx.app.log("SmartPlacement", "Extending sea left");
+            map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCL"));
+            map.getTile(x + 1, y).updateTerrain(TerrainManager.getInstance().getTerrain("SHS"));
+        }
+
+        if (extendSeaRight && x < MAP_WIDTH - 1) {
+            Gdx.app.log("SmartPlacement", "Extending sea right");
+            map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCR"));
+            map.getTile(x - 1, y).updateTerrain(TerrainManager.getInstance().getTerrain("SHS"));
+        }
 
     }
 
@@ -299,6 +436,7 @@ public class MapMaker implements Screen {
                     if (distance <= radius / TILE_SIZE) {
                         if(map.getTile(x,y).getTerrain().getId().startsWith("F") && !map.getTile(x, y).isDestroyed()) {
                             map.getTile(x,y).attachFire();
+
                         }
                         //map.getTile(x, y).updateTileHealth(0.5f);
                     }
@@ -331,17 +469,17 @@ public class MapMaker implements Screen {
         }
     }
 
-//    private void updateBoard() {
-//        for (int y = 0; y < MAP_HEIGHT; y++) {
-//            for (int x = 0; x < MAP_WIDTH; x++) {
-//
-//                if(map[y][x].contains("S")) {
-//
-//
-//                }
-//            }
-//        }
-//    }
+    private void updateBoard() {
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            for (int x = 0; x < MAP_WIDTH; x++) {
+
+                if(map.getTile(x,y).getTerrainId().contains("S")) {
+                    smartPlaceSea(x, y);
+
+                }
+            }
+        }
+    }
 
 
     private void triggerEarthquake() {
