@@ -166,6 +166,540 @@
       "damagedTextures": []
     },
     {
+      "id": "S8",
+      "excludeTilePicker": true,
+      "terrainName": "S8",
+      "texturePath": [
+        "sea/plains/s8.png",
+        "sea/desert/s8.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S9",
+      "excludeTilePicker": true,
+      "terrainName": "S9",
+      "texturePath": [
+        "sea/plains/s9.png",
+        "sea/desert/s9.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S10",
+      "excludeTilePicker": true,
+      "terrainName": "S10",
+      "texturePath": [
+        "sea/plains/s10.png",
+        "sea/desert/s10.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S11",
+      "excludeTilePicker": true,
+      "terrainName": "S11",
+      "texturePath": [
+        "sea/plains/s11.png",
+        "sea/desert/s11.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S12",
+      "excludeTilePicker": true,
+      "terrainName": "S12",
+      "texturePath": [
+        "sea/plains/s12.png",
+        "sea/desert/s12.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S13",
+      "excludeTilePicker": true,
+      "terrainName": "S13",
+      "texturePath": [
+        "sea/plains/s13.png",
+        "sea/desert/s13.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S14",
+      "excludeTilePicker": true,
+      "terrainName": "S14",
+      "texturePath": [
+        "sea/plains/s14.png",
+        "sea/desert/s14.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S15",
+      "excludeTilePicker": true,
+      "terrainName": "S15",
+      "texturePath": [
+        "sea/plains/s15.png",
+        "sea/desert/s15.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S16",
+      "excludeTilePicker": true,
+      "terrainName": "S16",
+      "texturePath": [
+        "sea/plains/s16.png",
+        "sea/desert/s16.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S17",
+      "excludeTilePicker": true,
+      "terrainName": "S17",
+      "texturePath": [
+        "sea/plains/s17.png",
+        "sea/desert/s17.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S18",
+      "excludeTilePicker": true,
+      "terrainName": "S18",
+      "texturePath": [
+        "sea/plains/s18.png",
+        "sea/desert/s18.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S19",
+      "excludeTilePicker": true,
+      "terrainName": "S19",
+      "texturePath": [
+        "sea/plains/s19.png",
+        "sea/desert/s19.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S20",
+      "excludeTilePicker": true,
+      "terrainName": "S20",
+      "texturePath": [
+        "sea/plains/s20.png",
+        "sea/desert/s20.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S21",
+      "excludeTilePicker": true,
+      "terrainName": "S21",
+      "texturePath": [
+        "sea/plains/s21.png",
+        "sea/desert/s21.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S22",
+      "excludeTilePicker": true,
+      "terrainName": "S22",
+      "texturePath": [
+        "sea/plains/s22.png",
+        "sea/desert/s22.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S23",
+      "excludeTilePicker": true,
+      "terrainName": "S23",
+      "texturePath": [
+        "sea/plains/s23.png",
+        "sea/desert/s23.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S24",
+      "excludeTilePicker": true,
+      "terrainName": "S24",
+      "texturePath": [
+        "sea/plains/s24.png",
+        "sea/desert/s24.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S25",
+      "excludeTilePicker": true,
+      "terrainName": "S25",
+      "texturePath": [
+        "sea/plains/s25.png",
+        "sea/desert/s25.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S26",
+      "excludeTilePicker": true,
+      "terrainName": "S26",
+      "texturePath": [
+        "sea/plains/s26.png",
+        "sea/desert/s26.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S27",
+      "excludeTilePicker": true,
+      "terrainName": "S27",
+      "texturePath": [
+        "sea/plains/s27.png",
+        "sea/desert/s27.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S28",
+      "excludeTilePicker": true,
+      "terrainName": "S28",
+      "texturePath": [
+        "sea/plains/s28.png",
+        "sea/desert/s28.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S29",
+      "excludeTilePicker": true,
+      "terrainName": "S29",
+      "texturePath": [
+        "sea/plains/s29.png",
+        "sea/desert/s29.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S30",
+      "excludeTilePicker": true,
+      "terrainName": "S30",
+      "texturePath": [
+        "sea/plains/s30.png",
+        "sea/desert/s30.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S31",
+      "excludeTilePicker": true,
+      "terrainName": "S31",
+      "texturePath": [
+        "sea/plains/s31.png",
+        "sea/desert/s31.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S32",
+      "excludeTilePicker": true,
+      "terrainName": "S32",
+      "texturePath": [
+        "sea/plains/s32.png",
+        "sea/desert/s32.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S33",
+      "excludeTilePicker": true,
+      "terrainName": "S33",
+      "texturePath": [
+        "sea/plains/s33.png",
+        "sea/desert/s33.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S34",
+      "excludeTilePicker": true,
+      "terrainName": "S34",
+      "texturePath": [
+        "sea/plains/s34.png",
+        "sea/desert/s34.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S35",
+      "excludeTilePicker": true,
+      "terrainName": "S35",
+      "texturePath": [
+        "sea/plains/s35.png",
+        "sea/desert/s35.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S36",
+      "excludeTilePicker": true,
+      "terrainName": "S36",
+      "texturePath": [
+        "sea/plains/s36.png",
+        "sea/desert/s36.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S37",
+      "excludeTilePicker": true,
+      "terrainName": "S37",
+      "texturePath": [
+        "sea/plains/s37.png",
+        "sea/desert/s37.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S38",
+      "excludeTilePicker": true,
+      "terrainName": "S38",
+      "texturePath": [
+        "sea/plains/s38.png",
+        "sea/desert/s38.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S39",
+      "excludeTilePicker": true,
+      "terrainName": "S39",
+      "texturePath": [
+        "sea/plains/s39.png",
+        "sea/desert/s39.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S40",
+      "excludeTilePicker": true,
+      "terrainName": "S40",
+      "texturePath": [
+        "sea/plains/s40.png",
+        "sea/desert/s40.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S41",
+      "excludeTilePicker": true,
+      "terrainName": "S41",
+      "texturePath": [
+        "sea/plains/s41.png",
+        "sea/desert/s41.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S42",
+      "excludeTilePicker": true,
+      "terrainName": "S42",
+      "texturePath": [
+        "sea/plains/s42.png",
+        "sea/desert/s42.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S43",
+      "excludeTilePicker": true,
+      "terrainName": "S43",
+      "texturePath": [
+        "sea/plains/s43.png",
+        "sea/desert/s43.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S44",
+      "excludeTilePicker": true,
+      "terrainName": "S44",
+      "texturePath": [
+        "sea/plains/s44.png",
+        "sea/desert/s44.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S45",
+      "excludeTilePicker": true,
+      "terrainName": "S45",
+      "texturePath": [
+        "sea/plains/s45.png",
+        "sea/desert/s45.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S46",
+      "excludeTilePicker": true,
+      "terrainName": "S46",
+      "texturePath": [
+        "sea/plains/s46.png",
+        "sea/desert/s46.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S47",
+      "excludeTilePicker": true,
+      "terrainName": "S47",
+      "texturePath": [
+        "sea/plains/s47.png",
+        "sea/desert/s47.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+    {
+      "id": "S48",
+      "excludeTilePicker": true,
+      "terrainName": "S48",
+      "texturePath": [
+        "sea/plains/s48.png",
+        "sea/desert/s48.png"
+      ],
+      "defense": 0.0,
+      "speed": 0.2,
+      "canBeDestroyed": false,
+      "damagedTextures": []
+    },
+
+    {
       "id": "R",
       "excludeTilePicker": true,
       "terrainName": "Ruptured",
