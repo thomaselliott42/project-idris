@@ -3,6 +3,8 @@ package com.main;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 
+
+//worked on by Josh
 public class Tile {
 
     private Unit unit;
