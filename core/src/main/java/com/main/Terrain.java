@@ -19,6 +19,7 @@ public class Terrain implements Serializable {
     public Terrain(String id, String terrainName, boolean excludeTilePicker, List<Texture> texture, float defense, float speed, boolean canBeDestroyed, List<Texture> damagedTextures) {
         this.id = id;
         this.terrainName = terrainName;
+        this.excludeTilePicker = excludeTilePicker;
         this.texture = texture;
         this.defense = defense;
         this.speed = speed;

@@ -518,7 +518,7 @@ public class MapMaker implements Screen {
         int startX = (Gdx.graphics.getWidth() - pickerWidth) / 2;
         int startY = Gdx.graphics.getHeight() - TILE_PICKER_HEIGHT;
 
-        // Draw tile picker background with a border for cleaner appearance
+        // Draw tile picker background with a border for a cleaner appearance
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f)); // Dark background
         shapeRenderer.rect(startX - 2, startY - 2, pickerWidth + 4, TILE_PICKER_HEIGHT + 4); // Add some border
@@ -536,10 +536,10 @@ public class MapMaker implements Screen {
         // Draw the tiles dynamically based on terrain
         int terrainIndex = 0;
         for (Terrain terrain : terrainManager.getTerrains()) {
-            if(!terrain.isExcludeTilePicker()){
+            if (!terrain.isExcludeTilePicker()) {
                 batch.draw(terrain.getTexture().get(0), startX + terrainIndex * TILE_SIZE, startY, TILE_SIZE, TILE_PICKER_HEIGHT); // Draw the terrain
-                terrainIndex++;
             }
+            terrainIndex++;
 
         }
 
@@ -554,17 +554,17 @@ public class MapMaker implements Screen {
 
         // Check for tile selection
         int mouseX = Gdx.input.getX();
-        int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+        int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();  // Correct Y position for LibGDX
 
         // Check if mouse is within the tile picker area
-        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) &&
-            mouseY >= startY && mouseY <= startY + TILE_PICKER_HEIGHT) {
-
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && mouseY >= startY && mouseY <= startY + TILE_PICKER_HEIGHT) {
             // Loop through the terrains and check which one was clicked
             int clickedTerrainIndex = (mouseX - startX) / TILE_SIZE;
             int currentIndex = 0;
+
+            // Ensure the selected tile is within bounds and update
             for (Terrain terrain : terrainManager.getTerrains()) {
-                if (clickedTerrainIndex == currentIndex) {
+                if (!terrain.isExcludeTilePicker() && clickedTerrainIndex == currentIndex) {
                     isPlacing = true;
                     selectedTile = terrain.getId();  // Set the selected tile using the terrain ID
                     break;
