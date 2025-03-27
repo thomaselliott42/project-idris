@@ -28,7 +28,7 @@ public class Map {
 
         for (int x = 0; x < MAP_WIDTH; x++) {
             for (int y = 0; y < MAP_HEIGHT; y++) {
-                map[y][x] = new Tile(TerrainManager.getInstance().getTerrain(tiles[0]), null, null);
+                map[y][x] = new Tile(TerrainManager.getInstance().getTerrain("P"), null, null);
                 Gdx.app.log("Map", map[y][x].toString());
             }
         }

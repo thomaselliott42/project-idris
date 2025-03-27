@@ -83,7 +83,6 @@ public class MapMaker implements Screen {
         batch.begin();
 
 
-
         earthquakeTimer += delta;
         shakeTimer -= delta;
         if (shakeTimer > 0) {
@@ -97,7 +96,6 @@ public class MapMaker implements Screen {
         }
 
         // Trigger earthquake event periodically
-//
         if (earthquakeTimer >= EARTHQUAKE_INTERVAL) {
             triggerForestFire();
             //triggerEarthquake();
@@ -108,53 +106,7 @@ public class MapMaker implements Screen {
             switchRender = !switchRender;
         }
 
-
-        if (!switchRender) {
-            // First, render all tiles except mountain tiles
-            // First, render all tiles except the mountains
-            map.renderMap(TILE_SIZE, batch, fire);
-        }
-//        else {
-//
-//            float horizontalOffset = 10 * TILE_SIZE;  // 10 tiles to the right
-//
-//            for (int y = 0; y < MAP_HEIGHT; y++) {
-//                for (int x = 0; x < MAP_WIDTH; x++) {
-//                    Texture tex = getTileTexture(map[y][x]);
-//
-//                    // Apply fake 3D tilt to X and Y position of each tile
-//                    float drawX = (x - y) * TILE_SIZE + (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2 + horizontalOffset;
-//                    ;
-//                    float drawY = (x + y) * TILE_SIZE / 2 + (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2;
-//                    // float drawX = (x - y) * TILE_SIZE + (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2 + 32*5;
-////                    float drawY = (x + y) * TILE_SIZE / 2 + (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2 + 32*5;
-//                    // Render non-mountain tiles first
-//                    if (!map[y][x].equals("M")) {
-//                        if (map[y][x].equals("F")) {
-//                            batch.draw(getTileTexture("P"), drawX, drawY, TILE_SIZE, TILE_SIZE);
-//                        }
-//                        batch.draw(tex, drawX, drawY, TILE_SIZE, TILE_SIZE);
-//                    }
-//                }
-//            }
-//
-//            // Then, render the mountain tiles starting from bottom-right to top-left with the fake 3D tilt
-//            for (int y = MAP_HEIGHT - 1; y >= 0; y--) { // Start from the bottom row
-//                for (int x = MAP_WIDTH - 1; x >= 0; x--) { // Start from the rightmost column
-//                    if (map[y][x].equals("M")) {
-//                        Texture tex = getTileTexture(map[y][x]);
-//
-//                        // Apply fake 3D tilt to X and Y position of each mountain tile
-//                        float drawX = (x - y) * TILE_SIZE + (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2 + horizontalOffset;
-//                        ;
-//                        float drawY = (x + y) * TILE_SIZE / 2 + (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2;
-//                        batch.draw(getTileTexture("P"), drawX, drawY, TILE_SIZE, TILE_SIZE);
-//                        batch.draw(tex, drawX, drawY, TILE_SIZE, TILE_SIZE);
-//                    }
-//                }
-//            }
-//
-//        }
+        map.renderMap(TILE_SIZE, batch, fire);
 
         batch.end();
 
@@ -182,10 +134,6 @@ public class MapMaker implements Screen {
                         map.getTile(gridX, gridY).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
 
                     }
-
-//                else if  (selectedTile.equals("RH")) {
-//                    smartPlaceRoad(gridX, gridY);
-//                }
 
                     //updateBoard();
                 }
@@ -491,9 +439,6 @@ public class MapMaker implements Screen {
         batch.end();
     }
 
-
-
-
     private void fillBoard() {
         for (int y = 0; y < MAP_HEIGHT; y++) {
             for (int x = 0; x < MAP_WIDTH; x++) {
@@ -514,7 +459,6 @@ public class MapMaker implements Screen {
             }
         }
     }
-
 
     private void triggerEarthquake() {
         Random rand = new Random();
@@ -566,12 +510,19 @@ public class MapMaker implements Screen {
         batch.begin();
 
         int terrainIndex = 0;
+        List<Terrain> includedTerrains = new ArrayList<>();
+
+        // Collect only the terrains that are not excluded from the tile picker
         for (Terrain terrain : terrainManager.getTerrains()) {
             if (!terrain.isExcludeTilePicker()) {
-                batch.draw(terrain.getTexture().get(0), startX + terrainIndex * TILE_SIZE, startY, TILE_SIZE, TILE_PICKER_HEIGHT);
+                includedTerrains.add(terrain);
             }
-            terrainIndex++;
+        }
 
+        // Draw the terrains
+        for (int i = 0; i < includedTerrains.size(); i++) {
+            Terrain terrain = includedTerrains.get(i);
+            batch.draw(terrain.getTexture().get(0), startX + i * TILE_SIZE, startY, TILE_SIZE, TILE_PICKER_HEIGHT);
         }
 
         batch.end();
@@ -588,15 +539,11 @@ public class MapMaker implements Screen {
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && mouseY >= startY && mouseY <= startY + TILE_PICKER_HEIGHT) {
 
             int clickedTerrainIndex = (mouseX - startX) / TILE_SIZE;
-            int currentIndex = 0;
 
-            for (Terrain terrain : terrainManager.getTerrains()) {
-                if (!terrain.isExcludeTilePicker() && clickedTerrainIndex == currentIndex) {
-                    isPlacing = true;
-                    selectedTile = terrain.getId();
-                    break;
-                }
-                currentIndex++;
+            if (clickedTerrainIndex >= 0 && clickedTerrainIndex < includedTerrains.size()) {
+                Terrain clickedTerrain = includedTerrains.get(clickedTerrainIndex);
+                isPlacing = true;
+                selectedTile = clickedTerrain.getId();
             }
         }
     }
