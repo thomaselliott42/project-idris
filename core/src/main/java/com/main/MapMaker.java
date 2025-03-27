@@ -25,6 +25,7 @@ public class MapMaker implements Screen {
     private final float SHAKE_INTENSITY = 10f; // Max intensity of shake (pixels)
 
     private Texture damageIcon = new Texture("damageIcon.png");
+    private Texture fillIcon = new Texture("fillmapIcon.png");
     private Texture damageRadius = new Texture("damageRadius.png");
     private final int TILE_PICKER_HEIGHT = 64; // Height of the tile picker
     private Texture fire = new Texture("fire.png");
@@ -198,15 +199,22 @@ public class MapMaker implements Screen {
 
         }
 
-        if(Gdx.input.isKeyPressed(Input.Keys.P)) {
-            fillBoard();
-        }
 
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+
+            // Check if the damage icon was clicked
             if (mouseX >= 0 && mouseX <= 64) {
                 if (mouseY >= Gdx.graphics.getHeight() - 128 && mouseY <= Gdx.graphics.getHeight() - 64) {
                     Gdx.app.log("MapMaker", "Damage Mode");
-                    isPlacing = false;
+                    isPlacing = !isPlacing;
+                }
+            }
+
+            // Check if the fill icon was clicked
+            if (mouseX >= 0 && mouseX <= 64) {
+                if (mouseY >= Gdx.graphics.getHeight() - 192 && mouseY <= Gdx.graphics.getHeight() - 128) {
+                    Gdx.app.log("MapMaker", "Fill Mode");
+                    fillBoard();
                 }
             }
         }
@@ -455,10 +463,36 @@ public class MapMaker implements Screen {
         shapeRenderer.rect(0, 0, toolbarWidth, toolbarHeight);
         shapeRenderer.end();
 
+        // Get mouse position
+        int mouseX = Gdx.input.getX();
+        int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();  // Invert Y coordinate to match screen space
+
+
+        // Highlight damage icon if mouse is over it
+        if (mouseX >= 0 && mouseX <= iconSize && mouseY >= Gdx.graphics.getHeight() - 128 && mouseY <= Gdx.graphics.getHeight() - 64) {
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            shapeRenderer.setColor(Color.YELLOW);  // Highlight color (yellow border)
+            shapeRenderer.rect(0, Gdx.graphics.getHeight() - 128, iconSize, iconSize);  // Draw border
+            shapeRenderer.end();
+        }
         batch.begin();
         batch.draw(damageIcon, 0, Gdx.graphics.getHeight() - (iconSize * 2), iconSize, iconSize);
         batch.end();
+
+        // Highlight fill icon if mouse is over it
+        if (mouseX >= 0 && mouseX <= iconSize && mouseY >= Gdx.graphics.getHeight() - 192 && mouseY <= Gdx.graphics.getHeight() - 128) {
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            shapeRenderer.setColor(Color.YELLOW);  // Highlight color (yellow border)
+            shapeRenderer.rect(0, Gdx.graphics.getHeight() - 192, iconSize, iconSize);  // Draw border
+            shapeRenderer.end();
+        }
+        batch.begin();
+        batch.draw(fillIcon, 0, Gdx.graphics.getHeight() - (iconSize * 3), iconSize, iconSize);
+        batch.end();
     }
+
+
+
 
     private void fillBoard() {
         for (int y = 0; y < MAP_HEIGHT; y++) {
@@ -534,7 +568,7 @@ public class MapMaker implements Screen {
         int terrainIndex = 0;
         for (Terrain terrain : terrainManager.getTerrains()) {
             if (!terrain.isExcludeTilePicker()) {
-                batch.draw(terrain.getTexture().get(0), startX + terrainIndex * TILE_SIZE, startY, TILE_SIZE, TILE_PICKER_HEIGHT); 
+                batch.draw(terrain.getTexture().get(0), startX + terrainIndex * TILE_SIZE, startY, TILE_SIZE, TILE_PICKER_HEIGHT);
             }
             terrainIndex++;
 
