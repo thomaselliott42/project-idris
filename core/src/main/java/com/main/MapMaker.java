@@ -514,30 +514,27 @@ public class MapMaker implements Screen {
     }
 
     private void drawTilePicker() {
-        int pickerWidth = 4 * TILE_SIZE;  // For 4 tiles in the picker
+        int pickerWidth = 4 * TILE_SIZE;
         int startX = (Gdx.graphics.getWidth() - pickerWidth) / 2;
         int startY = Gdx.graphics.getHeight() - TILE_PICKER_HEIGHT;
 
-        // Draw tile picker background with a border for a cleaner appearance
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f)); // Dark background
-        shapeRenderer.rect(startX - 2, startY - 2, pickerWidth + 4, TILE_PICKER_HEIGHT + 4); // Add some border
+        shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f));
+        shapeRenderer.rect(startX - 2, startY - 2, pickerWidth + 4, TILE_PICKER_HEIGHT + 4);
         shapeRenderer.end();
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(new Color(0.2f, 0.2f, 0.2f, 1f)); // Lighter background
+        shapeRenderer.setColor(new Color(0.2f, 0.2f, 0.2f, 1f));
         shapeRenderer.rect(startX, startY, pickerWidth, TILE_PICKER_HEIGHT);
         shapeRenderer.end();
 
-        // Access the TerrainManager to get the textures dynamically
         TerrainManager terrainManager = TerrainManager.getInstance();
         batch.begin();
 
-        // Draw the tiles dynamically based on terrain
         int terrainIndex = 0;
         for (Terrain terrain : terrainManager.getTerrains()) {
             if (!terrain.isExcludeTilePicker()) {
-                batch.draw(terrain.getTexture().get(0), startX + terrainIndex * TILE_SIZE, startY, TILE_SIZE, TILE_PICKER_HEIGHT); // Draw the terrain
+                batch.draw(terrain.getTexture().get(0), startX + terrainIndex * TILE_SIZE, startY, TILE_SIZE, TILE_PICKER_HEIGHT); 
             }
             terrainIndex++;
 
@@ -545,28 +542,24 @@ public class MapMaker implements Screen {
 
         batch.end();
 
-        // Highlight the selected tile
         int selectedTileX = getSelectedTileX(selectedTile);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         shapeRenderer.setColor(Color.YELLOW);
         shapeRenderer.rect(startX + selectedTileX * TILE_SIZE, startY, TILE_SIZE, TILE_PICKER_HEIGHT);
         shapeRenderer.end();
 
-        // Check for tile selection
         int mouseX = Gdx.input.getX();
-        int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();  // Correct Y position for LibGDX
+        int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
 
-        // Check if mouse is within the tile picker area
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && mouseY >= startY && mouseY <= startY + TILE_PICKER_HEIGHT) {
-            // Loop through the terrains and check which one was clicked
+
             int clickedTerrainIndex = (mouseX - startX) / TILE_SIZE;
             int currentIndex = 0;
 
-            // Ensure the selected tile is within bounds and update
             for (Terrain terrain : terrainManager.getTerrains()) {
                 if (!terrain.isExcludeTilePicker() && clickedTerrainIndex == currentIndex) {
                     isPlacing = true;
-                    selectedTile = terrain.getId();  // Set the selected tile using the terrain ID
+                    selectedTile = terrain.getId();
                     break;
                 }
                 currentIndex++;
