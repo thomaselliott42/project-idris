@@ -3,12 +3,13 @@ package com.main;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,47 +17,44 @@ import java.util.Random;
 
 public class MapMaker implements Screen {
 
-    private final int TILE_SIZE = 32;
-    private final int MAP_WIDTH = 20;
-    private final int MAP_HEIGHT = 20;
+    private final int TILE_SIZE = 32; // 32
+    private final int MAP_WIDTH = 20; // 20
+    private final int MAP_HEIGHT = 20; // 20
 
-    private final float EARTHQUAKE_INTERVAL = 2.0f; // Time between earthquakes in seconds
-    private final float SHAKE_DURATION = 0.5f; // How long the shake lasts in seconds
-    private final float SHAKE_INTENSITY = 10f; // Max intensity of shake (pixels)
+    private Texture cursor = new Texture("ui/cursor.png");
+    private Texture fillIcon = new Texture("ui/fillmapIcon.png");
+    private Texture reloadIcon = new Texture("ui/reloadIcon.png");
+    private Texture saveIcon = new Texture("ui/saveIcon.png");
+    private Texture inspectIcon = new Texture("ui/inspectIcon.png");
 
-    private Texture damageIcon = new Texture("damageIcon.png");
-    private Texture fillIcon = new Texture("fillmapIcon.png");
-    private Texture damageRadius = new Texture("damageRadius.png");
+    private Texture damageIcon = new Texture("ui/damageIcon.png");
+    private Texture damageRadius = new Texture("ui/damageRadius.png");
+
     private final int TILE_PICKER_HEIGHT = 64; // Height of the tile picker
-    private Texture fire = new Texture("fire.png");
-
     private boolean isPlacing = true;
     private  Map map;
 
-    private Texture cursor;
     private SpriteBatch batch;
+    private BitmapFont font;
+
     private ShapeRenderer shapeRenderer;
     private OrthographicCamera camera;
 
     private String selectedTile = "P";  // Default selected tile
-    private boolean switchRender = false;
+    private boolean inspect = false;
 
-    private float earthquakeTimer = 0.0f; // Timer for earthquake events
-    private float shakeTimer = 0.0f; // Timer for shake duration
-    private float shakeOffsetX = 0f; // X offset for shake
-    private float shakeOffsetY = 0f; // Y offset for shake
 
 
     @Override
     public void show() {
+
         batch = new SpriteBatch();
+        font = new BitmapFont();
         shapeRenderer = new ShapeRenderer();
 
         camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.setToOrtho(false);
         camera.update();
-
-        cursor = new Texture("cursor.png");
 
         this.map = new Map(MAP_WIDTH, MAP_HEIGHT);
 
@@ -78,35 +76,11 @@ public class MapMaker implements Screen {
 
 
         drawToolbar();
-        camera.position.set(Gdx.graphics.getWidth() / 2 + shakeOffsetX, Gdx.graphics.getHeight() / 2 + shakeOffsetY, 0);
         camera.update();
         batch.begin();
 
 
-        earthquakeTimer += delta;
-        shakeTimer -= delta;
-        if (shakeTimer > 0) {
-            Random rand = new Random();
-            shakeOffsetX = (rand.nextFloat() * 2 - 1) * SHAKE_INTENSITY; // Random X offset
-            shakeOffsetY = (rand.nextFloat() * 2 - 1) * SHAKE_INTENSITY; // Random Y offset
-        } else {
-            // Reset shake offsets after the shaking duration ends
-            shakeOffsetX = 0;
-            shakeOffsetY = 0;
-        }
-
-        // Trigger earthquake event periodically
-        if (earthquakeTimer >= EARTHQUAKE_INTERVAL) {
-            triggerForestFire();
-            //triggerEarthquake();
-            earthquakeTimer = 0.0f; // Reset the timer
-        }
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.L)) {
-            switchRender = !switchRender;
-        }
-
-        map.renderMap(TILE_SIZE, batch, fire);
+        map.renderMap(TILE_SIZE, batch);
 
         batch.end();
 
@@ -128,14 +102,16 @@ public class MapMaker implements Screen {
             if(isPlacing){
 
                 if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
+
                     if(selectedTile.equals("S")){
                         smartPlaceSea(gridX, gridY);
                     }else{
                         map.getTile(gridX, gridY).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
-
+                        forceUpdateAllSeaTiles();
                     }
 
-                    //updateBoard();
+                    map.printMapToTerminal();
+
                 }
             }else{
                 if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
@@ -149,24 +125,49 @@ public class MapMaker implements Screen {
 
 
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-
-            // Check if the damage icon was clicked
             if (mouseX >= 0 && mouseX <= 64) {
                 if (mouseY >= Gdx.graphics.getHeight() - 128 && mouseY <= Gdx.graphics.getHeight() - 64) {
+                    Gdx.app.log("MapMaker", "Inspect Mode");
+                    inspect = !inspect;
+
+
+                }
+                else if (mouseY >= Gdx.graphics.getHeight() - 192 && mouseY <= Gdx.graphics.getHeight() - 128) {
                     Gdx.app.log("MapMaker", "Damage Mode");
                     isPlacing = !isPlacing;
-                }
-            }
 
-            // Check if the fill icon was clicked
-            if (mouseX >= 0 && mouseX <= 64) {
-                if (mouseY >= Gdx.graphics.getHeight() - 192 && mouseY <= Gdx.graphics.getHeight() - 128) {
+                }
+                else if (mouseY >= Gdx.graphics.getHeight() - 256 && mouseY <= Gdx.graphics.getHeight() - 192) {
                     Gdx.app.log("MapMaker", "Fill Mode");
+                    fillBoard();
+
+                }
+                else if (mouseY >= Gdx.graphics.getHeight() - 320 && mouseY <= Gdx.graphics.getHeight() - 256) {
+                    Gdx.app.log("MapMaker", "Reload Json");
+                    reloadJson();
+
+                }
+                else if (mouseY >= Gdx.graphics.getHeight() - 384 && mouseY <= Gdx.graphics.getHeight() - 320) {
+                    Gdx.app.log("MapMaker", "Save Map");
                     fillBoard();
                 }
             }
+
         }
 
+
+        if(inspect){
+            if(map.checkBounds(gridX, gridY)){
+                batch.begin();
+                font.draw(batch, map.getTile(gridX,gridY).getTerrainId(), Gdx.graphics.getWidth() - 50, 40);
+                batch.end();
+            }
+        }
+        batch.begin();
+        String coords = gridY +"," +gridX;
+        font.draw(batch, coords, Gdx.graphics.getWidth() - 50, 20);
+        font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(),Gdx.graphics.getWidth() - 150, 20 );
+        batch.end();
 
 //        ImGuiHandler.startImGui();
 //        ImGuiHandler.renderUI();
@@ -174,6 +175,10 @@ public class MapMaker implements Screen {
 
     }
 
+    private void reloadJson() {
+        TerrainLoader.loadTerrains();
+        forceUpdateAllSeaTiles();
+    }
 
     private void smartPlaceSea(int x, int y) {
         if (!map.checkBounds(x, y) || map.getTile(x, y).getTerrain().getId().contains("S")) {
@@ -514,9 +519,7 @@ public class MapMaker implements Screen {
                     returnString = "SLMCNCR";
                     break;
                 }
-
-
-
+                
 
                 break;
             case 6:
@@ -614,48 +617,6 @@ public class MapMaker implements Screen {
         return returnString;
     }
 
-
-
-    private void triggerForestFire() {
-        Random rand = new Random();
-
-        List<int[]> storeData = new ArrayList<>(); // Store fire spread locations
-
-
-        for (int x = 0; x < MAP_WIDTH; x++) {
-            for (int y = 0; y < MAP_HEIGHT; y++) {
-                if (map.getTile(x, y).getTerrain().getId().startsWith("F")&& map.getTile(x, y).hasFire()) {
-
-                    map.getTile(x, y).updateTileHealth(0.5f);
-
-                    int[][] directions = {
-                        {1, 0}, {-1, 0}, {0, 1}, {0, -1},  // Up, Down, Left, Right
-                        {1, 1}, {1, -1}, {-1, 1}, {-1, -1} // Diagonals
-                    };
-
-                    for (int i = 0; i < directions.length; i++) {
-                        int dx = directions[i][0];
-                        int dy = directions[i][1];
-
-                        int newX = x + dx;
-                        int newY = y + dy;
-
-                        if (map.checkBounds(newX, newY) && map.getTile(newX, newY).getTerrain().getId().startsWith("F")) {
-                            if (rand.nextDouble() < 0.4) {
-                                if(!map.getTile(newX, newY).isDestroyed()){storeData.add(new int[]{newX, newY});}
-                            }
-                        }
-                    }
-                }
-            }
-
-        }
-
-        for (int[] coord : storeData) {
-            map.getTile(coord[0], coord[1]).attachFire();
-        }
-    }
-
     private void drawDamageRadius(int mouseX, int mouseY) {
         // Radius of damage effect in tiles
         int radius = TILE_SIZE;  // Radius in tiles (adjustable)
@@ -696,11 +657,7 @@ public class MapMaker implements Screen {
                     float distance = (float) Math.sqrt(Math.pow(x - gridX, 2) + Math.pow(y - gridY, 2));
 
                     if (distance <= radius / TILE_SIZE) {
-                        if(map.getTile(x,y).getTerrain().getId().startsWith("F") && !map.getTile(x, y).isDestroyed()) {
-                            map.getTile(x,y).attachFire();
-
-                        }
-                        //map.getTile(x, y).updateTileHealth(0.5f);
+                        map.getTile(x, y).updateTileHealth(0.5f);
                     }
                 }
             }
@@ -721,27 +678,25 @@ public class MapMaker implements Screen {
         int mouseX = Gdx.input.getX();
         int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();  // Invert Y coordinate to match screen space
 
+        // Draw and highlight icons with a helper function
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 128, inspectIcon, iconSize); // Damage icon
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 192, damageIcon, iconSize); // Damage icon
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 256, fillIcon, iconSize);   // Fill icon
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 320, reloadIcon, iconSize); // Reload icon
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 384, saveIcon, iconSize);   // Save icon
+    }
 
-        // Highlight damage icon if mouse is over it
-        if (mouseX >= 0 && mouseX <= iconSize && mouseY >= Gdx.graphics.getHeight() - 128 && mouseY <= Gdx.graphics.getHeight() - 64) {
+    private void drawAndHighlightIcon(int mouseX, int mouseY, int x, int y, Texture icon, int iconSize) {
+        // Highlight icon if mouse is over it
+        if (mouseX >= x && mouseX <= x + iconSize && mouseY >= y && mouseY <= y + iconSize) {
             shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
             shapeRenderer.setColor(Color.YELLOW);  // Highlight color (yellow border)
-            shapeRenderer.rect(0, Gdx.graphics.getHeight() - 128, iconSize, iconSize);  // Draw border
+            shapeRenderer.rect(x, y, iconSize, iconSize);  // Draw border
             shapeRenderer.end();
         }
-        batch.begin();
-        batch.draw(damageIcon, 0, Gdx.graphics.getHeight() - (iconSize * 2), iconSize, iconSize);
-        batch.end();
 
-        // Highlight fill icon if mouse is over it
-        if (mouseX >= 0 && mouseX <= iconSize && mouseY >= Gdx.graphics.getHeight() - 192 && mouseY <= Gdx.graphics.getHeight() - 128) {
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-            shapeRenderer.setColor(Color.YELLOW);  // Highlight color (yellow border)
-            shapeRenderer.rect(0, Gdx.graphics.getHeight() - 192, iconSize, iconSize);  // Draw border
-            shapeRenderer.end();
-        }
         batch.begin();
-        batch.draw(fillIcon, 0, Gdx.graphics.getHeight() - (iconSize * 3), iconSize, iconSize);
+        batch.draw(icon, x, y, iconSize, iconSize);
         batch.end();
     }
 
@@ -749,52 +704,8 @@ public class MapMaker implements Screen {
         for (int y = 0; y < MAP_HEIGHT; y++) {
             for (int x = 0; x < MAP_WIDTH; x++) {
                 map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
-                // map[y][x] = selectedTile;
             }
         }
-    }
-
-    private void updateBoard() {
-        for (int y = 0; y < MAP_HEIGHT; y++) {
-            for (int x = 0; x < MAP_WIDTH; x++) {
-
-                if(map.getTile(x,y).getTerrainId().contains("S")) {
-                    smartPlaceSea(x, y);
-
-                }
-            }
-        }
-    }
-
-    private void triggerEarthquake() {
-        Random rand = new Random();
-        int numRuptures = 5 + rand.nextInt(10); // Number of ruptures per earthquake (between 5 and 15)
-
-        for (int i = 0; i < numRuptures; i++) {
-            int x = rand.nextInt(MAP_WIDTH);
-            int y = rand.nextInt(MAP_HEIGHT);
-
-            // If the tile isn't already ruptured, rupture it
-            if (!map.getTile(x,y).getTerrain().getId().equals("R")) {
-                map.getTile(x,y).updateTerrain(TerrainManager.getInstance().getTerrain("R"));
-
-                // get the adjacent tiles
-                if(map.checkBounds(x+1,y)){  map.getTile(x+1, y).updateTileHealth(1f);}
-                if(map.checkBounds(x-1,y)){  map.getTile(x-1, y).updateTileHealth(1f);}
-                if(map.checkBounds(x,y+1)){  map.getTile(x, y+1).updateTileHealth(1f);}
-                if(map.checkBounds(x,y-1)){  map.getTile(x, y-1).updateTileHealth(1f);}
-
-                // further away tiles damage by .5
-                if(map.checkBounds(x+2,y)){  map.getTile(x+2, y).updateTileHealth(.5f);}
-                if(map.checkBounds(x-2,y)){  map.getTile(x-2, y).updateTileHealth(.5f);}
-                if(map.checkBounds(x,y+2)){  map.getTile(x, y+2).updateTileHealth(.5f);}
-                if(map.checkBounds(x,y-2)){  map.getTile(x, y-2).updateTileHealth(.5f);}
-
-            }
-        }
-
-        shakeTimer = SHAKE_DURATION;
-
     }
 
     private void drawTilePicker() {
