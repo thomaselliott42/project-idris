@@ -283,12 +283,12 @@
       "damagedTextures": []
     },
     {
-      "id": "SLECTRR",
+      "id": "SLECTRH",
       "excludeTilePicker": true,
-      "terrainName": "SLECTRR",
+      "terrainName": "SLECTRH",
       "texturePath": [
-        "sea/plains/slectrr.png",
-        "sea/desert/slectrr.png"
+        "sea/plains/slectrh.png",
+        "sea/desert/slectrh.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
