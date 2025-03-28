@@ -206,6 +206,7 @@ public class MapMaker implements Screen {
 
     private void updateSeaTileGuaranteed(int x, int y) {
         // Safe neighbor checking with boundary verification
+
         boolean north = (y < MAP_HEIGHT - 1) && map.getTile(x, y + 1).getTerrain().getId().contains("S");
         boolean east = (x < MAP_WIDTH - 1) && map.getTile(x + 1, y).getTerrain().getId().contains("S");
         boolean south = (y > 0) && map.getTile(x, y - 1).getTerrain().getId().contains("S");
@@ -220,6 +221,65 @@ public class MapMaker implements Screen {
             map.getTile(x + 1, y - 1).getTerrain().getId().contains("S");
         boolean southwest = (x > 0) && (y > 0) &&
             map.getTile(x - 1, y - 1).getTerrain().getId().contains("S");
+
+
+        // checking to see if the tile is at the edges of the terrain
+        // north edge straight
+        if ((y == MAP_HEIGHT-1) && (x < MAP_WIDTH-1) && (x > 0)){
+            north = true;
+            northeast = true;
+            northwest = true;
+        }
+        // south edge straight
+        if ((y == 0) && (x < MAP_WIDTH-1) && (x > 0)){
+            south = true;
+            southeast = true;
+            southwest = true;
+        }
+        // right edge straight
+        if ((y < MAP_HEIGHT-1) && (y>0) && (x == MAP_WIDTH-1)){
+            northeast = true;
+            east = true;
+            southeast = true;
+        }
+        // left edge straight
+        if ((y < MAP_HEIGHT-1) && (y>0) && (x == 0)){
+            northwest = true;
+            west = true;
+            southwest = true;
+        }
+        // top right edge corner
+        if ((y == MAP_HEIGHT-1) && (x == MAP_WIDTH-1)){
+            north = true;
+            east = true;
+            southeast = true;
+            northwest = true;
+            northeast = true;
+        }
+        // top left edge corner
+        if ((y == MAP_HEIGHT-1) && (x == 0)){
+            north = true;
+            west = true;
+            southwest = true;
+            northwest = true;
+            northeast = true;
+        }
+        // bottom left edge corner
+        if ((y == 0) && (x == 0)){
+            south = true;
+            west = true;
+            southeast = true;
+            southwest = true;
+            northwest = true;
+        }
+        // bottom right edge corner
+        if ((y == 0) && (x == MAP_WIDTH-1)){
+            south = true;
+            east = true;
+            southeast = true;
+            southwest = true;
+            northeast = true;
+        }
 
         String newTileId = determineTileType(north, east, south, west, northeast, northwest, southeast, southwest);
         Terrain newTerrain = TerrainManager.getInstance().getTerrain(newTileId);
@@ -314,6 +374,41 @@ public class MapMaker implements Screen {
                 }
                 break;
             case 4:
+
+                // lake extending corners
+                if (north && east && southeast && south){
+                    returnString = "SLECTLV";
+                    break;
+                }
+                if (west && east && southeast && south){
+                    returnString = "SLECTLH";
+                    break;
+                }
+                if (east && west && north && northwest){
+                    returnString = "SLECBRH";
+                    break;
+                }
+                if (south && west && north && northwest){
+                    returnString = "SLECBRV";
+                    break;
+                }
+                if (north && west && southwest && south){
+                    returnString = "SLECTRV";
+                    break;
+                }
+                if (!southeast && !north && !northwest && !northeast){
+                    returnString = "SLECTRH";
+                    break;
+                }
+                if (west && east && north && northeast){
+                    returnString = "SLECBLH";
+                    break;
+                }
+                if (south && east && north && northeast){
+                    returnString = "SLECBLV";
+                    break;
+                }
+
                 // lake corners of t functions
                 if ((!south && !southeast && !east && !northeast) || (!south && !southeast && !east && !southwest)){
                     returnString = "SLCBR";
@@ -332,33 +427,38 @@ public class MapMaker implements Screen {
                     break;
                 }
 
-                // lake extending corners
-                if (north && east && southeast && south){
-                    returnString = "SLECTLV";
-                }
-                if (west && east && southeast && south){
-                    returnString = "SLECTLH";
-                }
-                if (east && west && north && northwest){
-                    returnString = "SLECBRH";
-                }
-                if (south && west && north && northwest){
-                    returnString = "SLECBRV";
-                }
-                if (north && west && southwest && south){
-                    returnString = "SLECTRV";
-                }
-                if (east && west && southwest && south){
-                    returnString = "SLECTRH";
-                }
-                if (west && east && north && northeast){
-                    returnString = "SLECBLH";
-                }
-                if (south && east && north && northeast){
-                    returnString = "SLECBLV";
-                }
+
                 break;
+
+
             case 5:
+
+                // lake extending corners
+                if (!northwest && !west && !southeast){
+                    returnString = "SLECBLV";
+                    break;
+                }
+                if (!northeast && !east && !southwest){
+                    returnString = "SLECBRV";
+                    break;
+                }
+                if (!south && !southeast && !northwest){
+                    returnString = "SLECBLH";
+                    break;
+                }
+                if (!south && !southwest && !northeast){
+                    returnString = "SLECBRH";
+                    break;
+                }
+                if (!west && !southwest && !northeast){
+                    returnString = "SLECTLV";
+                    break;
+                }
+                if (!east && !southeast && !northwest){
+                    returnString = "SLECTRV";
+                    break;
+                }
+
                 //lake corners of t functions
                 if (!south && !southeast && !east){
                     returnString = "SLCBR";
@@ -414,6 +514,10 @@ public class MapMaker implements Screen {
                     returnString = "SLMCNCR";
                     break;
                 }
+
+
+
+
                 break;
             case 6:
                 // lake t-functions
@@ -484,15 +588,19 @@ public class MapMaker implements Screen {
                 // lake straights
                 if (!south){
                     returnString = "SLHB";
+                    break;
                 }
                 if (!north){
                     returnString = "SLHT";
+                    break;
                 }
                 if (!east){
                     returnString = "SLVR";
+                    break;
                 }
                 if (!west){
                     returnString = "SLVL";
+                    break;
                 }
             case 8:
                 // sea
