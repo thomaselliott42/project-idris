@@ -43,6 +43,8 @@ public class Tile {
                 terrainBaseType = "Plain";
             }else if(terrain.getId().contains("D")){
                 terrainBaseType = "Desert";
+            }else if(terrain.getId().contains("W")){
+                terrainBaseType = "Winter";
             }
         }
     }
@@ -104,6 +106,8 @@ public class Tile {
             return TerrainManager.getInstance().getTerrain("P").getTexture().get(0);
         }else if(terrainBaseType.equals("Desert")){
             return TerrainManager.getInstance().getTerrain("D").getTexture().get(0);
+        }else if(terrainBaseType.equals("Winter")){
+            return TerrainManager.getInstance().getTerrain("W").getTexture().get(0);
         }
         return null;
     }
@@ -130,11 +134,12 @@ public class Tile {
                     return terrain.getTexture().get(0);
                 }else if(terrainBaseType.equals("Desert")){
                     return terrain.getTexture().get(1);
-                }else if(terrainBaseType.equals("Winter")){
+                }else if(terrainBaseType.equals("Winter") && terrain.getTexture().size() == 3){
                     return terrain.getTexture().get(2);
                 }
             }
         }
-        return null;
+        return terrain.getTexture().get(0);
+
     }
 }

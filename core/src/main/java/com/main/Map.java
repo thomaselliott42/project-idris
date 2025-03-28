@@ -12,7 +12,6 @@ public class Map {
     private final int MAP_HEIGHT;
     private Tile[][] map;
 
-
     public Map(int width, int height) {
         this.MAP_WIDTH = width;
         this.MAP_HEIGHT = height;
@@ -38,11 +37,8 @@ public class Map {
 
     public boolean checkBounds(int x, int y) {
         if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT){
-            Gdx.app.log("Map", "Inbounds");
             return true;
         }
-        Gdx.app.log("Map", "Outbounds");
-
         return false;
     }
 
@@ -70,6 +66,8 @@ public class Map {
                         if (textureKey != null) {
                             batch.draw(TerrainManager.getInstance().getTerrain(textureKey).getTexture().get(0), drawX, drawY, TILE_SIZE, TILE_SIZE);
                         }
+                        batch.draw(tile.getTerrainTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
+
                     } else if (terrainId.startsWith("S")) {
                         Texture cT = checkSurroundingBaseTerrain(tile, x, y);
                         batch.draw(cT, drawX, drawY, TILE_SIZE, TILE_SIZE);
@@ -106,7 +104,7 @@ public class Map {
 
         // render units
     }
-    
+
     private Texture checkSurroundingBaseTerrain(Tile tile, int x, int y) {
         if(checkBounds(x+1, y) && checkBounds(x-1,y)){
             String lBT = getTile(x+1,y).getTerrainBaseType();
@@ -162,6 +160,8 @@ public class Map {
             }
             System.out.println(row.toString().trim()); // Print each row
         }
+        System.out.println("------------------------------------");
+
     }
 
 

@@ -23,6 +23,17 @@
       "joinTexturePath": ["","","","","",""]
     },
     {
+      "id": "W",
+      "excludeTilePicker": false,
+      "terrainName": "Winter",
+      "texturePath": "winter.png",
+      "defense": 1.0,
+      "speed": 1.0,
+      "canBeDestroyed": false,
+      "damagedTextures": [],
+      "joinTexturePath": ["","","","","",""]
+    },
+    {
       "id": "FP",
       "excludeTilePicker": false,
       "terrainName": "Forest",
@@ -87,7 +98,8 @@
       "terrainName": "Single Sea",
       "texturePath": [
         "sea/plains/ss.png",
-        "sea/desert/ss.png"
+        "sea/desert/ss.png",
+        "sea/winter/ss.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -149,7 +161,7 @@
       "speed": 0.2,
       "canBeDestroyed": false,
       "damagedTextures": [],
-      "joinTexturePath": ["","","","","",""]
+      "joinTexturePath": ["sea/joiners/ssctpd.png","","sea/joiners/ssctdp.png","","",""]
     },
     {
       "id": "SSCB",
@@ -163,7 +175,7 @@
       "speed": 0.2,
       "canBeDestroyed": false,
       "damagedTextures": [],
-      "joinTexturePath": ["","","","","",""]
+      "joinTexturePath": ["sea/joiners/sscbpd.png","","sea/joiners/sscbdp.png","","",""]
     },
     {
       "id": "SVS",

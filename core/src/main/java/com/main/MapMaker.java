@@ -3,12 +3,13 @@ package com.main;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,13 +17,17 @@ import java.util.Random;
 
 public class MapMaker implements Screen {
 
-    private final int TILE_SIZE = 32;
-    private final int MAP_WIDTH = 20;
-    private final int MAP_HEIGHT = 20;
+    private final int TILE_SIZE = 32; // 32
+    private final int MAP_WIDTH = 20; // 20
+    private final int MAP_HEIGHT = 20; // 20
 
     private Texture cursor = new Texture("ui/cursor.png");
-    private Texture damageIcon = new Texture("ui/damageIcon.png");
     private Texture fillIcon = new Texture("ui/fillmapIcon.png");
+    private Texture reloadIcon = new Texture("ui/reloadIcon.png");
+    private Texture saveIcon = new Texture("ui/saveIcon.png");
+    private Texture inspectIcon = new Texture("ui/inspectIcon.png");
+
+    private Texture damageIcon = new Texture("ui/damageIcon.png");
     private Texture damageRadius = new Texture("ui/damageRadius.png");
 
     private final int TILE_PICKER_HEIGHT = 64; // Height of the tile picker
@@ -30,16 +35,21 @@ public class MapMaker implements Screen {
     private  Map map;
 
     private SpriteBatch batch;
+    private BitmapFont font;
+
     private ShapeRenderer shapeRenderer;
     private OrthographicCamera camera;
 
     private String selectedTile = "P";  // Default selected tile
-    private boolean switchRender = false;
+    private boolean inspect = false;
+
+
 
     @Override
     public void show() {
 
         batch = new SpriteBatch();
+        font = new BitmapFont();
         shapeRenderer = new ShapeRenderer();
 
         camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -69,9 +79,6 @@ public class MapMaker implements Screen {
         camera.update();
         batch.begin();
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.L)) {
-            switchRender = !switchRender;
-        }
 
         map.renderMap(TILE_SIZE, batch);
 
@@ -103,7 +110,7 @@ public class MapMaker implements Screen {
                         forceUpdateAllSeaTiles();
                     }
 
-//                    map.printMapBaseTerrain();
+                    map.printMapToTerminal();
 
                 }
             }else{
@@ -118,29 +125,59 @@ public class MapMaker implements Screen {
 
 
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-
-            // Check if the damage icon was clicked
             if (mouseX >= 0 && mouseX <= 64) {
                 if (mouseY >= Gdx.graphics.getHeight() - 128 && mouseY <= Gdx.graphics.getHeight() - 64) {
+                    Gdx.app.log("MapMaker", "Inspect Mode");
+                    inspect = !inspect;
+
+
+                }
+                else if (mouseY >= Gdx.graphics.getHeight() - 192 && mouseY <= Gdx.graphics.getHeight() - 128) {
                     Gdx.app.log("MapMaker", "Damage Mode");
                     isPlacing = !isPlacing;
-                }
-            }
 
-            // Check if the fill icon was clicked
-            if (mouseX >= 0 && mouseX <= 64) {
-                if (mouseY >= Gdx.graphics.getHeight() - 192 && mouseY <= Gdx.graphics.getHeight() - 128) {
+                }
+                else if (mouseY >= Gdx.graphics.getHeight() - 256 && mouseY <= Gdx.graphics.getHeight() - 192) {
                     Gdx.app.log("MapMaker", "Fill Mode");
+                    fillBoard();
+
+                }
+                else if (mouseY >= Gdx.graphics.getHeight() - 320 && mouseY <= Gdx.graphics.getHeight() - 256) {
+                    Gdx.app.log("MapMaker", "Reload Json");
+                    reloadJson();
+
+                }
+                else if (mouseY >= Gdx.graphics.getHeight() - 384 && mouseY <= Gdx.graphics.getHeight() - 320) {
+                    Gdx.app.log("MapMaker", "Save Map");
                     fillBoard();
                 }
             }
+
         }
 
+
+        if(inspect){
+            if(map.checkBounds(gridX, gridY)){
+                batch.begin();
+                font.draw(batch, map.getTile(gridX,gridY).getTerrainId(), Gdx.graphics.getWidth() - 50, 40);
+                batch.end();
+            }
+        }
+        batch.begin();
+        String coords = gridY +"," +gridX;
+        font.draw(batch, coords, Gdx.graphics.getWidth() - 50, 20);
+        font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(),Gdx.graphics.getWidth() - 150, 20 );
+        batch.end();
 
 //        ImGuiHandler.startImGui();
 //        ImGuiHandler.renderUI();
 //        ImGuiHandler.endImGui();
 
+    }
+
+    private void reloadJson() {
+        TerrainLoader.loadTerrains();
+        forceUpdateAllSeaTiles();
     }
 
     private void smartPlaceSea(int x, int y) {
@@ -195,8 +232,6 @@ public class MapMaker implements Screen {
             map.getTile(x, y).updateTerrain(newTerrain);
         }
     }
-
-
 
     private String determineTileType(boolean north, boolean east, boolean south, boolean west,
                                      boolean northeast, boolean northwest, boolean southeast, boolean southwest) {
@@ -535,27 +570,25 @@ public class MapMaker implements Screen {
         int mouseX = Gdx.input.getX();
         int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();  // Invert Y coordinate to match screen space
 
+        // Draw and highlight icons with a helper function
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 128, inspectIcon, iconSize); // Damage icon
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 192, damageIcon, iconSize); // Damage icon
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 256, fillIcon, iconSize);   // Fill icon
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 320, reloadIcon, iconSize); // Reload icon
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 384, saveIcon, iconSize);   // Save icon
+    }
 
-        // Highlight damage icon if mouse is over it
-        if (mouseX >= 0 && mouseX <= iconSize && mouseY >= Gdx.graphics.getHeight() - 128 && mouseY <= Gdx.graphics.getHeight() - 64) {
+    private void drawAndHighlightIcon(int mouseX, int mouseY, int x, int y, Texture icon, int iconSize) {
+        // Highlight icon if mouse is over it
+        if (mouseX >= x && mouseX <= x + iconSize && mouseY >= y && mouseY <= y + iconSize) {
             shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
             shapeRenderer.setColor(Color.YELLOW);  // Highlight color (yellow border)
-            shapeRenderer.rect(0, Gdx.graphics.getHeight() - 128, iconSize, iconSize);  // Draw border
+            shapeRenderer.rect(x, y, iconSize, iconSize);  // Draw border
             shapeRenderer.end();
         }
-        batch.begin();
-        batch.draw(damageIcon, 0, Gdx.graphics.getHeight() - (iconSize * 2), iconSize, iconSize);
-        batch.end();
 
-        // Highlight fill icon if mouse is over it
-        if (mouseX >= 0 && mouseX <= iconSize && mouseY >= Gdx.graphics.getHeight() - 192 && mouseY <= Gdx.graphics.getHeight() - 128) {
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-            shapeRenderer.setColor(Color.YELLOW);  // Highlight color (yellow border)
-            shapeRenderer.rect(0, Gdx.graphics.getHeight() - 192, iconSize, iconSize);  // Draw border
-            shapeRenderer.end();
-        }
         batch.begin();
-        batch.draw(fillIcon, 0, Gdx.graphics.getHeight() - (iconSize * 3), iconSize, iconSize);
+        batch.draw(icon, x, y, iconSize, iconSize);
         batch.end();
     }
 

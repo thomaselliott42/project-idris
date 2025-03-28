@@ -11,7 +11,7 @@ import java.util.List;
 
 public class TerrainLoader {
 
-    private static final String TERRAIN_JSON_PATH = "assets/terrain.json";
+    private static final String TERRAIN_JSON_PATH = "assets/data/terrain.json";
 
     public static void loadTerrains() {
         ObjectMapper objectMapper = new ObjectMapper();
