@@ -20,20 +20,15 @@ public class MapMaker implements Screen {
     private final int MAP_WIDTH = 20;
     private final int MAP_HEIGHT = 20;
 
-    private final float EARTHQUAKE_INTERVAL = 2.0f; // Time between earthquakes in seconds
-    private final float SHAKE_DURATION = 0.5f; // How long the shake lasts in seconds
-    private final float SHAKE_INTENSITY = 10f; // Max intensity of shake (pixels)
+    private Texture cursor = new Texture("ui/cursor.png");
+    private Texture damageIcon = new Texture("ui/damageIcon.png");
+    private Texture fillIcon = new Texture("ui/fillmapIcon.png");
+    private Texture damageRadius = new Texture("ui/damageRadius.png");
 
-    private Texture damageIcon = new Texture("damageIcon.png");
-    private Texture fillIcon = new Texture("fillmapIcon.png");
-    private Texture damageRadius = new Texture("damageRadius.png");
     private final int TILE_PICKER_HEIGHT = 64; // Height of the tile picker
-    private Texture fire = new Texture("fire.png");
-
     private boolean isPlacing = true;
     private  Map map;
 
-    private Texture cursor;
     private SpriteBatch batch;
     private ShapeRenderer shapeRenderer;
     private OrthographicCamera camera;
@@ -41,22 +36,15 @@ public class MapMaker implements Screen {
     private String selectedTile = "P";  // Default selected tile
     private boolean switchRender = false;
 
-    private float earthquakeTimer = 0.0f; // Timer for earthquake events
-    private float shakeTimer = 0.0f; // Timer for shake duration
-    private float shakeOffsetX = 0f; // X offset for shake
-    private float shakeOffsetY = 0f; // Y offset for shake
-
-
     @Override
     public void show() {
+
         batch = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
 
         camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.setToOrtho(false);
         camera.update();
-
-        cursor = new Texture("cursor.png");
 
         this.map = new Map(MAP_WIDTH, MAP_HEIGHT);
 
@@ -78,35 +66,14 @@ public class MapMaker implements Screen {
 
 
         drawToolbar();
-        camera.position.set(Gdx.graphics.getWidth() / 2 + shakeOffsetX, Gdx.graphics.getHeight() / 2 + shakeOffsetY, 0);
         camera.update();
         batch.begin();
-
-
-        earthquakeTimer += delta;
-        shakeTimer -= delta;
-        if (shakeTimer > 0) {
-            Random rand = new Random();
-            shakeOffsetX = (rand.nextFloat() * 2 - 1) * SHAKE_INTENSITY; // Random X offset
-            shakeOffsetY = (rand.nextFloat() * 2 - 1) * SHAKE_INTENSITY; // Random Y offset
-        } else {
-            // Reset shake offsets after the shaking duration ends
-            shakeOffsetX = 0;
-            shakeOffsetY = 0;
-        }
-
-        // Trigger earthquake event periodically
-        if (earthquakeTimer >= EARTHQUAKE_INTERVAL) {
-            triggerForestFire();
-            //triggerEarthquake();
-            earthquakeTimer = 0.0f; // Reset the timer
-        }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.L)) {
             switchRender = !switchRender;
         }
 
-        map.renderMap(TILE_SIZE, batch, fire);
+        map.renderMap(TILE_SIZE, batch);
 
         batch.end();
 
@@ -128,14 +95,16 @@ public class MapMaker implements Screen {
             if(isPlacing){
 
                 if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
+
                     if(selectedTile.equals("S")){
                         smartPlaceSea(gridX, gridY);
                     }else{
                         map.getTile(gridX, gridY).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
-
+                        forceUpdateAllSeaTiles();
                     }
 
-                    //updateBoard();
+//                    map.printMapBaseTerrain();
+
                 }
             }else{
                 if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
@@ -174,180 +143,335 @@ public class MapMaker implements Screen {
 
     }
 
-
     private void smartPlaceSea(int x, int y) {
-        int count = 0;
-
-        // Define the directional labels and corresponding (dx, dy) offsets
-        int[][] directions = {
-            {-1, 1}, // TL: Top-left
-            {0, 1},  // T: Top
-            {1, 1},  // TR: Top-right
-            {-1, 0}, // L: Left
-            {1, 0},  // R: Right
-            {-1, -1}, // BL: Bottom-left
-            {0, -1}, // B: Bottom
-            {1, -1}  // BR: Bottom-right
-        };
-
-        boolean allPlains = true; // Flag to track if all surrounding tiles are plain
-
-        boolean seaLeft = false;  // Flag to track if there is a sea tile to the left
-        boolean seaRight = false; // Flag to track if there is a sea tile to the right
-        boolean seaDown = false;  // Flag for sea tile down
-        boolean seaUp = false;    // Flag for sea tile up
-
-        boolean extendSeaLeft = false;
-        boolean extendSeaRight = false;
-        boolean extendSeaUp = false;
-        boolean extendSeaDown = false;
-
-        // Loop through each direction
-        for (int i = 0; i < directions.length; i++) {
-            Gdx.app.log("SmartPlacement", "Checking direction: dx = " + directions[i][0] + ", dy = " + directions[i][1]);
-
-            int dx = directions[i][0];
-            int dy = directions[i][1];
-            int checkX = x + dx;
-            int checkY = y + dy;
-
-            // Skip out-of-bound tiles
-            if (!map.checkBounds(checkX, checkY)) { continue; }
-
-            String terrainId = map.getTile(checkX, checkY).getTerrainId();
-
-            // Check left and right directions for specific terrain condition
-            if (dy == 0 && (dx == -1 || dx == 1)) {
-                if (!terrainId.contains("S")) {
-                    count++;
-                } else {
-                    allPlains = false;
-                }
-            }
-
-            // Check for sea tiles to the left and right
-            if (dy == 0) {
-                if (dx == -1 && terrainId.contains("SS")) {
-                    Gdx.app.log("SmartPlacement", "Found sea left");
-                    seaLeft = true;
-                } else if (dx == 1 && terrainId.contains("SS")) {
-                    Gdx.app.log("SmartPlacement", "Found sea right");
-                    seaRight = true;
-                }
-
-                if (dx == 1 && terrainId.contains("SSCL")) {
-                    extendSeaLeft = true;
-                } else if (dx == -1 && terrainId.contains("SSCR")) {
-                    extendSeaRight = true;
-                }
-            }
-
-            // Check for sea tiles up and down
-            if (dx == 0) {
-                if (dy == -1 && terrainId.contains("SS")) {
-                    seaUp = true;
-                } else if (dy == 1 && terrainId.contains("SS")) {
-                    seaDown = true;
-                }
-
-                if (dy == -1 && terrainId.contains("SSCB")) {
-                    extendSeaUp = true;
-                } else if (dy == 1 && terrainId.contains("SSCT")) {
-                    extendSeaDown = true;
-                }
-            }
+        if (!map.checkBounds(x, y) || map.getTile(x, y).getTerrain().getId().contains("S")) {
+            return;
         }
 
-        // If all surrounding tiles are plain, set the current tile to "SS"
-        if (allPlains) {
-            if (!map.checkBounds(x, y + 1)) {
-                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCB"));
-            } else if (!map.checkBounds(x, y - 1)) {
-                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCT"));
-            } else if (!map.checkBounds(x + 1, y)) {
-                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCL"));
-            } else if (!map.checkBounds(x - 1, y)) {
-                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCR"));
-            } else {
-                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SS"));
-            }
-        }
+        // Place initial sea tile
+        map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SS"));
 
-        // Check for sea tiles to the left or right and update map
-        if (seaLeft && x > 0) {
-            if (!map.checkBounds(x - 2, y)) {
-                Gdx.app.log("SmartPlacement", "Updating sea left edge");
-                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCR"));
-                map.getTile(x - 1, y).updateTerrain(TerrainManager.getInstance().getTerrain("SHS"));
-            } else {
-                Gdx.app.log("SmartPlacement", "Updating sea left");
-                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCR"));
-                map.getTile(x - 1, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCL"));
-            }
-        } else if (seaRight && x < MAP_WIDTH - 1) {
-            if (!map.checkBounds(x + 2, y)) {
-                Gdx.app.log("SmartPlacement", "Updating sea right edge");
-                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCL"));
-                map.getTile(x + 1, y).updateTerrain(TerrainManager.getInstance().getTerrain("SHS"));
-            } else {
-                Gdx.app.log("SmartPlacement", "Updating sea right");
-                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCL"));
-                map.getTile(x + 1, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCR"));
-            }
-        }
-        // Extend the sea in the left or right directions if needed
-        if (extendSeaLeft && x > 0) {
-            Gdx.app.log("SmartPlacement", "Extending sea left");
-            map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCL"));
-            map.getTile(x + 1, y).updateTerrain(TerrainManager.getInstance().getTerrain("SHS"));
-        }
-
-        if (extendSeaRight && x < MAP_WIDTH - 1) {
-            Gdx.app.log("SmartPlacement", "Extending sea right");
-            map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SSCR"));
-            map.getTile(x - 1, y).updateTerrain(TerrainManager.getInstance().getTerrain("SHS"));
-        }
-
+        // Immediately update all sea tiles on the map
+        forceUpdateAllSeaTiles();
     }
 
-    private void triggerForestFire() {
-        Random rand = new Random();
+    private void forceUpdateAllSeaTiles() {
+        // Create a copy of all sea tile positions
+        List<int[]> seaTiles = new ArrayList<>();
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            for (int x = 0; x < MAP_WIDTH; x++) {
+                if (map.getTile(x, y).getTerrain().getId().contains("S")) {
+                    seaTiles.add(new int[]{x, y});
+                }
+            }
+        }
 
-        List<int[]> storeData = new ArrayList<>(); // Store fire spread locations
+        // Update each sea tile with guaranteed neighbor checks
+        for (int[] pos : seaTiles) {
+            updateSeaTileGuaranteed(pos[0], pos[1]);
+        }
+    }
+
+    private void updateSeaTileGuaranteed(int x, int y) {
+        // Safe neighbor checking with boundary verification
+        boolean north = (y < MAP_HEIGHT - 1) && map.getTile(x, y + 1).getTerrain().getId().contains("S");
+        boolean east = (x < MAP_WIDTH - 1) && map.getTile(x + 1, y).getTerrain().getId().contains("S");
+        boolean south = (y > 0) && map.getTile(x, y - 1).getTerrain().getId().contains("S");
+        boolean west = (x > 0) && map.getTile(x - 1, y).getTerrain().getId().contains("S");
+
+        // Diagonal checks - MUST validate BOTH x and y bounds!
+        boolean northeast = (x < MAP_WIDTH - 1) && (y < MAP_HEIGHT - 1) &&
+            map.getTile(x + 1, y + 1).getTerrain().getId().contains("S");
+        boolean northwest = (x > 0) && (y < MAP_HEIGHT - 1) &&
+            map.getTile(x - 1, y + 1).getTerrain().getId().contains("S");
+        boolean southeast = (x < MAP_WIDTH - 1) && (y > 0) &&
+            map.getTile(x + 1, y - 1).getTerrain().getId().contains("S");
+        boolean southwest = (x > 0) && (y > 0) &&
+            map.getTile(x - 1, y - 1).getTerrain().getId().contains("S");
+
+        String newTileId = determineTileType(north, east, south, west, northeast, northwest, southeast, southwest);
+        Terrain newTerrain = TerrainManager.getInstance().getTerrain(newTileId);
+        if (newTerrain != null) {
+            map.getTile(x, y).updateTerrain(newTerrain);
+        }
+    }
 
 
-        for (int x = 0; x < MAP_WIDTH; x++) {
-            for (int y = 0; y < MAP_HEIGHT; y++) {
-                if (map.getTile(x, y).getTerrain().getId().startsWith("F")&& map.getTile(x, y).hasFire()) {
 
-                        map.getTile(x, y).updateTileHealth(0.5f);
+    private String determineTileType(boolean north, boolean east, boolean south, boolean west,
+                                     boolean northeast, boolean northwest, boolean southeast, boolean southwest) {
+        int directConnections = (north ? 1 : 0) + (east ? 1 : 0) + (south ? 1 : 0) + (west ? 1 : 0);
+        int allConnections = (north ? 1 : 0) + (east ? 1 : 0) + (south ? 1 : 0) + (west ? 1 : 0) + (northwest ? 1 : 0) + (southwest ? 1 : 0) + (northeast ? 1 : 0) + (southeast ? 1 : 0);
 
-                        int[][] directions = {
-                            {1, 0}, {-1, 0}, {0, 1}, {0, -1},  // Up, Down, Left, Right
-                            {1, 1}, {1, -1}, {-1, 1}, {-1, -1} // Diagonals
-                        };
+        String returnString = "SS";
 
-                        for (int i = 0; i < directions.length; i++) {
-                            int dx = directions[i][0];
-                            int dy = directions[i][1];
+        // Handle all direct connection cases
+        switch (directConnections) {
 
-                            int newX = x + dx;
-                            int newY = y + dy;
+            case 1: // semi-circular straights
+                if (north) {
+                    returnString = "SSCB";
+                    break;
+                }
+                if (south){
+                    returnString = "SSCT";
+                    break;
+                }
+                if (east){
+                    returnString = "SSCL";
+                    break;
+                }
+                if (west){
+                    returnString = "SSCR";
+                    break;
+                }
+                break;
 
-                            if (map.checkBounds(newX, newY) && map.getTile(newX, newY).getTerrain().getId().startsWith("F")) {
-                                if (rand.nextDouble() < 0.4) {
-                                    if(!map.getTile(newX, newY).isDestroyed()){storeData.add(new int[]{newX, newY});}
-                                }
-                            }
-                        }
-                    }
+            case 2: // Corners or straight
+                if (east && west){
+                    returnString = "SHS";
+                }
+                if (north && south){
+                    returnString = "SVS";
+                }
+                if (north && east) {
+                    returnString = "SSCBL";
+                }
+                if (north && west) {
+                    returnString = "SSCBR";
+                }
+                if (south && east) {
+                    returnString = "SSCTL";
+                }
+                if (south && west) {
+                    returnString = "SSCTR";
+                }
+                break;
+
+            case 3: // T-junctions
+                if (south && east && west) returnString = "STFT";
+                if (north && east && west) returnString = "STFB";
+                if (north && south && east) returnString = "STFL";
+                if (north && south && west) returnString = "STFR";
+                break;
+
+            case 4:
+                if (north && south && east && west) returnString = "STFFS"; // Cross
+                break;
+        }
+
+        // handle all connections including diagonals
+        switch (allConnections) {
+            case 3:
+                // lake corners
+                if (north && northwest && west){
+                    returnString = "SLCBR";
+                    break;
+                }
+                if (north && northeast && east){
+                    returnString = "SLCBL";
+                    break;
+                }
+                if (south && southeast && east){
+                    returnString = "SLCTL";
+                    break;
+                }
+                if (south && southwest && west){
+                    returnString = "SLCTR";
+                    break;
+                }
+                break;
+            case 4:
+                // lake corners of t functions
+                if ((!south && !southeast && !east && !northeast) || (!south && !southeast && !east && !southwest)){
+                    returnString = "SLCBR";
+                    break;
+                }
+                if ((!south && !southwest && !west && !northwest) || (!south && !southwest && !west && !southeast)){
+                    returnString = "SLCBL";
+                    break;
+                }
+                if ((!north && !northeast && !east && !northwest) || (!north && !northeast && !east && !southeast)){
+                    returnString = "SLCTR";
+                    break;
+                }
+                if ((!north && !northwest && !west && !northeast) || (!north && !northwest && !west && !southwest)){
+                    returnString = "SLCTL";
+                    break;
                 }
 
+                // lake extending corners
+                if (north && east && southeast && south){
+                    returnString = "SLECTLV";
+                }
+                if (west && east && southeast && south){
+                    returnString = "SLECTLH";
+                }
+                if (east && west && north && northwest){
+                    returnString = "SLECBRH";
+                }
+                if (south && west && north && northwest){
+                    returnString = "SLECBRV";
+                }
+                if (north && west && southwest && south){
+                    returnString = "SLECTRV";
+                }
+                if (east && west && southwest && south){
+                    returnString = "SLECTRH";
+                }
+                if (west && east && north && northeast){
+                    returnString = "SLECBLH";
+                }
+                if (south && east && north && northeast){
+                    returnString = "SLECBLV";
+                }
+                break;
+            case 5:
+                //lake corners of t functions
+                if (!south && !southeast && !east){
+                    returnString = "SLCBR";
+                    break;
+                }
+                if (!south && !southwest && !west){
+                    returnString = "SLCBL";
+                    break;
+                }
+                if (!north && !northeast && !east){
+                    returnString = "SLCTR";
+                    break;
+                }
+                if (!north && !northwest && !west){
+                    returnString = "SLCTL";
+                    break;
+                }
+
+                // lake straights
+                if ((northeast && north && northwest && east && west) || (southwest && east && south && north && northwest)
+                    || (southwest && east && south && north && northeast)){
+                    returnString = "SLHB";
+                    break;
+                }
+                if ((southeast && south && southwest && east && west) || (northwest && west && east && south && southeast)
+                    || (northwest && west && east && south && southwest)){
+                    returnString = "SLHT";
+                    break;
+                }
+                if (northeast && north && east && south && southeast){
+                    returnString = "SLVL";
+                    break;
+                }
+                if (northwest && north && west && south && southwest){
+                    returnString = "SLVR";
+                    break;
+                }
+
+                // lake middle corners
+                if (!northwest && !southeast && !northeast){
+                    returnString = "SLMCPCR";
+                    break;
+                }
+                if (!northwest && !southeast && !southwest){
+                    returnString = "SLMCPCL";
+                    break;
+                }
+                if (!northeast && !southwest && !northwest){
+                    returnString = "SLMCNCL";
+                    break;
+                }
+                if (!northeast && !southwest && !southeast){
+                    returnString = "SLMCNCR";
+                    break;
+                }
+                break;
+            case 6:
+                // lake t-functions
+                if (north && northeast && east && west && south && southeast) {
+                    returnString = "SLTFR";
+                    break;
+                }
+                if (north && northwest && east && west && south && southwest) {
+                    returnString = "SLTFL";
+                    break;
+                }
+                if (north && northeast && northwest && east && west && south) {
+                    returnString = "SLTFT";
+                    break;
+                }
+                if (south && southeast && southwest && east && west && north) {
+                    returnString = "SLTFB";
+                    break;
+                }
+
+                // tiles next to t-functions
+                if ((north && northwest && west && southwest && south && southeast) || (northwest && north && northeast && west && southwest && south)){
+                    returnString = "SLVR";
+                    break;
+                }
+                if ((north && northeast && northwest && east && southeast && south) || (south && southwest && southeast && east && north && northeast)){
+                    returnString = "SLVL";
+                    break;
+                }
+                if ((southwest && east && west && northwest && north && northeast) || (southeast && east && west && northwest && north && northeast)){
+                    returnString = "SLHB";
+                    break;
+                }
+                if ((northeast && east && west && southwest && south && southeast) || (northwest && east && west && south && southeast &&southwest)){
+                    returnString = "SLHT";
+                    break;
+                }
+
+                // lake middle corners
+                if (!northwest && !southeast){
+                    returnString = "SLMCP";
+                    break;
+                }
+                if (!northeast && !southwest){
+                    returnString = "SLMCN";
+                    break;
+                }
+                break;
+            case 7:
+                // lake inside corners
+                if (!southeast){
+                    returnString = "SLICTL";
+                    break;
+                }
+                if (!southwest){
+                    returnString = "SLICTR";
+                    break;
+                }
+                if (!northeast){
+                    returnString = "SLICBL";
+                    break;
+                }
+                if (!northwest){
+                    returnString = "SLICBR";
+                    break;
+                }
+
+                // lake straights
+                if (!south){
+                    returnString = "SLHB";
+                }
+                if (!north){
+                    returnString = "SLHT";
+                }
+                if (!east){
+                    returnString = "SLVR";
+                }
+                if (!west){
+                    returnString = "SLVL";
+                }
+            case 8:
+                // sea
+                if (north && northwest && northeast && east && west && south && southwest && southeast) {
+                    returnString = "S";
+                    break;
+                }
+                break;
         }
 
-        for (int[] coord : storeData) {
-            map.getTile(coord[0], coord[1]).attachFire();
-        }
+        return returnString;
     }
 
     private void drawDamageRadius(int mouseX, int mouseY) {
@@ -390,11 +514,7 @@ public class MapMaker implements Screen {
                     float distance = (float) Math.sqrt(Math.pow(x - gridX, 2) + Math.pow(y - gridY, 2));
 
                     if (distance <= radius / TILE_SIZE) {
-                        if(map.getTile(x,y).getTerrain().getId().startsWith("F") && !map.getTile(x, y).isDestroyed()) {
-                            map.getTile(x,y).attachFire();
-
-                        }
-                        //map.getTile(x, y).updateTileHealth(0.5f);
+                        map.getTile(x, y).updateTileHealth(0.5f);
                     }
                 }
             }
@@ -443,52 +563,8 @@ public class MapMaker implements Screen {
         for (int y = 0; y < MAP_HEIGHT; y++) {
             for (int x = 0; x < MAP_WIDTH; x++) {
                 map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
-              // map[y][x] = selectedTile;
             }
         }
-    }
-
-    private void updateBoard() {
-        for (int y = 0; y < MAP_HEIGHT; y++) {
-            for (int x = 0; x < MAP_WIDTH; x++) {
-
-                if(map.getTile(x,y).getTerrainId().contains("S")) {
-                    smartPlaceSea(x, y);
-
-                }
-            }
-        }
-    }
-
-    private void triggerEarthquake() {
-        Random rand = new Random();
-        int numRuptures = 5 + rand.nextInt(10); // Number of ruptures per earthquake (between 5 and 15)
-
-        for (int i = 0; i < numRuptures; i++) {
-            int x = rand.nextInt(MAP_WIDTH);
-            int y = rand.nextInt(MAP_HEIGHT);
-
-            // If the tile isn't already ruptured, rupture it
-            if (!map.getTile(x,y).getTerrain().getId().equals("R")) {
-                map.getTile(x,y).updateTerrain(TerrainManager.getInstance().getTerrain("R"));
-
-                // get the adjacent tiles
-                if(map.checkBounds(x+1,y)){  map.getTile(x+1, y).updateTileHealth(1f);}
-                if(map.checkBounds(x-1,y)){  map.getTile(x-1, y).updateTileHealth(1f);}
-                if(map.checkBounds(x,y+1)){  map.getTile(x, y+1).updateTileHealth(1f);}
-                if(map.checkBounds(x,y-1)){  map.getTile(x, y-1).updateTileHealth(1f);}
-
-                // further away tiles damage by .5
-                if(map.checkBounds(x+2,y)){  map.getTile(x+2, y).updateTileHealth(.5f);}
-                if(map.checkBounds(x-2,y)){  map.getTile(x-2, y).updateTileHealth(.5f);}
-                if(map.checkBounds(x,y+2)){  map.getTile(x, y+2).updateTileHealth(.5f);}
-                if(map.checkBounds(x,y-2)){  map.getTile(x, y-2).updateTileHealth(.5f);}
-
-            }
-        }
-
-        shakeTimer = SHAKE_DURATION;
-
     }
 
     private void drawTilePicker() {

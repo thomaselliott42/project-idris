@@ -3,6 +3,8 @@ package com.main;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 
+import java.util.List;
+
 
 //worked on by Josh
 public class Tile {
@@ -30,33 +32,23 @@ public class Tile {
     public void updateTerrain(Terrain terrain) {
         tileHealth = 1.0f;
         damagedStateIndex = -1;
-        removeFire();
         this.terrain = terrain;
         updateTerrainBaseType();
 
     }
 
     private void updateTerrainBaseType(){
-        if(terrain.getId().contains("P")){
-            terrainBaseType = "Plain";
-        }else if(terrain.getId().contains("D")){
-            terrainBaseType = "Desert";
+        if(!terrain.getId().contains("S")){
+            if(terrain.getId().contains("P")){
+                terrainBaseType = "Plain";
+            }else if(terrain.getId().contains("D")){
+                terrainBaseType = "Desert";
+            }
         }
     }
 
     public float getTileHealth() {
         return tileHealth;
-    }
-
-    public void removeFire(){
-        fire = false;
-    }
-
-    public void attachFire(){
-        fire = true;
-    }
-    public boolean hasFire(){
-        return fire;
     }
 
     public void updateTileHealth(float damage) {
@@ -88,7 +80,6 @@ public class Tile {
 
         if (tileHealth <= 0.0f) {
             Gdx.app.log("Tile", "Tile Destroyed");
-            removeFire();
         }
     }
 
@@ -117,6 +108,13 @@ public class Tile {
         return null;
     }
 
+    public void setTerrainBaseType(String base) {
+        terrainBaseType = base;
+    }
+
+    public String getTerrainBaseType(){
+        return terrainBaseType;
+    }
     public String getTerrainId(){
         return terrain.getId();
     }
