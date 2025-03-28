@@ -1,11 +1,5 @@
-Strategy game like advanced wars with a heavy focus on weather effecting the game board
-such as earthquakes / tusnamis hurricanes ect
 
-taking place in current day due to climate change the climate has started to collapse
-last remaning countires are fighting over the last resources avaible / places you can live
+Welcome to Idris!
 
-european coilition
-russain federation
-usa
-union of nations (mainly brick countries minus russia and china)
-
+Follow this link to see our documentation for the game:
+https://docs.google.com/document/d/18wm7LdBHksFiOvxQEhCbGbBcCItvV116R3zOG6_6u4k/edit?usp=sharing

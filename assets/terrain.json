@@ -166,12 +166,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S8",
+      "id": "SLICBR",
       "excludeTilePicker": true,
-      "terrainName": "S8",
+      "terrainName": "SLICBR",
       "texturePath": [
-        "sea/plains/s8.png",
-        "sea/desert/s8.png"
+        "sea/plains/slicbr.png",
+        "sea/desert/slicbr.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -179,12 +179,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S9",
+      "id": "SLHT",
       "excludeTilePicker": true,
-      "terrainName": "S9",
+      "terrainName": "SLHT",
       "texturePath": [
-        "sea/plains/s9.png",
-        "sea/desert/s9.png"
+        "sea/plains/slht.png",
+        "sea/desert/slht.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -192,12 +192,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S10",
+      "id": "SLICBL",
       "excludeTilePicker": true,
-      "terrainName": "S10",
+      "terrainName": "SLICBL",
       "texturePath": [
-        "sea/plains/s10.png",
-        "sea/desert/s10.png"
+        "sea/plains/slicbl.png",
+        "sea/desert/slicbl.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -205,12 +205,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S11",
+      "id": "SLTFB",
       "excludeTilePicker": true,
-      "terrainName": "S11",
+      "terrainName": "SLTFB",
       "texturePath": [
-        "sea/plains/s11.png",
-        "sea/desert/s11.png"
+        "sea/plains/sltfb.png",
+        "sea/desert/sltfb.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -218,12 +218,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S12",
+      "id": "SLVR",
       "excludeTilePicker": true,
-      "terrainName": "S12",
+      "terrainName": "SLVR",
       "texturePath": [
-        "sea/plains/s12.png",
-        "sea/desert/s12.png"
+        "sea/plains/slvr.png",
+        "sea/desert/slvr.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -231,12 +231,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S13",
+      "id": "SLECTRV",
       "excludeTilePicker": true,
-      "terrainName": "S13",
+      "terrainName": "SLECTRV",
       "texturePath": [
-        "sea/plains/s13.png",
-        "sea/desert/s13.png"
+        "sea/plains/slectrv.png",
+        "sea/desert/slectrv.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -244,12 +244,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S14",
+      "id": "SSCBL",
       "excludeTilePicker": true,
-      "terrainName": "S14",
+      "terrainName": "SSCBL",
       "texturePath": [
-        "sea/plains/s14.png",
-        "sea/desert/s14.png"
+        "sea/plains/sscbl.png",
+        "sea/desert/sscbl.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -257,12 +257,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S15",
+      "id": "SLICTL",
       "excludeTilePicker": true,
-      "terrainName": "S15",
+      "terrainName": "SLICTL",
       "texturePath": [
-        "sea/plains/s15.png",
-        "sea/desert/s15.png"
+        "sea/plains/slictl.png",
+        "sea/desert/slictl.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -270,12 +270,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S16",
+      "id": "SLMCP",
       "excludeTilePicker": true,
-      "terrainName": "S16",
+      "terrainName": "SLMCP",
       "texturePath": [
-        "sea/plains/s16.png",
-        "sea/desert/s16.png"
+        "sea/plains/slmcp.png",
+        "sea/desert/slmcp.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -283,12 +283,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S17",
+      "id": "SLECTRR",
       "excludeTilePicker": true,
-      "terrainName": "S17",
+      "terrainName": "SLECTRR",
       "texturePath": [
-        "sea/plains/s17.png",
-        "sea/desert/s17.png"
+        "sea/plains/slectrr.png",
+        "sea/desert/slectrr.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -296,12 +296,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S18",
+      "id": "SLTFL",
       "excludeTilePicker": true,
-      "terrainName": "S18",
+      "terrainName": "SLTFL",
       "texturePath": [
-        "sea/plains/s18.png",
-        "sea/desert/s18.png"
+        "sea/plains/sltfl.png",
+        "sea/desert/sltfl.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -309,12 +309,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S19",
+      "id": "SLMCPCR",
       "excludeTilePicker": true,
-      "terrainName": "S19",
+      "terrainName": "SLMCPCR",
       "texturePath": [
-        "sea/plains/s19.png",
-        "sea/desert/s19.png"
+        "sea/plains/slmcpcr.png",
+        "sea/desert/slmcpcr.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -322,12 +322,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S20",
+      "id": "SLHB",
       "excludeTilePicker": true,
-      "terrainName": "S20",
+      "terrainName": "SLHB",
       "texturePath": [
-        "sea/plains/s20.png",
-        "sea/desert/s20.png"
+        "sea/plains/slhb.png",
+        "sea/desert/slhb.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -335,12 +335,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S21",
+      "id": "SSCTL",
       "excludeTilePicker": true,
-      "terrainName": "S21",
+      "terrainName": "SSCTL",
       "texturePath": [
-        "sea/plains/s21.png",
-        "sea/desert/s21.png"
+        "sea/plains/ssctl.png",
+        "sea/desert/ssctl.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -348,12 +348,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S22",
+      "id": "SLCBL",
       "excludeTilePicker": true,
-      "terrainName": "S22",
+      "terrainName": "SLCBL",
       "texturePath": [
-        "sea/plains/s22.png",
-        "sea/desert/s22.png"
+        "sea/plains/slcbl.png",
+        "sea/desert/slcbl.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -361,12 +361,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S23",
+      "id": "STFL",
       "excludeTilePicker": true,
-      "terrainName": "S23",
+      "terrainName": "STFL",
       "texturePath": [
-        "sea/plains/s23.png",
-        "sea/desert/s23.png"
+        "sea/plains/stfl.png",
+        "sea/desert/stfl.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -374,12 +374,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S24",
+      "id": "SLECBLV",
       "excludeTilePicker": true,
-      "terrainName": "S24",
+      "terrainName": "SLECBLV",
       "texturePath": [
-        "sea/plains/s24.png",
-        "sea/desert/s24.png"
+        "sea/plains/slecblv.png",
+        "sea/desert/slecblv.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -387,12 +387,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S25",
+      "id": "SLECTLV",
       "excludeTilePicker": true,
-      "terrainName": "S25",
+      "terrainName": "SLECTLV",
       "texturePath": [
-        "sea/plains/s25.png",
-        "sea/desert/s25.png"
+        "sea/plains/slectlv.png",
+        "sea/desert/slectlv.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -400,12 +400,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S26",
+      "id": "SLCTL",
       "excludeTilePicker": true,
-      "terrainName": "S26",
+      "terrainName": "SLCTL",
       "texturePath": [
-        "sea/plains/s26.png",
-        "sea/desert/s26.png"
+        "sea/plains/slctl.png",
+        "sea/desert/slctl.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -413,12 +413,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S27",
+      "id": "SLVL",
       "excludeTilePicker": true,
-      "terrainName": "S27",
+      "terrainName": "SLVL",
       "texturePath": [
-        "sea/plains/s27.png",
-        "sea/desert/s27.png"
+        "sea/plains/slvl.png",
+        "sea/desert/slvl.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -426,12 +426,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S28",
+      "id": "STFFS",
       "excludeTilePicker": true,
-      "terrainName": "S28",
+      "terrainName": "STFFS",
       "texturePath": [
-        "sea/plains/s28.png",
-        "sea/desert/s28.png"
+        "sea/plains/stffs.png",
+        "sea/desert/stffs.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -439,12 +439,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S29",
+      "id": "SLMCNCR",
       "excludeTilePicker": true,
-      "terrainName": "S29",
+      "terrainName": "SLMCNCR",
       "texturePath": [
-        "sea/plains/s29.png",
-        "sea/desert/s29.png"
+        "sea/plains/slmcncr.png",
+        "sea/desert/slmcncr.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -452,12 +452,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S30",
+      "id": "STFT",
       "excludeTilePicker": true,
-      "terrainName": "S30",
+      "terrainName": "STFT",
       "texturePath": [
-        "sea/plains/s30.png",
-        "sea/desert/s30.png"
+        "sea/plains/stft.png",
+        "sea/desert/stft.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -465,12 +465,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S31",
+      "id": "SSCBR",
       "excludeTilePicker": true,
-      "terrainName": "S31",
+      "terrainName": "SSCBR",
       "texturePath": [
-        "sea/plains/s31.png",
-        "sea/desert/s31.png"
+        "sea/plains/sscbr.png",
+        "sea/desert/sscbr.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -478,12 +478,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S32",
+      "id": "SLMCPCL",
       "excludeTilePicker": true,
-      "terrainName": "S32",
+      "terrainName": "SLMCPCL",
       "texturePath": [
-        "sea/plains/s32.png",
-        "sea/desert/s32.png"
+        "sea/plains/slmcpcl.png",
+        "sea/desert/slmcpcl.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -491,12 +491,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S33",
+      "id": "SLTFT",
       "excludeTilePicker": true,
-      "terrainName": "S33",
+      "terrainName": "SLTFT",
       "texturePath": [
-        "sea/plains/s33.png",
-        "sea/desert/s33.png"
+        "sea/plains/sltft.png",
+        "sea/desert/sltft.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -504,12 +504,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S34",
+      "id": "SLCTR",
       "excludeTilePicker": true,
-      "terrainName": "S34",
+      "terrainName": "SLCTR",
       "texturePath": [
-        "sea/plains/s34.png",
-        "sea/desert/s34.png"
+        "sea/plains/slctr.png",
+        "sea/desert/slctr.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -517,12 +517,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S35",
+      "id": "STFR",
       "excludeTilePicker": true,
-      "terrainName": "S35",
+      "terrainName": "STFR",
       "texturePath": [
-        "sea/plains/s35.png",
-        "sea/desert/s35.png"
+        "sea/plains/stfr.png",
+        "sea/desert/stfr.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -530,12 +530,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S36",
+      "id": "SLECBRV",
       "excludeTilePicker": true,
-      "terrainName": "S36",
+      "terrainName": "SLECBRV",
       "texturePath": [
-        "sea/plains/s36.png",
-        "sea/desert/s36.png"
+        "sea/plains/slecbrv.png",
+        "sea/desert/slecbrv.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -543,12 +543,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S37",
+      "id": "SLMCNCL",
       "excludeTilePicker": true,
-      "terrainName": "S37",
+      "terrainName": "SLMCNCL",
       "texturePath": [
-        "sea/plains/s37.png",
-        "sea/desert/s37.png"
+        "sea/plains/slmcncl.png",
+        "sea/desert/slmcncl.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -556,12 +556,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S38",
+      "id": "SLMCN",
       "excludeTilePicker": true,
-      "terrainName": "S38",
+      "terrainName": "SLMCN",
       "texturePath": [
-        "sea/plains/s38.png",
-        "sea/desert/s38.png"
+        "sea/plains/slmcn.png",
+        "sea/desert/slmcn.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -569,12 +569,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S39",
+      "id": "SLECTLH",
       "excludeTilePicker": true,
-      "terrainName": "S39",
+      "terrainName": "SLECTLH",
       "texturePath": [
-        "sea/plains/s39.png",
-        "sea/desert/s39.png"
+        "sea/plains/slectlh.png",
+        "sea/desert/slectlh.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -582,12 +582,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S40",
+      "id": "SLTFR",
       "excludeTilePicker": true,
-      "terrainName": "S40",
+      "terrainName": "SLTFR",
       "texturePath": [
-        "sea/plains/s40.png",
-        "sea/desert/s40.png"
+        "sea/plains/sltfr.png",
+        "sea/desert/sltfr.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -595,12 +595,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S41",
+      "id": "SLICTR",
       "excludeTilePicker": true,
-      "terrainName": "S41",
+      "terrainName": "SLICTR",
       "texturePath": [
-        "sea/plains/s41.png",
-        "sea/desert/s41.png"
+        "sea/plains/slictr.png",
+        "sea/desert/slictr.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -608,12 +608,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S42",
+      "id": "SSCTR",
       "excludeTilePicker": true,
-      "terrainName": "S42",
+      "terrainName": "SSCTR",
       "texturePath": [
-        "sea/plains/s42.png",
-        "sea/desert/s42.png"
+        "sea/plains/ssctr.png",
+        "sea/desert/ssctr.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -621,12 +621,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S43",
+      "id": "SLCBR",
       "excludeTilePicker": true,
-      "terrainName": "S43",
+      "terrainName": "SLCBR",
       "texturePath": [
-        "sea/plains/s43.png",
-        "sea/desert/s43.png"
+        "sea/plains/slcbr.png",
+        "sea/desert/slcbr.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -634,12 +634,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S44",
+      "id": "STFB",
       "excludeTilePicker": true,
-      "terrainName": "S44",
+      "terrainName": "STFB",
       "texturePath": [
-        "sea/plains/s44.png",
-        "sea/desert/s44.png"
+        "sea/plains/stfb.png",
+        "sea/desert/stfb.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -647,12 +647,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S45",
+      "id": "SLECBRH",
       "excludeTilePicker": true,
-      "terrainName": "S45",
+      "terrainName": "SLECBRH",
       "texturePath": [
-        "sea/plains/s45.png",
-        "sea/desert/s45.png"
+        "sea/plains/slecbrh.png",
+        "sea/desert/slecbrh.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
@@ -660,12 +660,12 @@
       "damagedTextures": []
     },
     {
-      "id": "S46",
+      "id": "SLECBLH",
       "excludeTilePicker": true,
-      "terrainName": "S46",
+      "terrainName": "SLECBLH",
       "texturePath": [
-        "sea/plains/s46.png",
-        "sea/desert/s46.png"
+        "sea/plains/slecblh.png",
+        "sea/desert/slecblh.png"
       ],
       "defense": 0.0,
       "speed": 0.2,
