@@ -3,6 +3,8 @@ package com.main;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 
+import java.util.List;
+
 
 //worked on by Josh
 public class Tile {
@@ -30,33 +32,25 @@ public class Tile {
     public void updateTerrain(Terrain terrain) {
         tileHealth = 1.0f;
         damagedStateIndex = -1;
-        removeFire();
         this.terrain = terrain;
         updateTerrainBaseType();
 
     }
 
     private void updateTerrainBaseType(){
-        if(terrain.getId().contains("P")){
-            terrainBaseType = "Plain";
-        }else if(terrain.getId().contains("D")){
-            terrainBaseType = "Desert";
+        if(!terrain.getId().contains("S")){
+            if(terrain.getId().contains("P")){
+                terrainBaseType = "Plain";
+            }else if(terrain.getId().contains("D")){
+                terrainBaseType = "Desert";
+            }else if(terrain.getId().contains("W")){
+                terrainBaseType = "Winter";
+            }
         }
     }
 
     public float getTileHealth() {
         return tileHealth;
-    }
-
-    public void removeFire(){
-        fire = false;
-    }
-
-    public void attachFire(){
-        fire = true;
-    }
-    public boolean hasFire(){
-        return fire;
     }
 
     public void updateTileHealth(float damage) {
@@ -88,7 +82,6 @@ public class Tile {
 
         if (tileHealth <= 0.0f) {
             Gdx.app.log("Tile", "Tile Destroyed");
-            removeFire();
         }
     }
 
@@ -113,10 +106,19 @@ public class Tile {
             return TerrainManager.getInstance().getTerrain("P").getTexture().get(0);
         }else if(terrainBaseType.equals("Desert")){
             return TerrainManager.getInstance().getTerrain("D").getTexture().get(0);
+        }else if(terrainBaseType.equals("Winter")){
+            return TerrainManager.getInstance().getTerrain("W").getTexture().get(0);
         }
         return null;
     }
 
+    public void setTerrainBaseType(String base) {
+        terrainBaseType = base;
+    }
+
+    public String getTerrainBaseType(){
+        return terrainBaseType;
+    }
     public String getTerrainId(){
         return terrain.getId();
     }
@@ -132,11 +134,12 @@ public class Tile {
                     return terrain.getTexture().get(0);
                 }else if(terrainBaseType.equals("Desert")){
                     return terrain.getTexture().get(1);
-                }else if(terrainBaseType.equals("Winter")){
+                }else if(terrainBaseType.equals("Winter") && terrain.getTexture().size() == 3){
                     return terrain.getTexture().get(2);
                 }
             }
         }
-        return null;
+        return terrain.getTexture().get(0);
+
     }
 }

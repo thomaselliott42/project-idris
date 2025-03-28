@@ -15,8 +15,10 @@ public class Terrain implements Serializable {
     private float speed;
     private boolean canBeDestroyed;
     private transient List<Texture> damagedTextures;
+    private transient List<Texture> joinigTextures;
 
-    public Terrain(String id, String terrainName, boolean excludeTilePicker, List<Texture> texture, float defense, float speed, boolean canBeDestroyed, List<Texture> damagedTextures) {
+
+    public Terrain(String id, String terrainName, boolean excludeTilePicker, List<Texture> texture, float defense, float speed, boolean canBeDestroyed, List<Texture> damagedTextures, List<Texture> joinigTextures) {
         this.id = id;
         this.terrainName = terrainName;
         this.excludeTilePicker = excludeTilePicker;
@@ -25,6 +27,7 @@ public class Terrain implements Serializable {
         this.speed = speed;
         this.canBeDestroyed = canBeDestroyed;
         this.damagedTextures = damagedTextures;
+        this.joinigTextures = joinigTextures;
     }
 
     public String getId() {
@@ -50,6 +53,14 @@ public class Terrain implements Serializable {
 
     public float getSpeed() {
         return speed;
+    }
+
+    public boolean hasJoinigTextures() {
+        return joinigTextures != null && !joinigTextures.isEmpty();
+    }
+
+    public List<Texture> getJoinigTextures() {
+        return joinigTextures;
     }
 
     public boolean canBeDestroyed() {

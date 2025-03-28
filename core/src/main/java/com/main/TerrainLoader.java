@@ -11,7 +11,7 @@ import java.util.List;
 
 public class TerrainLoader {
 
-    private static final String TERRAIN_JSON_PATH = "assets/terrain.json";
+    private static final String TERRAIN_JSON_PATH = "assets/data/terrain.json";
 
     public static void loadTerrains() {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -23,6 +23,7 @@ public class TerrainLoader {
             for (TerrainData terrainData : data.terrains) {
                 List<Texture> textures = loadTextures(terrainData.texturePath);
                 List<Texture> damagedTextures = loadDamagedTextures(terrainData);
+                List<Texture> joinigTextures = loadJoinigTextures(terrainData);
 
                 // Log loaded terrains for debugging
                 Gdx.app.log("TerrainLoader", "Loading terrain: " + terrainData.id + " (" + terrainData.terrainName + ")");
@@ -36,7 +37,8 @@ public class TerrainLoader {
                     terrainData.defense,
                     terrainData.speed,
                     terrainData.canBeDestroyed,
-                    damagedTextures
+                    damagedTextures,
+                    joinigTextures
                 );
             }
 
@@ -71,6 +73,20 @@ public class TerrainLoader {
         return dT;
     }
 
+    private static List<Texture> loadJoinigTextures(TerrainData data) {
+        List<Texture> jT = new ArrayList<>();
+        {
+            for (String joiningTexture : data.joinTexturePath) {
+                if(!joiningTexture.equals("")){
+                    jT.add(new Texture(joiningTexture));
+
+                }else{
+                    jT.add(null);
+                }
+            }
+        }
+        return jT;
+    }
     // Wrapper class for JSON data
     private static class TerrainDataWrapper {
         public List<TerrainData> terrains;
@@ -86,5 +102,6 @@ public class TerrainLoader {
         public float speed;
         public boolean canBeDestroyed;
         public List<String> damagedTextures;
+        public List<String> joinTexturePath;
     }
 }
