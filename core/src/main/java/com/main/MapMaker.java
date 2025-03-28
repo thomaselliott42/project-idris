@@ -519,7 +519,7 @@ public class MapMaker implements Screen {
                     returnString = "SLMCNCR";
                     break;
                 }
-                
+
 
                 break;
             case 6:
