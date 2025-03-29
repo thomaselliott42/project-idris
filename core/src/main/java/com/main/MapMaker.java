@@ -2,6 +2,7 @@ package com.main;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.Batch;
@@ -9,13 +10,15 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
 
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class MapMaker implements Screen {
+public class MapMaker implements Screen, InputProcessor {
 
     private final int TILE_SIZE = 32; // 32
     private final int MAP_WIDTH = 20; // 20
@@ -47,8 +50,23 @@ public class MapMaker implements Screen {
     private String selectedTile = "P";  // Default selected tile
     private boolean inspect = false;
 
+    // Zoom variables
+    private float zoomLevel = 1.0f;
+    private final float MIN_ZOOM = 0.1f;
+    private final float MAX_ZOOM = 2.0f;
+    private final float ZOOM_SPEED = 0.1f;
+
+    // Zoom state tracking
+    private boolean zoomingIn = false;
+    private boolean zoomingOut = false;
+    private final float ZOOM_KEY_SPEED = 10.0f; // Faster zoom when holding keys
 
 
+    // Camera movement variables
+    private boolean movingUp, movingDown, movingLeft, movingRight;
+    private final float PAN_SPEED = 10f; // Adjust this value as needed
+    private float movedX = 0f;
+    private float movedY = 0f;
 
     @Override
     public void show() {
@@ -56,18 +74,36 @@ public class MapMaker implements Screen {
         font = new BitmapFont();
         shapeRenderer = new ShapeRenderer();
 
-        // Initialize UI camera
+        // Set this class as the input processor
+        Gdx.input.setInputProcessor(this);
+
+        // Initialize cameras
         uiCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         uiCamera.setToOrtho(false);
-        uiCamera.update();
 
-        // Initialize map camera - will be positioned to center the map
-        mapCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        mapCamera.setToOrtho(false);
+        // Initialize map camera
+        mapCamera = new OrthographicCamera();
+        mapCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        // Center camera on map initially
+        mapCamera.position.set(
+            (MAP_WIDTH * TILE_SIZE) / 2f,
+            (MAP_HEIGHT * TILE_SIZE) / 2f,
+            0
+        );
         mapCamera.update();
+
 
         this.map = new Map(MAP_WIDTH, MAP_HEIGHT);
         map.generateMap();
+    }
+
+    private void centerMapCamera() {
+        float mapCenterX = (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2 + (MAP_WIDTH * TILE_SIZE) / 2;
+        float mapCenterY = (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2 + (MAP_HEIGHT * TILE_SIZE) / 2;
+        mapCamera.position.set(mapCenterX, mapCenterY, 0);
+        mapCamera.zoom = zoomLevel;
+        mapCamera.update();
     }
 
 
@@ -76,6 +112,22 @@ public class MapMaker implements Screen {
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        // Handle camera movement
+        handleCameraMovement(delta);
+        // Update camera position
+        updateCameraPosition();
+
+        // Handle continuous zooming if keys are held
+        if (zoomingIn) {
+            // ZOOM IN (make things bigger) - DECREASE zoom level
+            zoomLevel = Math.max(MIN_ZOOM, zoomLevel - ZOOM_SPEED * delta * ZOOM_KEY_SPEED);
+        }
+        if (zoomingOut) {
+            // ZOOM OUT (make things smaller) - INCREASE zoom level
+            zoomLevel = Math.min(MAX_ZOOM, zoomLevel + ZOOM_SPEED * delta * ZOOM_KEY_SPEED);
+        }
+
 
         // First render the map with the map camera
         batch.setProjectionMatrix(mapCamera.combined);
@@ -97,6 +149,7 @@ public class MapMaker implements Screen {
         // Convert mouse coordinates to map coordinates
         int gridX = (mouseX - (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2) / TILE_SIZE;
         int gridY = (mouseY - (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2) / TILE_SIZE;
+
 
         if (gridX >= 0 && gridX < MAP_WIDTH && gridY >= 0 && gridY < MAP_HEIGHT) {
             // draw cursor (using UI camera)
@@ -163,6 +216,49 @@ public class MapMaker implements Screen {
         font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(),Gdx.graphics.getWidth() - 150, 20 );
         batch.end();
     }
+
+    private void handleCameraMovement(float delta) {
+        // Calculate movement speed adjusted for zoom (move faster when zoomed out)
+
+        if (mapCamera.position.x >= 0) {
+            if (movingLeft) movedX -= PAN_SPEED;
+        }
+        if (mapCamera.position.x <= MAP_WIDTH*TILE_SIZE*2) {
+            if (movingRight) movedX += PAN_SPEED;
+        }
+        if (mapCamera.position.y >= 0) {
+            if (movingDown) movedY -= PAN_SPEED;
+        }
+        if (mapCamera.position.y <= MAP_HEIGHT*TILE_SIZE*2) {
+            if (movingUp) movedY += PAN_SPEED;
+        }
+
+        mapCamera.update();
+    }
+
+
+    private void updateCameraPosition() {
+        // Calculate the center position adjusted for zoom
+        float centerX = Gdx.graphics.getWidth()/2f + movedX;
+        float centerY = Gdx.graphics.getHeight()/2f + movedY;
+
+        mapCamera.position.set(centerX, centerY, 0);
+        mapCamera.zoom = zoomLevel; // Make sure zoom is applied here
+        mapCamera.update();
+    }
+
+
+    @Override
+    public boolean scrolled(float amountX, float amountY) {
+        // Mouse wheel zoom (inverted for natural feeling)
+        // Scroll UP (negative amountY) = ZOOM IN (decrease zoom level)
+        // Scroll DOWN (positive amountY) = ZOOM OUT (increase zoom level)
+        float zoomFactor = 1 + (amountY * ZOOM_SPEED); // Removed negative sign
+        zoomLevel *= zoomFactor;
+        zoomLevel = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoomLevel));
+        return true;
+    }
+
 
     private void reloadJson() {
         TerrainLoader.loadTerrains();
@@ -772,24 +868,7 @@ public class MapMaker implements Screen {
     }
 
     private void drawTilePicker() {
-        int pickerWidth = 4 * TILE_SIZE;
-        int startX = (Gdx.graphics.getWidth() - pickerWidth) / 2;
-        int startY = Gdx.graphics.getHeight() - TILE_PICKER_HEIGHT;
-
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f));
-        shapeRenderer.rect(startX - 2, startY - 2, pickerWidth + 4, TILE_PICKER_HEIGHT + 4);
-        shapeRenderer.end();
-
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(new Color(0.2f, 0.2f, 0.2f, 1f));
-        shapeRenderer.rect(startX, startY, pickerWidth, TILE_PICKER_HEIGHT);
-        shapeRenderer.end();
-
         TerrainManager terrainManager = TerrainManager.getInstance();
-        batch.begin();
-
-        int terrainIndex = 0;
         List<Terrain> includedTerrains = new ArrayList<>();
 
         // Collect only the terrains that are not excluded from the tile picker
@@ -799,46 +878,79 @@ public class MapMaker implements Screen {
             }
         }
 
-        // Draw the terrains
-        for (int i = 0; i < includedTerrains.size(); i++) {
+        // Calculate width based on number of tiles
+        int numTiles = includedTerrains.size();
+        int pickerWidth = numTiles * TILE_SIZE + 20; // 10px padding on each side
+        int pickerHeight = TILE_PICKER_HEIGHT + 20; // Add some extra height for padding
+        int startX = (Gdx.graphics.getWidth() - pickerWidth) / 2;
+        int startY = Gdx.graphics.getHeight() - pickerHeight;
+
+        // Draw background for the tile picker (similar to toolbar)
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f));  // Dark background
+        shapeRenderer.rect(startX - 2, startY - 2, pickerWidth + 4, pickerHeight + 4);  // Outer border
+        shapeRenderer.setColor(new Color(0.2f, 0.2f, 0.2f, 1f));  // Slightly lighter inner area
+        shapeRenderer.rect(startX, startY, pickerWidth, pickerHeight);  // Inner area
+        shapeRenderer.end();
+
+        batch.begin();
+
+        // Draw the terrains with some padding from the edges
+        int tilePickerContentStartY = startY + 10; // Add 10px padding from bottom
+        for (int i = 0; i < numTiles; i++) {
             Terrain terrain = includedTerrains.get(i);
-            batch.draw(terrain.getTexture().get(0), startX + i * TILE_SIZE, startY, TILE_SIZE, TILE_PICKER_HEIGHT);
+            batch.draw(terrain.getTexture().get(0),
+                startX + i * TILE_SIZE + 10, // Add 10px padding from left
+                tilePickerContentStartY,
+                TILE_SIZE,
+                TILE_PICKER_HEIGHT);
         }
 
         batch.end();
 
-        int selectedTileX = getSelectedTileX(selectedTile);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(Color.YELLOW);
-        shapeRenderer.rect(startX + selectedTileX * TILE_SIZE, startY, TILE_SIZE, TILE_PICKER_HEIGHT);
-        shapeRenderer.end();
+        // Draw selection highlight
+        int selectedTileIndex = getSelectedTileIndex(selectedTile, includedTerrains);
+        if (selectedTileIndex >= 0) {
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            shapeRenderer.setColor(Color.YELLOW);
+            shapeRenderer.rect(
+                startX + selectedTileIndex * TILE_SIZE + 10, // Match the padding from left
+                tilePickerContentStartY,
+                TILE_SIZE,
+                TILE_PICKER_HEIGHT);
+            shapeRenderer.end();
+        }
 
+        // Handle tile selection
         int mouseX = Gdx.input.getX();
         int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
 
-        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && mouseY >= startY && mouseY <= startY + TILE_PICKER_HEIGHT) {
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+            // Check if click is within the tile picker area
+            if (mouseX >= startX && mouseX <= startX + pickerWidth &&
+                mouseY >= startY && mouseY <= startY + pickerHeight) {
 
-            int clickedTerrainIndex = (mouseX - startX) / TILE_SIZE;
+                int clickedTerrainIndex = (mouseX - startX - 10) / TILE_SIZE; // Account for padding
 
-            if (clickedTerrainIndex >= 0 && clickedTerrainIndex < includedTerrains.size()) {
-                Terrain clickedTerrain = includedTerrains.get(clickedTerrainIndex);
-                isPlacing = true;
-                selectedTile = clickedTerrain.getId();
+                if (clickedTerrainIndex >= 0 && clickedTerrainIndex < numTiles) {
+                    Terrain clickedTerrain = includedTerrains.get(clickedTerrainIndex);
+                    isPlacing = true;
+                    selectedTile = clickedTerrain.getId();
+                }
             }
         }
     }
 
-    private int getSelectedTileX(String selectedTile) {
-        TerrainManager terrainManager = TerrainManager.getInstance();
-        int index = 0;
-        for (Terrain terrain : terrainManager.getTerrains()) {
-            if (terrain.getId().equals(selectedTile)) {
-                return index;
+    // Helper method to get the index of the selected tile
+    private int getSelectedTileIndex(String selectedTileId, List<Terrain> terrains) {
+        for (int i = 0; i < terrains.size(); i++) {
+            if (terrains.get(i).getId().equals(selectedTileId)) {
+                return i;
             }
-            index++;
         }
-        return 0;
+        return -1;
     }
+
 
     @Override
     public void resize(int width, int height) {
@@ -863,7 +975,91 @@ public class MapMaker implements Screen {
     }
 
     @Override
+    public boolean keyDown(int keycode) {
+
+
+        // Movement keys
+        switch (keycode) {
+            case Input.Keys.UP:
+            case Input.Keys.W:
+                movingUp = true;
+                return true;
+            case Input.Keys.DOWN:
+            case Input.Keys.S:
+                movingDown = true;
+                return true;
+            case Input.Keys.LEFT:
+            case Input.Keys.A:
+                movingLeft = true;
+                return true;
+            case Input.Keys.RIGHT:
+            case Input.Keys.D:
+                movingRight = true;
+                return true;
+        }
+
+        // Track zoom key states
+        if (keycode == Input.Keys.Z) {
+            zoomingIn = true;  // Z = zoom in
+            return true;
+        }
+        if (keycode == Input.Keys.X) {
+            zoomingOut = true;  // X = zoom out
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean keyUp(int keycode) {
+
+        // Movement keys
+        switch (keycode) {
+            case Input.Keys.UP:
+            case Input.Keys.W:
+                movingUp = false;
+                return true;
+            case Input.Keys.DOWN:
+            case Input.Keys.S:
+                movingDown = false;
+                return true;
+            case Input.Keys.LEFT:
+            case Input.Keys.A:
+                movingLeft = false;
+                return true;
+            case Input.Keys.RIGHT:
+            case Input.Keys.D:
+                movingRight = false;
+                return true;
+        }
+
+        // Stop zooming when keys are released
+        if (keycode == Input.Keys.Z) {
+            zoomingIn = false;
+            return true;
+        }
+        if (keycode == Input.Keys.X) {
+            zoomingOut = false;
+            return true;
+        }
+        return false;
+    }
+    @Override public boolean keyTyped(char character) { return false; }
+    @Override public boolean touchDown(int screenX, int screenY, int pointer, int button) { return false; }
+    @Override public boolean touchUp(int screenX, int screenY, int pointer, int button) { return false; }
+    @Override public boolean touchDragged(int screenX, int screenY, int pointer) { return false; }
+    @Override public boolean mouseMoved(int screenX, int screenY) { return false; }
+
+    @Override
+    public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
+    @Override
     public void dispose() {
+
+        Gdx.input.setInputProcessor(null);
+
         batch.dispose();
         shapeRenderer.dispose();
         cursor.dispose();
