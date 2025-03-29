@@ -38,29 +38,35 @@ public class MapMaker implements Screen {
     private BitmapFont font;
 
     private ShapeRenderer shapeRenderer;
-    private OrthographicCamera camera;
+
+    // Main camera for UI elements
+    private OrthographicCamera uiCamera;
+    // Separate camera for the map
+    private OrthographicCamera mapCamera;
 
     private String selectedTile = "P";  // Default selected tile
     private boolean inspect = false;
 
 
 
+
     @Override
     public void show() {
-
         batch = new SpriteBatch();
         font = new BitmapFont();
         shapeRenderer = new ShapeRenderer();
 
-        camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        camera.setToOrtho(false);
-        camera.update();
+        // Initialize UI camera
+        uiCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        uiCamera.setToOrtho(false);
+        uiCamera.update();
+
+        // Initialize map camera - will be positioned to center the map
+        mapCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        mapCamera.setToOrtho(false);
+        mapCamera.update();
 
         this.map = new Map(MAP_WIDTH, MAP_HEIGHT);
-
-//        ImGuiHandler.initImGui();
-
-        // generating random map
         map.generateMap();
     }
 
@@ -71,90 +77,77 @@ public class MapMaker implements Screen {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        batch.setProjectionMatrix(camera.combined);
-        shapeRenderer.setProjectionMatrix(camera.combined);
-
-
-        drawToolbar();
-        camera.update();
+        // First render the map with the map camera
+        batch.setProjectionMatrix(mapCamera.combined);
         batch.begin();
-
-
         map.renderMap(TILE_SIZE, batch);
-
         batch.end();
 
-        drawTilePicker();
+        // Then render UI elements with the UI camera
+        batch.setProjectionMatrix(uiCamera.combined);
+        shapeRenderer.setProjectionMatrix(uiCamera.combined);
 
+        drawToolbar();
+        uiCamera.update();
+
+        // Handle cursor and interactions (using UI camera coordinates)
         int mouseX = Gdx.input.getX();
         int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+
+        // Convert mouse coordinates to map coordinates
         int gridX = (mouseX - (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2) / TILE_SIZE;
         int gridY = (mouseY - (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2) / TILE_SIZE;
 
         if (gridX >= 0 && gridX < MAP_WIDTH && gridY >= 0 && gridY < MAP_HEIGHT) {
-
-            // draw cursor
+            // draw cursor (using UI camera)
             batch.begin();
-            batch.draw(cursor, (gridX * TILE_SIZE) + (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2,
+            batch.draw(cursor,
+                (gridX * TILE_SIZE) + (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2,
                 (gridY * TILE_SIZE) + (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2);
             batch.end();
 
             if(isPlacing){
-
                 if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
-
                     if(selectedTile.equals("S")){
                         smartPlaceSea(gridX, gridY);
                     }else{
                         map.getTile(gridX, gridY).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
                         forceUpdateAllSeaTiles();
                     }
-
                     map.printMapToTerminal();
-
                 }
             }else{
                 if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
                     applyDamageInRadius(mouseX, mouseY);
                 }
                 drawDamageRadius(mouseX, mouseY);
-
             }
-
         }
 
-
+        // Handle toolbar clicks (UI camera coordinates)
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             if (mouseX >= 0 && mouseX <= 64) {
                 if (mouseY >= Gdx.graphics.getHeight() - 128 && mouseY <= Gdx.graphics.getHeight() - 64) {
-                    Gdx.app.log("MapMaker", "Inspect Mode");
                     inspect = !inspect;
-
-
                 }
                 else if (mouseY >= Gdx.graphics.getHeight() - 192 && mouseY <= Gdx.graphics.getHeight() - 128) {
-                    Gdx.app.log("MapMaker", "Damage Mode");
                     isPlacing = !isPlacing;
-
                 }
                 else if (mouseY >= Gdx.graphics.getHeight() - 256 && mouseY <= Gdx.graphics.getHeight() - 192) {
-                    Gdx.app.log("MapMaker", "Fill Mode");
                     fillBoard();
-
                 }
                 else if (mouseY >= Gdx.graphics.getHeight() - 320 && mouseY <= Gdx.graphics.getHeight() - 256) {
-                    Gdx.app.log("MapMaker", "Reload Json");
                     reloadJson();
-
                 }
                 else if (mouseY >= Gdx.graphics.getHeight() - 384 && mouseY <= Gdx.graphics.getHeight() - 320) {
-                    Gdx.app.log("MapMaker", "Save Map");
+                    // Save Map
                     fillBoard();
                 }
             }
-
         }
 
+        // Draw tile picker and other UI elements
+        drawTilePicker();
 
         if(inspect){
             if(map.checkBounds(gridX, gridY)){
@@ -163,16 +156,12 @@ public class MapMaker implements Screen {
                 batch.end();
             }
         }
+
         batch.begin();
         String coords = gridY +"," +gridX;
         font.draw(batch, coords, Gdx.graphics.getWidth() - 50, 20);
         font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(),Gdx.graphics.getWidth() - 150, 20 );
         batch.end();
-
-//        ImGuiHandler.startImGui();
-//        ImGuiHandler.renderUI();
-//        ImGuiHandler.endImGui();
-
     }
 
     private void reloadJson() {
@@ -416,22 +405,22 @@ public class MapMaker implements Screen {
 
                 // lake corners
                 if ((!south && !southeast && !east && !northeast) || (!south && !southeast && !east && !southwest)
-                || (!south && !southwest && !east && !northeast)) {
+                    || (!south && !southwest && !east && !northeast)) {
                     returnString = "SLCBR";
                     break;
                 }
                 if ((!south && !southwest && !west && !northwest) || (!south && !southwest && !west && !southeast)
-                || (!south && !southeast && !west && !northwest)) {
+                    || (!south && !southeast && !west && !northwest)) {
                     returnString = "SLCBL";
                     break;
                 }
                 if ((!north && !northeast && !east && !northwest) || (!north && !northeast && !east && !southeast)
-                || (!north && !northwest && !east && !southeast)) {
+                    || (!north && !northwest && !east && !southeast)) {
                     returnString = "SLCTR";
                     break;
                 }
                 if ((!north && !northwest && !west && !northeast) || (!north && !northwest && !west && !southwest)
-                || (!north && !northeast && !west && !southwest)) {
+                    || (!north && !northeast && !west && !southwest)) {
                     returnString = "SLCTL";
                     break;
                 }
@@ -483,22 +472,22 @@ public class MapMaker implements Screen {
 
                 //lake corners
                 if ((!south && !southeast && !east) || (!south && !east && !northeast)
-                || (!south && !southwest && !east)){
+                    || (!south && !southwest && !east)){
                     returnString = "SLCBR";
                     break;
                 }
                 if ((!south && !southwest && !west) ||(!west && !south && !southeast)
-                || (!west && !northwest && !south)){
+                    || (!west && !northwest && !south)){
                     returnString = "SLCBL";
                     break;
                 }
                 if ((!north && !northeast && !east) || (!north && !east && !southeast)
-                || (!north && !northwest && !east)){
+                    || (!north && !northwest && !east)){
                     returnString = "SLCTR";
                     break;
                 }
                 if ((!north && !northwest && !west) || (!west && !north && !northeast)
-                || (!north && !west && !southwest)){
+                    || (!north && !west && !southwest)){
                     returnString = "SLCTL";
                     break;
                 }
@@ -853,8 +842,12 @@ public class MapMaker implements Screen {
 
     @Override
     public void resize(int width, int height) {
-        camera.setToOrtho(false, width, height);
-        camera.update();
+        // Update both cameras when screen is resized
+        uiCamera.setToOrtho(false, width, height);
+        uiCamera.update();
+
+        mapCamera.setToOrtho(false, width, height);
+        mapCamera.update();
     }
 
     @Override
@@ -873,10 +866,13 @@ public class MapMaker implements Screen {
     public void dispose() {
         batch.dispose();
         shapeRenderer.dispose();
-
         cursor.dispose();
-
-        //   ImGuiHandler.disposeImGui();
-
+        fillIcon.dispose();
+        reloadIcon.dispose();
+        saveIcon.dispose();
+        inspectIcon.dispose();
+        damageIcon.dispose();
+        damageRadius.dispose();
+        font.dispose();
     }
 }
