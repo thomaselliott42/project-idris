@@ -414,70 +414,91 @@ public class MapMaker implements Screen {
                     break;
                 }
 
-                // lake corners of t functions
-                if ((!south && !southeast && !east && !northeast) || (!south && !southeast && !east && !southwest)){
+                // lake corners
+                if ((!south && !southeast && !east && !northeast) || (!south && !southeast && !east && !southwest)
+                || (!south && !southwest && !east && !northeast)) {
                     returnString = "SLCBR";
                     break;
                 }
-                if ((!south && !southwest && !west && !northwest) || (!south && !southwest && !west && !southeast)){
+                if ((!south && !southwest && !west && !northwest) || (!south && !southwest && !west && !southeast)
+                || (!south && !southeast && !west && !northwest)) {
                     returnString = "SLCBL";
                     break;
                 }
-                if ((!north && !northeast && !east && !northwest) || (!north && !northeast && !east && !southeast)){
+                if ((!north && !northeast && !east && !northwest) || (!north && !northeast && !east && !southeast)
+                || (!north && !northwest && !east && !southeast)) {
                     returnString = "SLCTR";
                     break;
                 }
-                if ((!north && !northwest && !west && !northeast) || (!north && !northwest && !west && !southwest)){
+                if ((!north && !northwest && !west && !northeast) || (!north && !northwest && !west && !southwest)
+                || (!north && !northeast && !west && !southwest)) {
                     returnString = "SLCTL";
                     break;
                 }
-
-
                 break;
 
 
             case 5:
 
                 // lake extending corners
-                if (!northwest && !west && !southeast){
+                if ((!northwest && !west && !southeast) || (!west && !southwest && !southeast)){
                     returnString = "SLECBLV";
                     break;
                 }
-                if (!northeast && !east && !southwest){
+                if ((!northeast && !east && !southwest) || (!southwest && !east && !southeast)){
                     returnString = "SLECBRV";
                     break;
                 }
-                if (!south && !southeast && !northwest){
+                if ((!south && !southeast && !northwest) || (!south && !southwest && !northwest)){
                     returnString = "SLECBLH";
                     break;
                 }
-                if (!south && !southwest && !northeast){
+                if ((!south && !southwest && !northeast) || (!south && !southeast && !northeast)){
                     returnString = "SLECBRH";
                     break;
                 }
-                if (!west && !southwest && !northeast){
+                if ((!west && !southwest && !northeast) || (!west && !northwest && !northeast)){
                     returnString = "SLECTLV";
                     break;
                 }
-                if (!east && !southeast && !northwest){
+                if (!north && !northwest && !southwest){
+                    returnString = "SLECTLH";
+                    break;
+                }
+                if ((!east && !southeast && !northwest) || (!east && !northeast && !northwest)){
                     returnString = "SLECTRV";
                     break;
                 }
+                if (!north && !northwest && !southeast){
+                    returnString = "SLECTRH";
+                    break;
+                }
 
-                //lake corners of t functions
-                if (!south && !southeast && !east){
+
+                // t functions
+                if (!west && !northeast && !southeast){
+                    returnString = "STFL";
+                    break;
+                }
+
+                //lake corners
+                if ((!south && !southeast && !east) || (!south && !east && !northeast)
+                || (!south && !southwest && !east)){
                     returnString = "SLCBR";
                     break;
                 }
-                if (!south && !southwest && !west){
+                if ((!south && !southwest && !west) ||(!west && !south && !southeast)
+                || (!west && !northwest && !south)){
                     returnString = "SLCBL";
                     break;
                 }
-                if (!north && !northeast && !east){
+                if ((!north && !northeast && !east) || (!north && !east && !southeast)
+                || (!north && !northwest && !east)){
                     returnString = "SLCTR";
                     break;
                 }
-                if (!north && !northwest && !west){
+                if ((!north && !northwest && !west) || (!west && !north && !northeast)
+                || (!north && !west && !southwest)){
                     returnString = "SLCTL";
                     break;
                 }
@@ -523,6 +544,59 @@ public class MapMaker implements Screen {
 
                 break;
             case 6:
+
+                // lake corners
+                if (!north && !west){
+                    returnString = "SLCTL";
+                    break;
+                }
+                if (!north && !east){
+                    returnString = "SLCTR";
+                    break;
+                }
+                if (!east && !south){
+                    returnString = "SLCBR";
+                    break;
+                }
+                if (!west && !south){
+                    returnString = "SLCBL";
+                    break;
+                }
+
+                // lake extending corners
+                if (!northeast && !south){
+                    returnString = "SLECBRH";
+                    break;
+                }
+                if (!southwest && !east){
+                    returnString = "SLECBRV";
+                    break;
+                }
+                if (!south && !northwest){
+                    returnString = "SLECBLH";
+                    break;
+                }
+                if (!southeast && !west) {
+                    returnString = "SLECBLV";
+                    break;
+                }
+                if (!west && !northeast){
+                    returnString = "SLECTLV";
+                    break;
+                }
+                if (!north && !southwest){
+                    returnString = "SLECTLH";
+                    break;
+                }
+                if (!north && !southeast){
+                    returnString = "SLECTRH";
+                    break;
+                }
+                if (!east && !northwest){
+                    returnString = "SLECTRV";
+                    break;
+                }
+
                 // lake t-functions
                 if (north && northeast && east && west && south && southeast) {
                     returnString = "SLTFR";
