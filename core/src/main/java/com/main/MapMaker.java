@@ -20,6 +20,8 @@ import java.util.Random;
 
 public class MapMaker implements Screen, InputProcessor {
 
+    private final Main game;
+
     private final int TILE_SIZE = 32; // 32
     private final int MAP_WIDTH = 20; // 20
     private final int MAP_HEIGHT = 20; // 20
@@ -29,9 +31,11 @@ public class MapMaker implements Screen, InputProcessor {
     private Texture reloadIcon = new Texture("ui/reloadIcon.png");
     private Texture saveIcon = new Texture("ui/saveIcon.png");
     private Texture inspectIcon = new Texture("ui/inspectIcon.png");
+    private Texture infoIcon = new Texture("ui/infoIcon.png");
 
     private Texture damageIcon = new Texture("ui/damageIcon.png");
     private Texture damageRadius = new Texture("ui/damageRadius.png");
+
 
     private final int TILE_PICKER_HEIGHT = 64; // Height of the tile picker
     private boolean isPlacing = true;
@@ -67,6 +71,10 @@ public class MapMaker implements Screen, InputProcessor {
     private final float PAN_SPEED = 10f; // Adjust this value as needed
     private float movedX = 0f;
     private float movedY = 0f;
+
+    public MapMaker(Main game) {
+        this.game = game;
+    }
 
     @Override
     public void show() {
@@ -195,6 +203,9 @@ public class MapMaker implements Screen, InputProcessor {
                 else if (mouseY >= Gdx.graphics.getHeight() - 384 && mouseY <= Gdx.graphics.getHeight() - 320) {
                     // Save Map
                     fillBoard();
+                }
+                else if (mouseY >= Gdx.graphics.getHeight() - 448 && mouseY <= Gdx.graphics.getHeight() - 384) {
+                    game.setScreen(new InfoScreen(game));
                 }
             }
         }
@@ -829,20 +840,22 @@ public class MapMaker implements Screen, InputProcessor {
         int iconSize = 64;
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f));  // Dark background
+        shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f));
         shapeRenderer.rect(0, 0, toolbarWidth, toolbarHeight);
         shapeRenderer.end();
 
-        // Get mouse position
         int mouseX = Gdx.input.getX();
-        int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();  // Invert Y coordinate to match screen space
+        int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
 
-        // Draw and highlight icons with a helper function
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 128, inspectIcon, iconSize); // Damage icon
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 192, damageIcon, iconSize); // Damage icon
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 256, fillIcon, iconSize);   // Fill icon
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 320, reloadIcon, iconSize); // Reload icon
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 384, saveIcon, iconSize);   // Save icon
+        // Add info icon at the bottom
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 448, infoIcon, iconSize);
+
+        // Existing icons (moved up to make space)
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 128, inspectIcon, iconSize);
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 192, damageIcon, iconSize);
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 256, fillIcon, iconSize);
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 320, reloadIcon, iconSize);
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 384, saveIcon, iconSize);
     }
 
     private void drawAndHighlightIcon(int mouseX, int mouseY, int x, int y, Texture icon, int iconSize) {
@@ -1067,6 +1080,7 @@ public class MapMaker implements Screen, InputProcessor {
         reloadIcon.dispose();
         saveIcon.dispose();
         inspectIcon.dispose();
+        infoIcon.dispose();
         damageIcon.dispose();
         damageRadius.dispose();
         font.dispose();
