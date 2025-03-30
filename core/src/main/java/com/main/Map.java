@@ -12,6 +12,7 @@ public class Map {
     private final int MAP_HEIGHT;
     private Tile[][] map;
 
+
     public Map(int width, int height) {
         this.MAP_WIDTH = width;
         this.MAP_HEIGHT = height;
@@ -46,12 +47,76 @@ public class Map {
         return map[y][x];
     }
 
-    public void renderMap(int TILE_SIZE, Batch batch) {
+    public void renderMap(int TILE_SIZE, Batch batch, boolean is3DView) {
         int screenWidth = Gdx.graphics.getWidth();
         int screenHeight = Gdx.graphics.getHeight();
         int offsetX = (screenWidth - MAP_WIDTH * TILE_SIZE) / 2;
         int offsetY = (screenHeight - MAP_HEIGHT * TILE_SIZE) / 2;
 
+
+        if (is3DView) {
+            render3DMap(TILE_SIZE, batch, offsetX, offsetY);
+        } else {
+            render2DMap(TILE_SIZE, batch, offsetX, offsetY);
+        }
+
+    }
+
+    public void render2DMap(int TILE_SIZE, Batch batch, int offsetX, int offsetY) {
+        // Render non-mountain tiles first
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            for (int x = 0; x < MAP_WIDTH; x++) {
+                Tile tile = getTile(x, y);
+                String terrainId = tile.getTerrain().getId();
+                float drawX = x * TILE_SIZE + offsetX;
+                float drawY = y * TILE_SIZE + offsetY;
+
+                if (!terrainId.startsWith("M")) {
+                    if (terrainId.startsWith("F")) {
+                        String textureKey = terrainId.endsWith("P") ? "P" : terrainId.endsWith("D") ? "D" : null;
+                        if (textureKey != null) {
+                            batch.draw(TerrainManager.getInstance().getTerrain(textureKey).getTexture().get(0), drawX, drawY, TILE_SIZE, TILE_SIZE);
+                        }
+                        batch.draw(tile.getTerrainTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
+
+                    } else if (terrainId.startsWith("S")) {
+                        Texture cT = checkSurroundingBaseTerrain(tile, x, y);
+                        batch.draw(cT, drawX, drawY, TILE_SIZE, TILE_SIZE);
+
+                    }else{
+                        batch.draw(tile.getTerrainTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
+                    }
+                }
+            }
+        }
+
+        // Render mountain tiles and buildings from bottom-right to top-left
+        for (int y = MAP_HEIGHT - 1; y >= 0; y--) {
+            for (int x = MAP_WIDTH - 1; x >= 0; x--) {
+                Tile tile = getTile(x, y);
+                String terrainId = tile.getTerrain().getId();
+                float drawX = x * TILE_SIZE + offsetX;
+                float drawY = y * TILE_SIZE + offsetY;
+
+                if (terrainId.startsWith("M")) {
+                    String textureKey = terrainId.endsWith("P") ? "P" : terrainId.endsWith("D") ? "D" : null;
+                    if (textureKey != null) {
+                        batch.draw(TerrainManager.getInstance().getTerrain(textureKey).getTexture().get(0), drawX, drawY, TILE_SIZE, TILE_SIZE);
+                    }
+                    batch.draw(tile.getTerrainTexture(), drawX, drawY, TILE_SIZE, tile.getTerrain().getTexture().get(0).getHeight() * (TILE_SIZE / 16f));
+                }
+
+                if (terrainId.equals("SS") && tile.getBaseType().equals("Desert")) {
+                    batch.draw(tile.getBaseTerrainTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
+                    batch.draw(tile.getTerrainTexture(), drawX, drawY, TILE_SIZE, tile.getTerrainTexture().getHeight() * (TILE_SIZE / 16f));
+                }
+            }
+        }
+
+        // render units
+    }
+
+    public void render3DMap(int TILE_SIZE, Batch batch, int offsetX, int offsetY) {
         // Render non-mountain tiles first
         for (int y = 0; y < MAP_HEIGHT; y++) {
             for (int x = 0; x < MAP_WIDTH; x++) {
@@ -123,7 +188,7 @@ public class Map {
                     return tile.getTerrainTexture();
                 }
             }else if(!tile.getTerrainBaseType().equals(lBT)){
-               tile.setTerrainBaseType(lBT);
+                tile.setTerrainBaseType(lBT);
             }
         }
         return tile.getTerrainTexture();
