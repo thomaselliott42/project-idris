@@ -72,6 +72,9 @@ public class MapMaker implements Screen, InputProcessor {
     private float movedX = 0f;
     private float movedY = 0f;
 
+    private final float ZOOM_2D_THRESHOLD = 0.5f; // Zoom level where we switch to 3D
+    private boolean is3DView = false;
+
     public MapMaker(Main game) {
         this.game = game;
     }
@@ -121,6 +124,13 @@ public class MapMaker implements Screen, InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // Check if we need to switch views
+        boolean shouldBe3D = zoomLevel < ZOOM_2D_THRESHOLD;
+        if (shouldBe3D != is3DView) {
+            is3DView = shouldBe3D;
+            Gdx.app.log("MapMaker", "Switched to " + (is3DView ? "3D" : "2D") + " view");
+        }
+
         // Handle camera movement
         handleCameraMovement(delta);
         // Update camera position
@@ -140,7 +150,9 @@ public class MapMaker implements Screen, InputProcessor {
         // First render the map with the map camera
         batch.setProjectionMatrix(mapCamera.combined);
         batch.begin();
-        map.renderMap(TILE_SIZE, batch);
+
+        map.renderMap(TILE_SIZE, batch, is3DView);
+
         batch.end();
 
         // Then render UI elements with the UI camera
@@ -161,10 +173,12 @@ public class MapMaker implements Screen, InputProcessor {
 
         if (gridX >= 0 && gridX < MAP_WIDTH && gridY >= 0 && gridY < MAP_HEIGHT) {
             // draw cursor (using UI camera)
+            float cursorSize = getScaledCursorSize();
             batch.begin();
             batch.draw(cursor,
                 (gridX * TILE_SIZE) + (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2,
-                (gridY * TILE_SIZE) + (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2);
+                (gridY * TILE_SIZE) + (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2,
+                cursorSize, cursorSize); // Use scaled size
             batch.end();
 
             if(isPlacing){
@@ -788,8 +802,8 @@ public class MapMaker implements Screen, InputProcessor {
     }
 
     private void drawDamageRadius(int mouseX, int mouseY) {
-        // Radius of damage effect in tiles
-        int radius = TILE_SIZE;  // Radius in tiles (adjustable)
+        // Radius of damage effect in tiles, scaled by zoom level
+        int radius = (int)(TILE_SIZE * (1.0f / zoomLevel));
 
         // Convert mouse coordinates to map coordinates
         int gridX = (mouseX - (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2) / TILE_SIZE;
@@ -799,24 +813,24 @@ public class MapMaker implements Screen, InputProcessor {
         float centerX = gridX * TILE_SIZE + TILE_SIZE / 2 + (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2;
         float centerY = gridY * TILE_SIZE + TILE_SIZE / 2 + (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2;
 
-        // Adjust the damage radius texture size if needed
-        float scale = (float) radius / damageRadius.getWidth();
+        // Set the transparency for the damage radius
+        float alpha = 0.5f;
+        batch.setColor(1.0f, 1.0f, 1.0f, alpha);
 
-        // Set the transparency for the damage radius (alpha can range from 0.0f to 1.0f)
-        float alpha = 0.5f; // Adjust this value to change transparency (0.0f = fully transparent, 1.0f = fully opaque)
-        batch.setColor(1.0f, 1.0f, 1.0f, alpha);  // Set color with adjusted alpha
-
-        // Draw the damage radius texture behind the cursor
+        // Draw the damage radius texture
         batch.begin();
-        batch.draw(damageRadius, centerX - radius / 2, centerY - radius / 2, radius, radius);  // Adjust texture position and scale
+        batch.draw(damageRadius,
+            centerX - radius / 2,
+            centerY - radius / 2,
+            radius, radius);  // Use scaled size
         batch.end();
 
-        // Reset color to default (no alpha change for other drawings)
-        batch.setColor(1.0f, 1.0f, 1.0f, 1.0f);  // Reset to default (fully opaque)
+        // Reset color to default
+        batch.setColor(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
     private void applyDamageInRadius(int mouseX, int mouseY) {
-        int radius = TILE_SIZE;
+        int radius = (int)(TILE_SIZE * (1.0f / zoomLevel));  // Scaled radius
 
         int gridX = (mouseX - (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2) / TILE_SIZE;
         int gridY = (mouseY - (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2) / TILE_SIZE;
@@ -1066,6 +1080,13 @@ public class MapMaker implements Screen, InputProcessor {
     @Override
     public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
         return false;
+    }
+
+    private float getScaledCursorSize() {
+        // Base cursor size is TILE_SIZE, scaled by zoom level
+        // We invert the zoom level because smaller zoom values mean zoomed out (tiles appear smaller)
+        // and larger zoom values mean zoomed in (tiles appear larger)
+        return TILE_SIZE * (1.0f / zoomLevel);
     }
 
     @Override
