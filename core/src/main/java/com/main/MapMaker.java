@@ -5,19 +5,14 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.*;
-import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class MapMaker implements Screen, InputProcessor {
 
@@ -109,14 +104,6 @@ public class MapMaker implements Screen, InputProcessor {
 
         this.map = new Map(MAP_WIDTH, MAP_HEIGHT);
         map.generateMap();
-    }
-
-    private void centerMapCamera() {
-        float mapCenterX = (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2 + (MAP_WIDTH * TILE_SIZE) / 2;
-        float mapCenterY = (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2 + (MAP_HEIGHT * TILE_SIZE) / 2;
-        mapCamera.position.set(mapCenterX, mapCenterY, 0);
-        mapCamera.zoom = zoomLevel;
-        mapCamera.update();
     }
 
 
@@ -857,8 +844,14 @@ public class MapMaker implements Screen, InputProcessor {
         int mouseX = Gdx.input.getX();
         int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
 
-        // Add info icon at the bottom
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 448, infoIcon, iconSize);
+        
+
+        boolean isInfoIconClicked = drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 448, infoIcon, iconSize);
+
+        if (isInfoIconClicked && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+            game.setScreen(new InfoScreen(game));
+        }
+
 
         // Existing icons (moved up to make space)
         drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 128, inspectIcon, iconSize);
@@ -868,27 +861,23 @@ public class MapMaker implements Screen, InputProcessor {
         drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 384, saveIcon, iconSize);
     }
 
-    private void drawAndHighlightIcon(int mouseX, int mouseY, int x, int y, Texture icon, int iconSize) {
-        // Highlight icon if mouse is over it
-        if (mouseX >= x && mouseX <= x + iconSize && mouseY >= y && mouseY <= y + iconSize) {
+    private boolean drawAndHighlightIcon(int mouseX, int mouseY, int x, int y, Texture icon, int iconSize) {
+        boolean isMouseOver = mouseX >= x && mouseX <= x + iconSize && mouseY >= y && mouseY <= y + iconSize;
+
+        if (isMouseOver) {
             shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-            shapeRenderer.setColor(Color.YELLOW);  // Highlight color (yellow border)
-            shapeRenderer.rect(x, y, iconSize, iconSize);  // Draw border
+            shapeRenderer.setColor(Color.YELLOW);
+            shapeRenderer.rect(x, y, iconSize, iconSize);
             shapeRenderer.end();
         }
 
         batch.begin();
         batch.draw(icon, x, y, iconSize, iconSize);
         batch.end();
+
+        return isMouseOver;
     }
 
-    private void fillBoard() {
-        for (int y = 0; y < MAP_HEIGHT; y++) {
-            for (int x = 0; x < MAP_WIDTH; x++) {
-                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
-            }
-        }
-    }
 
     private void drawTilePicker() {
         // Set up for UI rendering
@@ -1138,31 +1127,6 @@ public class MapMaker implements Screen, InputProcessor {
         return false;
     }
 
-    private Vector3 getMouseWorldPosition() {
-        Vector3 mousePos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
-        mapCamera.unproject(mousePos);
-        return mousePos;
-    }
-
-    private boolean isMouseOverMap(Vector3 worldPos) {
-        float mapStartX = (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2f;
-        float mapStartY = (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2f;
-        float mapEndX = mapStartX + MAP_WIDTH * TILE_SIZE;
-        float mapEndY = mapStartY + MAP_HEIGHT * TILE_SIZE;
-
-        return worldPos.x >= mapStartX && worldPos.x <= mapEndX &&
-            worldPos.y >= mapStartY && worldPos.y <= mapEndY;
-    }
-
-    private int[] worldToTileCoordinates(Vector3 worldPos) {
-        float mapStartX = (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2f;
-        float mapStartY = (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2f;
-
-        int tileX = (int)((worldPos.x - mapStartX) / TILE_SIZE);
-        int tileY = (int)((worldPos.y - mapStartY) / TILE_SIZE);
-
-        return new int[]{tileX, tileY};
-    }
 
     private boolean isClickInTilePicker(int screenX, int screenY) {
         int numTiles = getIncludedTerrains().size();
