@@ -19,8 +19,8 @@ public class MapMaker implements Screen, InputProcessor {
     private final Main game;
 
     private final int TILE_SIZE = 32; // 32
-    private final int MAP_WIDTH = 20; // 20
-    private final int MAP_HEIGHT = 20; // 20
+    private final int MAP_WIDTH = 500; // 20
+    private final int MAP_HEIGHT = 500; // 20
 
     private Texture cursor = new Texture("ui/cursor.png");
     private Texture fillIcon = new Texture("ui/fillmapIcon.png");
@@ -42,32 +42,11 @@ public class MapMaker implements Screen, InputProcessor {
     private BitmapFont font;
 
     private ShapeRenderer shapeRenderer;
-
-    // Main camera for UI elements
-    private OrthographicCamera uiCamera;
-    // Separate camera for the map
-    private OrthographicCamera mapCamera;
+    private CameraManager cameraManager;
 
     private String selectedTile = "P";  // Default selected tile
     private boolean inspect = false;
 
-    // Zoom variables
-    private float zoomLevel = 1.0f;
-    private final float MIN_ZOOM = 0.1f;
-    private final float MAX_ZOOM = 1.0f;
-    private final float ZOOM_SPEED = 0.1f;
-
-    // Zoom state tracking
-    private boolean zoomingIn = false;
-    private boolean zoomingOut = false;
-    private final float ZOOM_KEY_SPEED = 10.0f; // Faster zoom when holding keys
-
-
-    // Camera movement variables
-    private boolean movingUp, movingDown, movingLeft, movingRight;
-    private final float PAN_SPEED = 10f; // Adjust this value as needed
-    private float movedX = 0f;
-    private float movedY = 0f;
 
     private final float ZOOM_2D_THRESHOLD = 0.5f; // Zoom level where we switch to 3D
     private boolean is3DView = false;
@@ -81,25 +60,28 @@ public class MapMaker implements Screen, InputProcessor {
         batch = new SpriteBatch();
         font = new BitmapFont();
         shapeRenderer = new ShapeRenderer();
+        cameraManager = CameraManager.getInstance();
 
         // Set this class as the input processor
         Gdx.input.setInputProcessor(this);
 
         // Initialize cameras
-        uiCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        uiCamera.setToOrtho(false);
-
-        // Initialize map camera
-        mapCamera = new OrthographicCamera();
-        mapCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+//        uiCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+//        uiCamera.setToOrtho(false);
+//
+//        // Initialize map camera
+//        mapCamera = new OrthographicCamera();
+//        mapCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         // Center camera on map initially
-        mapCamera.position.set(
+
+        cameraManager.getMapCamera().position.set(
             (MAP_WIDTH * TILE_SIZE) / 2f,
             (MAP_HEIGHT * TILE_SIZE) / 2f,
             0
         );
-        mapCamera.update();
+
+        cameraManager.getMapCamera().update();
 
 
         this.map = new Map(MAP_WIDTH, MAP_HEIGHT);
@@ -114,30 +96,29 @@ public class MapMaker implements Screen, InputProcessor {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // View switching and camera handling remains the same
-        boolean shouldBe3D = zoomLevel < ZOOM_2D_THRESHOLD;
+        boolean shouldBe3D = cameraManager.getZoomLevel() < ZOOM_2D_THRESHOLD;
         if (shouldBe3D != is3DView) {
             is3DView = shouldBe3D;
             Gdx.app.log("MapMaker", "Switched to " + (is3DView ? "3D" : "2D") + " view");
         }
 
-        handleCameraMovement(delta);
-        updateCameraPosition();
-
-        if (zoomingIn) zoomLevel = Math.max(MIN_ZOOM, zoomLevel - ZOOM_SPEED * delta * ZOOM_KEY_SPEED);
-        if (zoomingOut) zoomLevel = Math.min(MAX_ZOOM, zoomLevel + ZOOM_SPEED * delta * ZOOM_KEY_SPEED);
+        // Updating camera
+        cameraManager.handleCameraMovement(delta);
+        cameraManager.updateCameraPosition();
+        cameraManager.updateCameraZoom(delta);
 
         // Map rendering
-        batch.setProjectionMatrix(mapCamera.combined);
+        batch.setProjectionMatrix(cameraManager.getMapCamera().combined);
         batch.begin();
         map.renderMap(TILE_SIZE, batch, is3DView);
         batch.end();
 
         // UI rendering
-        batch.setProjectionMatrix(uiCamera.combined);
-        shapeRenderer.setProjectionMatrix(uiCamera.combined);
+        batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
+        shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
         drawToolbar();
         drawTilePicker();  // Now drawn with UI camera
-        uiCamera.update();
+        cameraManager.getUiCamera().update();
 
         // Initialize tile coordinates outside the if block
         int gridX = -1;
@@ -146,7 +127,7 @@ public class MapMaker implements Screen, InputProcessor {
 
         // Mouse position handling
         Vector3 mouseWorldPos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
-        mapCamera.unproject(mouseWorldPos);
+        cameraManager.getMapCamera().unproject(mouseWorldPos);
 
         float mapStartX = (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2f;
         float mapStartY = (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2f;
@@ -162,7 +143,7 @@ public class MapMaker implements Screen, InputProcessor {
 
             if (mouseOverMap) {
                 // Draw cursor
-                batch.setProjectionMatrix(mapCamera.combined);
+                batch.setProjectionMatrix(cameraManager.getMapCamera().combined);
                 batch.begin();
                 float cursorSize = TILE_SIZE;
                 float cursorX = mapStartX + gridX * TILE_SIZE;
@@ -225,48 +206,14 @@ public class MapMaker implements Screen, InputProcessor {
         batch.end();
     }
 
-    private void handleCameraMovement(float delta) {
-        // Calculate movement speed adjusted for zoom (move faster when zoomed out)
 
-        if (mapCamera.position.x >= 0) {
-            if (movingLeft) movedX -= PAN_SPEED;
-        }
-        if (mapCamera.position.x <= MAP_WIDTH*TILE_SIZE*2) {
-            if (movingRight) movedX += PAN_SPEED;
-        }
-        if (mapCamera.position.y >= 0) {
-            if (movingDown) movedY -= PAN_SPEED;
-        }
-        if (mapCamera.position.y <= MAP_HEIGHT*TILE_SIZE*2) {
-            if (movingUp) movedY += PAN_SPEED;
-        }
-
-        mapCamera.update();
-    }
-
-
-    private void updateCameraPosition() {
-        // Calculate the center position adjusted for zoom
-        float centerX = Gdx.graphics.getWidth()/2f + movedX;
-        float centerY = Gdx.graphics.getHeight()/2f + movedY;
-
-        mapCamera.position.set(centerX, centerY, 0);
-        mapCamera.zoom = zoomLevel; // Make sure zoom is applied here
-        mapCamera.update();
-    }
 
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
-        // Mouse wheel zoom (inverted for natural feeling)
-        // Scroll UP (negative amountY) = ZOOM IN (decrease zoom level)
-        // Scroll DOWN (positive amountY) = ZOOM OUT (increase zoom level)
-        float zoomFactor = 1 + (amountY * ZOOM_SPEED); // Removed negative sign
-        zoomLevel *= zoomFactor;
-        zoomLevel = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoomLevel));
+        cameraManager.scrolled(amountX, amountY);
         return true;
     }
-
 
     private void reloadJson() {
         TerrainLoader.loadTerrains();
@@ -385,8 +332,6 @@ public class MapMaker implements Screen, InputProcessor {
             map.getTile(x, y).updateTerrain(newTerrain);
         }
     }
-
-
 
     private String determineTileType(boolean north, boolean east, boolean south, boolean west,
                                      boolean northeast, boolean northwest, boolean southeast, boolean southwest) {
@@ -786,7 +731,7 @@ public class MapMaker implements Screen, InputProcessor {
 
     private void drawDamageRadius(int mouseX, int mouseY) {
         // Radius of damage effect in tiles, scaled by zoom level
-        int radius = (int)(TILE_SIZE * (1.0f / zoomLevel));
+        int radius = (int)(TILE_SIZE * (1.0f / cameraManager.getZoomLevel()));
 
         // Convert mouse coordinates to map coordinates
         int gridX = (mouseX - (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2) / TILE_SIZE;
@@ -813,7 +758,7 @@ public class MapMaker implements Screen, InputProcessor {
     }
 
     private void applyDamageInRadius(int mouseX, int mouseY) {
-        int radius = (int)(TILE_SIZE * (1.0f / zoomLevel));  // Scaled radius
+        int radius = (int)(TILE_SIZE * (1.0f / cameraManager.getZoomLevel()));  // Scaled radius
 
         int gridX = (mouseX - (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2) / TILE_SIZE;
         int gridY = (mouseY - (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2) / TILE_SIZE;
@@ -844,7 +789,7 @@ public class MapMaker implements Screen, InputProcessor {
         int mouseX = Gdx.input.getX();
         int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
 
-        
+
 
         boolean isInfoIconClicked = drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 448, infoIcon, iconSize);
 
@@ -878,11 +823,10 @@ public class MapMaker implements Screen, InputProcessor {
         return isMouseOver;
     }
 
-
     private void drawTilePicker() {
         // Set up for UI rendering
-        batch.setProjectionMatrix(uiCamera.combined);
-        shapeRenderer.setProjectionMatrix(uiCamera.combined);
+        batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
+        shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
 
         TerrainManager terrainManager = TerrainManager.getInstance();
         List<Terrain> includedTerrains = new ArrayList<>();
@@ -972,15 +916,10 @@ public class MapMaker implements Screen, InputProcessor {
         return -1;
     }
 
-
     @Override
     public void resize(int width, int height) {
         // Update both cameras when screen is resized
-        uiCamera.setToOrtho(false, width, height);
-        uiCamera.update();
-
-        mapCamera.setToOrtho(false, width, height);
-        mapCamera.update();
+        cameraManager.resize(width, height);
     }
 
     @Override
@@ -998,34 +937,33 @@ public class MapMaker implements Screen, InputProcessor {
     @Override
     public boolean keyDown(int keycode) {
 
-
         // Movement keys
         switch (keycode) {
             case Input.Keys.UP:
             case Input.Keys.W:
-                movingUp = true;
+                cameraManager.setMovingUp(true);
                 return true;
             case Input.Keys.DOWN:
             case Input.Keys.S:
-                movingDown = true;
+                cameraManager.setMovingDown(true);
                 return true;
             case Input.Keys.LEFT:
             case Input.Keys.A:
-                movingLeft = true;
+                cameraManager.setMovingLeft(true);
                 return true;
             case Input.Keys.RIGHT:
             case Input.Keys.D:
-                movingRight = true;
+                cameraManager.setMovingRight(true);
                 return true;
         }
 
         // Track zoom key states
         if (keycode == Input.Keys.Z) {
-            zoomingIn = true;  // Z = zoom in
+            cameraManager.setZoomingIn(true);
             return true;
         }
         if (keycode == Input.Keys.X) {
-            zoomingOut = true;  // X = zoom out
+            cameraManager.setZoomingOut(true);
             return true;
         }
         return false;
@@ -1038,35 +976,35 @@ public class MapMaker implements Screen, InputProcessor {
         switch (keycode) {
             case Input.Keys.UP:
             case Input.Keys.W:
-                movingUp = false;
+                cameraManager.setMovingUp(false);
                 return true;
             case Input.Keys.DOWN:
             case Input.Keys.S:
-                movingDown = false;
+                cameraManager.setMovingDown(false);
                 return true;
             case Input.Keys.LEFT:
             case Input.Keys.A:
-                movingLeft = false;
+                cameraManager.setMovingLeft(false);
                 return true;
             case Input.Keys.RIGHT:
             case Input.Keys.D:
-                movingRight = false;
+                cameraManager.setMovingRight(false);
                 return true;
         }
 
         // Stop zooming when keys are released
         if (keycode == Input.Keys.Z) {
-            zoomingIn = false;
+            cameraManager.setZoomingIn(false);
             return true;
         }
         if (keycode == Input.Keys.X) {
-            zoomingOut = false;
+            cameraManager.setZoomingOut(false);
             return true;
         }
         return false;
     }
-    @Override public boolean keyTyped(char character) { return false; }
 
+    @Override public boolean keyTyped(char character) { return false; }
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
