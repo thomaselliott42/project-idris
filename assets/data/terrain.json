@@ -772,17 +772,6 @@
       "canBeDestroyed": false,
       "damagedTextures": [],
       "joinTexturePath": ["","","","","",""]
-    },
-    {
-      "id": "R",
-      "excludeTilePicker": true,
-      "terrainName": "Ruptured",
-      "texturePath": "earthquake.png",
-      "defense": 1.0,
-      "speed": 0.0,
-      "canBeDestroyed": false,
-      "damagedTextures": [],
-      "joinTexturePath": ["","","","","",""]
     }
   ]
 }

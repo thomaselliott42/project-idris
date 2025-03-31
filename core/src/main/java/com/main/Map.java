@@ -3,6 +3,8 @@ package com.main;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 import java.util.Random;
 
@@ -11,13 +13,14 @@ public class Map {
     private final int MAP_WIDTH;
     private final int MAP_HEIGHT;
     private Tile[][] map;
+    private TextureAtlas atlas;
+
 
     public Map(int width, int height) {
         this.MAP_WIDTH = width;
         this.MAP_HEIGHT = height;
 
         this.map = new Tile[MAP_HEIGHT][MAP_WIDTH];
-
     }
 
 
@@ -46,12 +49,94 @@ public class Map {
         return map[y][x];
     }
 
-    public void renderMap(int TILE_SIZE, Batch batch) {
+    public void renderMap(int TILE_SIZE, Batch batch, boolean is3DView, int startX, int startY, int endX, int endY, int adjustedZoom) {
         int screenWidth = Gdx.graphics.getWidth();
         int screenHeight = Gdx.graphics.getHeight();
         int offsetX = (screenWidth - MAP_WIDTH * TILE_SIZE) / 2;
         int offsetY = (screenHeight - MAP_HEIGHT * TILE_SIZE) / 2;
 
+
+        if (is3DView) {
+            render3DMap(TILE_SIZE, batch, offsetX, offsetY);
+        } else {
+            render2DMap(TILE_SIZE, batch, offsetX, offsetY, startX, startY, endX, endY, adjustedZoom);
+        }
+
+    }
+
+    public void render2DMap(int TILE_SIZE, Batch batch, int offsetX, int offsetY, int startX, int startY, int endX, int endY, int adjustedZoom) {
+
+        // Render non-mountain tiles first
+        for (int y = startY; y <= endY; y++) {
+            for (int x = startX; x <= endX; x++) {
+                if (x < 0 || y < 0 || x >= MAP_WIDTH || y >= MAP_HEIGHT) {
+                    continue; // Skip if out of bounds
+                }
+
+                Tile tile = getTile(x, y);
+                if (tile == null) {
+                    continue; // Skip if tile is null
+                }
+
+                String terrainId = tile.getTerrain().getId();
+                float drawX = x * TILE_SIZE + offsetX;
+                float drawY = y * TILE_SIZE + offsetY;
+
+                if (!terrainId.startsWith("M")) {
+                    TextureRegion texture = null;
+                    if (terrainId.startsWith("F")) {
+                        if (texture != null) {
+                            batch.draw(AtlasManager.getInstance().getTexture(terrainId), drawX, drawY, TILE_SIZE, TILE_SIZE);
+                        }
+                        if (texture != null) {
+                            batch.draw(AtlasManager.getInstance().getTexture(terrainId), drawX, drawY, TILE_SIZE, TILE_SIZE);
+                        }
+                    } else if (terrainId.startsWith("S")) {
+                        Texture cT = checkSurroundingBaseTerrain(tile, x, y);
+                        batch.draw(cT, drawX, drawY, TILE_SIZE, TILE_SIZE);
+                    } else {
+                        batch.draw(AtlasManager.getInstance().getTexture(terrainId), drawX, drawY, TILE_SIZE, TILE_SIZE);
+                    }
+                }
+            }
+        }
+
+// Render mountain tiles and buildings from bottom-right to top-left
+        for (int y = endY; y >= startY; y--) {
+            for (int x = endX; x >= startX; x--) {
+                if (x < 0 || y < 0 || x >= MAP_WIDTH || y >= MAP_HEIGHT) {
+                    continue; // Skip if out of bounds
+                }
+
+                Tile tile = getTile(x, y);
+                if (tile == null) {
+                    continue; // Skip if tile is null
+                }
+
+                String terrainId = tile.getTerrain().getId();
+                float drawX = x * TILE_SIZE + offsetX;
+                float drawY = y * TILE_SIZE + offsetY;
+
+                if (terrainId.startsWith("M")) {
+                    TextureRegion newTexture = atlas.findRegion(terrainId.endsWith("P") ? "plain" : terrainId.endsWith("D") ? "desert" : null);
+                    if (newTexture != null) {
+                        batch.draw(newTexture, drawX, drawY, TILE_SIZE, TILE_SIZE);
+                    }
+
+                    batch.draw(AtlasManager.getInstance().getTexture(terrainId), drawX, drawY, TILE_SIZE, tile.getTerrainTexture().getHeight() * (TILE_SIZE / 16f));
+
+                }
+
+                if (terrainId.equals("SS") && tile.getBaseType().equals("Desert")) {
+                    batch.draw(tile.getBaseTerrainTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
+                    batch.draw(tile.getTerrainTexture(), drawX, drawY, TILE_SIZE, tile.getTerrainTexture().getHeight() * (TILE_SIZE / 16f));
+                }
+            }
+        }
+
+    }
+
+    public void render3DMap(int TILE_SIZE, Batch batch, int offsetX, int offsetY) {
         // Render non-mountain tiles first
         for (int y = 0; y < MAP_HEIGHT; y++) {
             for (int x = 0; x < MAP_WIDTH; x++) {
@@ -123,7 +208,7 @@ public class Map {
                     return tile.getTerrainTexture();
                 }
             }else if(!tile.getTerrainBaseType().equals(lBT)){
-               tile.setTerrainBaseType(lBT);
+                tile.setTerrainBaseType(lBT);
             }
         }
         return tile.getTerrainTexture();

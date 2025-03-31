@@ -81,7 +81,7 @@ public class InfoScreen implements Screen {
 
         // Return to map maker on any click
         if (Gdx.input.isButtonJustPressed(com.badlogic.gdx.Input.Buttons.LEFT)) {
-            game.setScreen(new MapMaker(game)); // Pass game instance to MapMaker
+           // game.setScreen(new MapMaker(game)); // Pass game instance to MapMaker
         }
     }
 

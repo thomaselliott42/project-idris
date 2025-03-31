@@ -23,7 +23,7 @@ public class LoadingScreen implements Screen {
     private Rectangle loadingBarBounds;
 
     private float progress = 0;
-    private final float LOAD_TIME = 3f;
+    private final float LOAD_TIME = 0.5f;
 
     public LoadingScreen(Main game) {
         this.game = game;
