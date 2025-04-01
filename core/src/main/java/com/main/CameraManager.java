@@ -94,7 +94,6 @@ public class CameraManager {
         mapCamera.update();
     }
 
-
     public void updateCameraPosition() {
         float centerX = mapViewport.getWorldWidth() / 2f + movedX;
         float centerY = mapViewport.getWorldHeight() / 2f + movedY;
