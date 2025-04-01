@@ -7,10 +7,9 @@ import java.util.List;
 public class Terrain implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String id;
+    private String textureId;
     private String terrainName;
     private boolean excludeTilePicker;
-    private transient List<Texture> texture; // Marked as transient since Texture isn't serializable
     private float defense;
     private float speed;
     private boolean canBeDestroyed;
@@ -18,11 +17,10 @@ public class Terrain implements Serializable {
     private transient List<Texture> joinigTextures;
 
 
-    public Terrain(String id, String terrainName, boolean excludeTilePicker, List<Texture> texture, float defense, float speed, boolean canBeDestroyed, List<Texture> damagedTextures, List<Texture> joinigTextures) {
-        this.id = id;
+    public Terrain(String id, String terrainName, boolean excludeTilePicker, float defense, float speed, boolean canBeDestroyed, List<Texture> damagedTextures, List<Texture> joinigTextures) {
+        this.textureId = id;
         this.terrainName = terrainName;
         this.excludeTilePicker = excludeTilePicker;
-        this.texture = texture;
         this.defense = defense;
         this.speed = speed;
         this.canBeDestroyed = canBeDestroyed;
@@ -30,8 +28,8 @@ public class Terrain implements Serializable {
         this.joinigTextures = joinigTextures;
     }
 
-    public String getId() {
-        return id;
+    public String getTextureId() {
+        return textureId;
     }
 
     public boolean isExcludeTilePicker() {
@@ -41,11 +39,6 @@ public class Terrain implements Serializable {
     public String getTerrainName() {
         return terrainName;
     }
-
-    public List<Texture> getTexture() {
-        return texture;
-    }
-
 
     public float getDefense() {
         return defense;
@@ -78,6 +71,6 @@ public class Terrain implements Serializable {
     @Override
     public String toString() {
         return String.format("Terrain{id='%s', name='%s', defense=%.1f, speed=%.1f}",
-            id, terrainName, defense, speed);
+            textureId, terrainName, defense, speed);
     }
 }

@@ -20,8 +20,8 @@ public class TerrainManager {
         return instance;
     }
 
-    public void addTerrain(String id, String terrainName, boolean excludeTilePicker, List<Texture> texture, float defense, float speed, boolean canBeDestroyed, List<Texture> damagedTextures, List<Texture> joinigTextures) {
-        terrains.put(id, new Terrain(id, terrainName, excludeTilePicker, texture, defense, speed,canBeDestroyed, damagedTextures, joinigTextures));
+    public void addTerrain(String id, String terrainName, boolean excludeTilePicker, float defense, float speed, boolean canBeDestroyed, List<Texture> damagedTextures, List<Texture> joinigTextures) {
+        terrains.put(id, new Terrain(id, terrainName, excludeTilePicker, defense, speed,canBeDestroyed, damagedTextures, joinigTextures));
     }
 
     public Terrain[] getTerrains() {

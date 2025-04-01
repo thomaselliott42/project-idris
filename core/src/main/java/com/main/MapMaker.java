@@ -7,6 +7,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 
@@ -19,19 +20,22 @@ public class MapMaker implements Screen, InputProcessor {
     private final Main game;
 
     private final int TILE_SIZE = 32; // 32
-    private final int MAP_WIDTH = 500; // 20
-    private final int MAP_HEIGHT = 500; // 20
+    private final int MAP_WIDTH = 100; // 20
+    private final int MAP_HEIGHT = 100; // 20
 
-    private Texture cursor = new Texture("ui/cursor.png");
-    private Texture fillIcon = new Texture("ui/fillmapIcon.png");
-    private Texture reloadIcon = new Texture("ui/reloadIcon.png");
-    private Texture saveIcon = new Texture("ui/saveIcon.png");
-    private Texture inspectIcon = new Texture("ui/inspectIcon.png");
-    private Texture infoIcon = new Texture("ui/infoIcon.png");
+    private final TextureRegion cursor = AtlasManager.getInstance().getMapUItexture("cursor");;
+    private final TextureRegion fillIcon = AtlasManager.getInstance().getMapUItexture("fillmapIcon");;
+    private final TextureRegion reloadIcon = AtlasManager.getInstance().getMapUItexture("reloadIcon");;
+    private final TextureRegion saveIcon = AtlasManager.getInstance().getMapUItexture("saveIcon");;
+    private final TextureRegion inspectIcon = AtlasManager.getInstance().getMapUItexture("inspectIcon");;
+    private final TextureRegion grabIcon = AtlasManager.getInstance().getMapUItexture("grabIcon");;
+    private final TextureRegion damageIcon = AtlasManager.getInstance().getMapUItexture("damageIcon");
+    private final TextureRegion damageRadius = AtlasManager.getInstance().getMapUItexture("damageRadius");;
 
-    private Texture damageIcon = new Texture("ui/damageIcon.png");
-    private Texture damageRadius = new Texture("ui/damageRadius.png");
 
+    Cursor grabCursor;
+
+    private boolean isGrabbing = false;
 
     private final int TILE_PICKER_HEIGHT = 64; // Height of the tile picker
     private boolean isPlacing = true;
@@ -47,9 +51,14 @@ public class MapMaker implements Screen, InputProcessor {
     private String selectedTile = "P";  // Default selected tile
     private boolean inspect = false;
 
-
     private final float ZOOM_2D_THRESHOLD = 0.5f; // Zoom level where we switch to 3D
     private boolean is3DView = false;
+    private boolean mouseOverMap = false;
+
+    // debug
+    private long lastMemoryUpdateTime = 0;
+    private long usedMemory = 0;
+    private long maxMemory = Runtime.getRuntime().maxMemory() / 1024 / 1024;
 
     public MapMaker(Main game) {
         this.game = game;
@@ -62,25 +71,20 @@ public class MapMaker implements Screen, InputProcessor {
         shapeRenderer = new ShapeRenderer();
         cameraManager = CameraManager.getInstance();
 
+        // Cursor Sprite
+       createGrabCursor();
+
         // Set this class as the input processor
         Gdx.input.setInputProcessor(this);
 
-        // Initialize cameras
-//        uiCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-//        uiCamera.setToOrtho(false);
-//
-//        // Initialize map camera
-//        mapCamera = new OrthographicCamera();
-//        mapCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
 
         // Center camera on map initially
-
         cameraManager.getMapCamera().position.set(
             (MAP_WIDTH * TILE_SIZE) / 2f,
             (MAP_HEIGHT * TILE_SIZE) / 2f,
             0
         );
-
         cameraManager.getMapCamera().update();
 
 
@@ -88,6 +92,21 @@ public class MapMaker implements Screen, InputProcessor {
         map.generateMap();
     }
 
+    public void createGrabCursor() {
+        // Get the texture and ensure its data is ready
+        Texture texture = grabIcon.getTexture();
+
+        if (!texture.getTextureData().isPrepared()) {
+            texture.getTextureData().prepare();
+        }
+
+        // Create a Pixmap from the texture
+        Pixmap pixmap = texture.getTextureData().consumePixmap();
+        grabCursor = Gdx.graphics.newCursor(pixmap, 0, 0);
+
+        // Dispose of the Pixmap to prevent memory leaks
+        pixmap.dispose();
+    }
 
 
     @Override
@@ -103,21 +122,21 @@ public class MapMaker implements Screen, InputProcessor {
         }
 
         // Updating camera
-        cameraManager.handleCameraMovement(delta);
+        cameraManager.handleCameraMovement();
         cameraManager.updateCameraPosition();
         cameraManager.updateCameraZoom(delta);
 
         // Map rendering
-        batch.setProjectionMatrix(cameraManager.getMapCamera().combined);
-        batch.begin();
-        map.renderMap(TILE_SIZE, batch, is3DView);
-        batch.end();
+        renderMap();
+
 
         // UI rendering
         batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
         shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
         drawToolbar();
         drawTilePicker();  // Now drawn with UI camera
+
+
         cameraManager.getUiCamera().update();
 
         // Initialize tile coordinates outside the if block
@@ -142,17 +161,20 @@ public class MapMaker implements Screen, InputProcessor {
             mouseOverMap = map.checkBounds(gridX, gridY);
 
             if (mouseOverMap) {
-                // Draw cursor
-                batch.setProjectionMatrix(cameraManager.getMapCamera().combined);
-                batch.begin();
-                float cursorSize = TILE_SIZE;
-                float cursorX = mapStartX + gridX * TILE_SIZE;
-                float cursorY = mapStartY + gridY * TILE_SIZE;
-                batch.draw(cursor,
-                    cursorX - (cursorSize - TILE_SIZE)/2,
-                    cursorY - (cursorSize - TILE_SIZE)/2,
-                    cursorSize, cursorSize);
-                batch.end();
+                if(!isGrabbing){
+                    // Draw cursor
+                    batch.setProjectionMatrix(cameraManager.getMapCamera().combined);
+                    batch.begin();
+                    float cursorSize = TILE_SIZE;
+                    float cursorX = mapStartX + gridX * TILE_SIZE;
+                    float cursorY = mapStartY + gridY * TILE_SIZE;
+                    batch.draw(cursor,
+                        cursorX - (cursorSize - TILE_SIZE)/2,
+                        cursorY - (cursorSize - TILE_SIZE)/2,
+                        cursorSize, cursorSize);
+                    batch.end();
+                }
+
 
                 // Handle continuous placement while dragging
                 if ((Gdx.input.isButtonPressed(Input.Buttons.LEFT) && isDraggingToPlace && isPlacing)) {
@@ -164,16 +186,23 @@ public class MapMaker implements Screen, InputProcessor {
                             smartPlaceSea(gridX, gridY);
                         } else {
                             map.getTile(gridX, gridY).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
-                            forceUpdateAllSeaTiles();
+                            forceUpdateAllSeaTiles(gridX, gridY);
                         }
-                        map.printMapToTerminal();
+                        //map.printMapToTerminal();
                     }
+                }else if(isGrabbing){
+
+
+                } else if(!isPlacing){
+                    int mouseX = Gdx.input.getX();
+                    int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+                    if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                        applyDamageInRadius(mouseX, mouseY);
+                    }
+                    drawDamageRadius(mouseX, mouseY);
                 }
 
-                // Handle damage radius when not placing
-                if (!isPlacing) {
-                    drawDamageRadius(gridX, gridY);
-                }
+
             }
         }
 
@@ -181,39 +210,142 @@ public class MapMaker implements Screen, InputProcessor {
         int mouseX = Gdx.input.getX();
         int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
 
+        // Handle toolbar clicks (UI camera coordinates)
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             if (mouseX >= 0 && mouseX <= 64) {
-                // ... existing toolbar click handling ...
+                if (mouseY >= Gdx.graphics.getHeight() - 128 && mouseY <= Gdx.graphics.getHeight() - 64) {
+                    isGrabbing = !isGrabbing;
+
+                    if(isGrabbing){
+                        Gdx.graphics.setCursor(grabCursor);
+
+                        isPlacing = false;
+                    }else{
+                        Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
+
+                        isPlacing = true;
+                    }
+                }
+                else if (mouseY >= Gdx.graphics.getHeight() - 192 && mouseY <= Gdx.graphics.getHeight() - 128) {
+                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
+                    isGrabbing = false;
+                    isPlacing = false;
+                }
+                else if (mouseY >= Gdx.graphics.getHeight() - 256 && mouseY <= Gdx.graphics.getHeight() - 192) {
+                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
+
+                    fillBoard();
+                }
+                else if (mouseY >= Gdx.graphics.getHeight() - 320 && mouseY <= Gdx.graphics.getHeight() - 256) {
+                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
+
+                    reloadJson();
+                }
+                else if (mouseY >= Gdx.graphics.getHeight() - 384 && mouseY <= Gdx.graphics.getHeight() - 320) {
+                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
+
+                    // Save Map
+                    fillBoard();
+                }
+                else if (mouseY >= Gdx.graphics.getHeight() - 448 && mouseY <= Gdx.graphics.getHeight() - 384) {
+                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
+
+                    inspect = !inspect;
+                }
             }
         }
 
-        // Draw tile picker and UI elements
-        drawTilePicker();
 
-        // Inspection info (now checks mouseOverMap)
-        if (inspect && mouseOverMap) {
-            batch.begin();
-            font.draw(batch, map.getTile(gridX, gridY).getTerrainId(), Gdx.graphics.getWidth() - 50, 40);
-            batch.end();
+
+
+        // Debug info
+        renderDebugInfo(gridX, gridY);
+
+    }
+
+    public void renderDebugInfo(int gridX, int gridY) {
+        long currentTime = System.currentTimeMillis();
+        mouseOverMap = map.checkBounds(gridX, gridY);
+
+        // **Update memory usage every 500ms instead of every frame**
+        if (currentTime - lastMemoryUpdateTime > 500) {
+            long totalMemory = Runtime.getRuntime().totalMemory();
+            long freeMemory = Runtime.getRuntime().freeMemory();
+            usedMemory = (totalMemory - freeMemory) / 1024 / 1024;
+            lastMemoryUpdateTime = currentTime;
         }
 
-        // Coordinate display (only shows valid coordinates)
+        // **Render debug background**
+        shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0, 0, 0, 0.5f); // Black with 50% transparency
+        shapeRenderer.rect(cameraManager.getUiCamera().viewportWidth - 225, 5, 225, 150);
+        shapeRenderer.end();
+
+
+        batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
         batch.begin();
-        if (mouseOverMap) {
-            font.draw(batch, gridY + "," + gridX, Gdx.graphics.getWidth() - 50, 20);
+
+        // **Use StringBuilder to reduce font.draw() calls**
+        StringBuilder debugText = new StringBuilder();
+
+        if (inspect && mouseOverMap) {
+            debugText.append("Tile: ").append(map.getTile(gridX, gridY).getTerrainId()).append("\n");
         }
-        font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(), Gdx.graphics.getWidth() - 150, 20);
+
+        if (mouseOverMap) {
+            debugText.append("Mouse: ").append(gridY).append(",").append(gridX).append("\n");
+        }
+
+        debugText.append("FPS: ").append(Gdx.graphics.getFramesPerSecond()).append("\n")
+            .append("Used Mem: ").append(usedMemory).append(" MB\n")
+            .append("Max Mem: ").append(maxMemory).append(" MB");
+
+        font.draw(batch, debugText.toString(), cameraManager.getUiCamera().viewportWidth - 220, 100);
+
         batch.end();
     }
 
+    public void renderMap(){
+        batch.setProjectionMatrix(cameraManager.getMapCamera().combined);
+        batch.begin();
+
+        float camX = cameraManager.getMapCamera().position.x;
+        float camY = cameraManager.getMapCamera().position.y;
+
+        // Get viewport dimensions (assuming an orthographic camera)
+        float viewportWidth = cameraManager.getMapCamera().viewportWidth * cameraManager.getMapCamera().zoom;
+        float viewportHeight = cameraManager.getMapCamera().viewportHeight * cameraManager.getMapCamera().zoom;
+        int offsetX = (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2;
+        int offsetY = (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2;
+
+        // Convert to tile indices (clamp values to avoid out-of-bounds errors)
+        int startX = Math.max(0, (int) ((camX - viewportWidth / 2 - offsetX) / TILE_SIZE));
+        int startY = Math.max(0, (int) ((camY - viewportHeight / 2 - offsetY) / TILE_SIZE));
+        int endX = Math.min(MAP_WIDTH - 1, (int) ((camX + viewportWidth / 2 - offsetX) / TILE_SIZE));
+        int endY = Math.min(MAP_HEIGHT - 1, (int) ((camY + viewportHeight / 2 - offsetY) / TILE_SIZE));
+
+        // Ensure these values are within valid bounds
+        startX = Math.max(0, startX);
+        startY = Math.max(0, startY);
+        endX = Math.min(MAP_WIDTH - 1, endX);
+        endY = Math.min(MAP_HEIGHT - 1, endY);
+
+        //Gdx.app.log("MapMaker", "StartX " + startX + " StartY " + startY + " EndX " + endX + " EndY " + endY);
 
 
-
-    @Override
-    public boolean scrolled(float amountX, float amountY) {
-        cameraManager.scrolled(amountX, amountY);
-        return true;
+        map.renderMap(TILE_SIZE, batch, is3DView, startX, startY, endX, endY);
+        batch.end();
     }
+
+    private void fillBoard() {
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            for (int x = 0; x < MAP_WIDTH; x++) {
+                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
+            }
+        }
+    }
+
 
     private void reloadJson() {
         TerrainLoader.loadTerrains();
@@ -221,7 +353,7 @@ public class MapMaker implements Screen, InputProcessor {
     }
 
     private void smartPlaceSea(int x, int y) {
-        if (!map.checkBounds(x, y) || map.getTile(x, y).getTerrain().getId().contains("S")) {
+        if (!map.checkBounds(x, y) || map.getTile(x, y).getTerrain().getTextureId().contains("S")) {
             return;
         }
 
@@ -229,15 +361,38 @@ public class MapMaker implements Screen, InputProcessor {
         map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain("SS"));
 
         // Immediately update all sea tiles on the map
-        forceUpdateAllSeaTiles();
+        forceUpdateAllSeaTiles(x, y);
     }
+
+    private void forceUpdateAllSeaTiles(int gridX, int gridY) {
+        List<int[]> seaTiles = new ArrayList<>();
+
+        int startX = Math.max(0, gridX - 5);
+        int endX = Math.min(MAP_WIDTH - 1, gridX + 5);
+        int startY = Math.max(0, gridY - 5);
+        int endY = Math.min(MAP_HEIGHT - 1, gridY + 5);
+
+        for (int y = startY; y <= endY; y++) {
+            for (int x = startX; x <= endX; x++) {
+                if (map.getTile(x, y).getTerrain().getTextureId().contains("S")) {
+                    seaTiles.add(new int[]{x, y});
+                }
+            }
+        }
+
+        // Update each sea tile
+        for (int[] pos : seaTiles) {
+            updateSeaTileGuaranteed(pos[0], pos[1]);
+        }
+    }
+
 
     private void forceUpdateAllSeaTiles() {
         // Create a copy of all sea tile positions
         List<int[]> seaTiles = new ArrayList<>();
         for (int y = 0; y < MAP_HEIGHT; y++) {
             for (int x = 0; x < MAP_WIDTH; x++) {
-                if (map.getTile(x, y).getTerrain().getId().contains("S")) {
+                if (map.getTile(x, y).getTerrain().getTextureId().contains("S")) {
                     seaTiles.add(new int[]{x, y});
                 }
             }
@@ -252,20 +407,20 @@ public class MapMaker implements Screen, InputProcessor {
     private void updateSeaTileGuaranteed(int x, int y) {
         // Safe neighbor checking with boundary verification
 
-        boolean north = (y < MAP_HEIGHT - 1) && map.getTile(x, y + 1).getTerrain().getId().contains("S");
-        boolean east = (x < MAP_WIDTH - 1) && map.getTile(x + 1, y).getTerrain().getId().contains("S");
-        boolean south = (y > 0) && map.getTile(x, y - 1).getTerrain().getId().contains("S");
-        boolean west = (x > 0) && map.getTile(x - 1, y).getTerrain().getId().contains("S");
+        boolean north = (y < MAP_HEIGHT - 1) && map.getTile(x, y + 1).getTerrain().getTextureId().contains("S");
+        boolean east = (x < MAP_WIDTH - 1) && map.getTile(x + 1, y).getTerrain().getTextureId().contains("S");
+        boolean south = (y > 0) && map.getTile(x, y - 1).getTerrain().getTextureId().contains("S");
+        boolean west = (x > 0) && map.getTile(x - 1, y).getTerrain().getTextureId().contains("S");
 
         // Diagonal checks - MUST validate BOTH x and y bounds!
         boolean northeast = (x < MAP_WIDTH - 1) && (y < MAP_HEIGHT - 1) &&
-            map.getTile(x + 1, y + 1).getTerrain().getId().contains("S");
+            map.getTile(x + 1, y + 1).getTerrain().getTextureId().contains("S");
         boolean northwest = (x > 0) && (y < MAP_HEIGHT - 1) &&
-            map.getTile(x - 1, y + 1).getTerrain().getId().contains("S");
+            map.getTile(x - 1, y + 1).getTerrain().getTextureId().contains("S");
         boolean southeast = (x < MAP_WIDTH - 1) && (y > 0) &&
-            map.getTile(x + 1, y - 1).getTerrain().getId().contains("S");
+            map.getTile(x + 1, y - 1).getTerrain().getTextureId().contains("S");
         boolean southwest = (x > 0) && (y > 0) &&
-            map.getTile(x - 1, y - 1).getTerrain().getId().contains("S");
+            map.getTile(x - 1, y - 1).getTerrain().getTextureId().contains("S");
 
 
         // checking to see if the tile is at the edges of the terrain
@@ -728,6 +883,15 @@ public class MapMaker implements Screen, InputProcessor {
 
         return returnString;
     }
+    // Helper method to get the index of the selected tile
+    private int getSelectedTileIndex(String selectedTileId, List<Terrain> terrains) {
+        for (int i = 0; i < terrains.size(); i++) {
+            if (terrains.get(i).getTextureId().equals(selectedTileId)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     private void drawDamageRadius(int mouseX, int mouseY) {
         // Radius of damage effect in tiles, scaled by zoom level
@@ -791,22 +955,22 @@ public class MapMaker implements Screen, InputProcessor {
 
 
 
-        boolean isInfoIconClicked = drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 448, infoIcon, iconSize);
 
-        if (isInfoIconClicked && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-            game.setScreen(new InfoScreen(game));
-        }
+//        if (isInfoIconClicked && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+//            game.setScreen(new InfoScreen(game));
+//        }
 
 
         // Existing icons (moved up to make space)
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 128, inspectIcon, iconSize);
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 128, grabIcon, iconSize);
         drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 192, damageIcon, iconSize);
         drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 256, fillIcon, iconSize);
         drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 320, reloadIcon, iconSize);
         drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 384, saveIcon, iconSize);
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 448, inspectIcon, iconSize);
     }
 
-    private boolean drawAndHighlightIcon(int mouseX, int mouseY, int x, int y, Texture icon, int iconSize) {
+    private boolean drawAndHighlightIcon(int mouseX, int mouseY, int x, int y, TextureRegion icon, int iconSize) {
         boolean isMouseOver = mouseX >= x && mouseX <= x + iconSize && mouseY >= y && mouseY <= y + iconSize;
 
         if (isMouseOver) {
@@ -859,7 +1023,7 @@ public class MapMaker implements Screen, InputProcessor {
         int tilePickerContentStartY = startY + 10; // Add 10px padding from bottom
         for (int i = 0; i < numTiles; i++) {
             Terrain terrain = includedTerrains.get(i);
-            batch.draw(terrain.getTexture().get(0),
+            batch.draw(AtlasManager.getInstance().getTexture(terrain.getTextureId()),
                 startX + i * TILE_SIZE + 10, // Add 10px padding from left
                 tilePickerContentStartY,
                 TILE_SIZE,
@@ -897,7 +1061,9 @@ public class MapMaker implements Screen, InputProcessor {
                 if (clickedTerrainIndex >= 0 && clickedTerrainIndex < numTiles) {
                     Terrain clickedTerrain = includedTerrains.get(clickedTerrainIndex);
                     isPlacing = true;
-                    selectedTile = clickedTerrain.getId();
+                    isGrabbing = false;
+                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
+                    selectedTile = clickedTerrain.getTextureId();
 
                     // Optional: Play a sound or provide feedback
                     Gdx.app.log("TilePicker", "Selected tile: " + selectedTile);
@@ -906,20 +1072,16 @@ public class MapMaker implements Screen, InputProcessor {
         }
     }
 
-    // Helper method to get the index of the selected tile
-    private int getSelectedTileIndex(String selectedTileId, List<Terrain> terrains) {
-        for (int i = 0; i < terrains.size(); i++) {
-            if (terrains.get(i).getId().equals(selectedTileId)) {
-                return i;
-            }
-        }
-        return -1;
-    }
 
     @Override
+    public boolean scrolled(float amountX, float amountY) {
+        cameraManager.scrolled(amountX, amountY);
+        return true;
+    }
+    @Override
     public void resize(int width, int height) {
-        // Update both cameras when screen is resized
         cameraManager.resize(width, height);
+
     }
 
     @Override
@@ -1024,7 +1186,7 @@ public class MapMaker implements Screen, InputProcessor {
                 if (clickedTerrainIndex >= 0 && clickedTerrainIndex < numTiles) {
                     Terrain clickedTerrain = includedTerrains.get(clickedTerrainIndex);
                     isPlacing = true;
-                    selectedTile = clickedTerrain.getId();
+                    selectedTile = clickedTerrain.getTextureId();
                     Gdx.app.log("TilePicker", "Selected tile: " + selectedTile);
                 }
                 return true; // Consume the event
@@ -1097,14 +1259,12 @@ public class MapMaker implements Screen, InputProcessor {
 
         batch.dispose();
         shapeRenderer.dispose();
-        cursor.dispose();
-        fillIcon.dispose();
-        reloadIcon.dispose();
-        saveIcon.dispose();
-        inspectIcon.dispose();
-        infoIcon.dispose();
-        damageIcon.dispose();
-        damageRadius.dispose();
+        if (grabCursor != null) {
+            grabCursor.dispose(); // Dispose of the cursor properly
+        }
+
+        AtlasManager.getInstance().dispose();
         font.dispose();
+        map.dispose();
     }
 }
