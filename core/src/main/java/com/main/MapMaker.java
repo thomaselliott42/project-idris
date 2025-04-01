@@ -122,7 +122,7 @@ public class MapMaker implements Screen, InputProcessor {
         }
 
         // Updating camera
-        cameraManager.handleCameraMovement(delta);
+        cameraManager.handleCameraMovement();
         cameraManager.updateCameraPosition();
         cameraManager.updateCameraZoom(delta);
 

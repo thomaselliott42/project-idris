@@ -85,21 +85,15 @@ public class CameraManager {
         uiCamera.update();
     }
 
-    public void handleCameraMovement(float delta) {
-        if (mapCamera.position.x >= 0) {
-            if (movingLeft) movedX -= PAN_SPEED;
-        }
-        if (mapCamera.position.x <= MAP_WIDTH * TILE_SIZE * 2) {
-            if (movingRight) movedX += PAN_SPEED;
-        }
-        if (mapCamera.position.y >= 0) {
-            if (movingDown) movedY -= PAN_SPEED;
-        }
-        if (mapCamera.position.y <= MAP_HEIGHT * TILE_SIZE * 2) {
-            if (movingUp) movedY += PAN_SPEED;
-        }
+    public void handleCameraMovement() {
+        if (movingLeft) movedX -= PAN_SPEED;
+        if (movingRight) movedX += PAN_SPEED;
+        if (movingDown) movedY -= PAN_SPEED;
+        if (movingUp) movedY += PAN_SPEED;
+
         mapCamera.update();
     }
+
 
     public void updateCameraPosition() {
         float centerX = mapViewport.getWorldWidth() / 2f + movedX;
