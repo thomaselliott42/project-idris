@@ -1128,6 +1128,13 @@ public class MapMaker implements Screen, InputProcessor {
             cameraManager.setZoomingOut(true);
             return true;
         }
+
+        // Sprinting key
+        if (keycode == Input.Keys.SHIFT_LEFT || keycode == Input.Keys.SHIFT_RIGHT) {
+            cameraManager.setSprinting(true); // Enable sprinting
+            return true;
+        }
+
         return false;
     }
 
@@ -1163,6 +1170,13 @@ public class MapMaker implements Screen, InputProcessor {
             cameraManager.setZoomingOut(false);
             return true;
         }
+
+        // Sprinting key
+        if (keycode == Input.Keys.SHIFT_LEFT || keycode == Input.Keys.SHIFT_RIGHT) {
+            cameraManager.setSprinting(false); // Disable sprinting
+            return true;
+        }
+
         return false;
     }
 

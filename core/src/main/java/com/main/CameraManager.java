@@ -18,8 +18,8 @@ public class CameraManager {
     private OrthographicCamera uiCamera;
     private Viewport uiViewport;
 
-    private static final float VIRTUAL_WIDTH = 1920;
-    private static final float VIRTUAL_HEIGHT = 1080;
+    private static final float VIRTUAL_WIDTH = Gdx.graphics.getWidth(); // Dynamically fetch screen width
+    private static final float VIRTUAL_HEIGHT = Gdx.graphics.getHeight(); // Dynamically fetch screen height
 
     private float zoomLevel = 1.0f;
     private final float MIN_ZOOM = 0.1f;
@@ -34,6 +34,8 @@ public class CameraManager {
     private final float PAN_SPEED = 10f;
     private float movedX = 0f;
     private float movedY = 0f;
+
+    private boolean sprinting = false; // New field to track sprinting
 
     private CameraManager() {
         mapCamera = new OrthographicCamera();
@@ -86,18 +88,22 @@ public class CameraManager {
     }
 
     public void handleCameraMovement() {
-        if (movingLeft) movedX -= PAN_SPEED;
-        if (movingRight) movedX += PAN_SPEED;
-        if (movingDown) movedY -= PAN_SPEED;
-        if (movingUp) movedY += PAN_SPEED;
+        float currentPanSpeed = sprinting ? PAN_SPEED * 2 : PAN_SPEED; // Double speed if sprinting
+
+        if (movingLeft) movedX -= currentPanSpeed;
+        if (movingRight) movedX += currentPanSpeed;
+        if (movingDown) movedY -= currentPanSpeed;
+        if (movingUp) movedY += currentPanSpeed;
 
         mapCamera.update();
     }
 
     public void updateCameraPosition() {
+        // Calculate the camera's position
         float centerX = mapViewport.getWorldWidth() / 2f + movedX;
         float centerY = mapViewport.getWorldHeight() / 2f + movedY;
 
+        // Set the camera's position and zoom
         mapCamera.position.set(centerX, centerY, 0);
         mapCamera.zoom = zoomLevel;
         mapCamera.update();
@@ -109,9 +115,15 @@ public class CameraManager {
     }
 
     public void scrolled(float amountX, float amountY) {
+        // Adjust zoom level based on scroll input
         float zoomFactor = 1 + (amountY * ZOOM_SPEED);
-        zoomLevel *= zoomFactor;
-        zoomLevel = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoomLevel));
+        float newZoomLevel = zoomLevel * zoomFactor;
+
+        // Clamp the zoom level to the allowed range
+        zoomLevel = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoomLevel));
+
+        // Update the camera to reflect the new zoom level
+        updateCameraPosition();
     }
 
     public float getZoomLevel() {
@@ -201,5 +213,13 @@ public class CameraManager {
 
     public void setMovedY(float movedY) {
         this.movedY = movedY;
+    }
+
+    public void setSprinting(boolean sprinting) {
+        this.sprinting = sprinting;
+    }
+
+    public boolean isSprinting() {
+        return sprinting;
     }
 }
