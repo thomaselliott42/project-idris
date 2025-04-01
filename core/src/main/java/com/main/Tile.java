@@ -19,14 +19,14 @@ public class Tile {
     private float damageSwitchPercentage = 0.0f;
     private int damagedStateIndex = -1;
     private boolean fire= false;
-    private String terrainBaseType = "Plain";
+    private String terrainBaseType = "P";
 
     public Tile(Terrain terrain, Unit unit, Building building) {
         this.terrain = terrain;
         this.unit = unit;
         this.building = building;
 
-        Gdx.app.log("Tile", "Created tile " + terrain.getId() + " " + unit + " " + building);
+        //Gdx.app.log("Tile", "Created tile " + terrain.getTextureId() + " " + unit + " " + building);
     }
 
     public void updateTerrain(Terrain terrain) {
@@ -38,13 +38,13 @@ public class Tile {
     }
 
     private void updateTerrainBaseType(){
-        if(!terrain.getId().contains("S")){
-            if(terrain.getId().contains("P")){
-                terrainBaseType = "Plain";
-            }else if(terrain.getId().contains("D")){
-                terrainBaseType = "Desert";
-            }else if(terrain.getId().contains("W")){
-                terrainBaseType = "Winter";
+        if(!terrain.getTextureId().contains("S")){
+            if(terrain.getTextureId().contains("P")){
+                terrainBaseType = "P";
+            }else if(terrain.getTextureId().contains("D")){
+                terrainBaseType = "D";
+            }else if(terrain.getTextureId().contains("W")){
+                terrainBaseType = "W";
             }
         }
     }
@@ -97,20 +97,10 @@ public class Tile {
         return terrain;
     }
 
-    public String getBaseType() {
+    public String getBaseTerrainId() {
         return terrainBaseType;
     }
 
-    public Texture getBaseTerrainTexture(){
-        if(terrainBaseType.equals("Plain")){
-            return TerrainManager.getInstance().getTerrain("P").getTexture().get(0);
-        }else if(terrainBaseType.equals("Desert")){
-            return TerrainManager.getInstance().getTerrain("D").getTexture().get(0);
-        }else if(terrainBaseType.equals("Winter")){
-            return TerrainManager.getInstance().getTerrain("W").getTexture().get(0);
-        }
-        return null;
-    }
 
     public void setTerrainBaseType(String base) {
         terrainBaseType = base;
@@ -120,26 +110,26 @@ public class Tile {
         return terrainBaseType;
     }
     public String getTerrainId(){
-        return terrain.getId();
+        return terrain.getTextureId();
     }
 
-    public Texture getTerrainTexture() {
-        if(terrain.canBeDestroyed() && damagedStateIndex >= 0){
-            return terrain.getDamagedTextures().get(damagedStateIndex);
-        }else{
-            if(terrain.getTexture().size() == 1){
-                return terrain.getTexture().get(0);
-            }else{
-                if(terrainBaseType.equals("Plain")){
-                    return terrain.getTexture().get(0);
-                }else if(terrainBaseType.equals("Desert")){
-                    return terrain.getTexture().get(1);
-                }else if(terrainBaseType.equals("Winter") && terrain.getTexture().size() == 3){
-                    return terrain.getTexture().get(2);
-                }
-            }
-        }
-        return terrain.getTexture().get(0);
-
-    }
+//    public Texture getTerrainTexture() {
+//        if(terrain.canBeDestroyed() && damagedStateIndex >= 0){
+//            return terrain.getDamagedTextures().get(damagedStateIndex);
+//        }else{
+//            if(terrain.getTexture().size() == 1){
+//                return terrain.getTexture().get(0);
+//            }else{
+//                if(terrainBaseType.equals("Plain")){
+//                    return terrain.getTexture().get(0);
+//                }else if(terrainBaseType.equals("Desert")){
+//                    return terrain.getTexture().get(1);
+//                }else if(terrainBaseType.equals("Winter") && terrain.getTexture().size() == 3){
+//                    return terrain.getTexture().get(2);
+//                }
+//            }
+//        }
+//        return terrain.getTexture().get(0);
+//
+//    }
 }

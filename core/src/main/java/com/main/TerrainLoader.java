@@ -21,7 +21,7 @@ public class TerrainLoader {
             TerrainManager terrainManager = TerrainManager.getInstance();
 
             for (TerrainData terrainData : data.terrains) {
-                List<Texture> textures = loadTextures(terrainData.texturePath);
+
                 List<Texture> damagedTextures = loadDamagedTextures(terrainData);
                 List<Texture> joinigTextures = loadJoinigTextures(terrainData);
 
@@ -33,7 +33,6 @@ public class TerrainLoader {
                     terrainData.id,
                     terrainData.terrainName,
                     terrainData.excludeTilePicker,
-                    textures,
                     terrainData.defense,
                     terrainData.speed,
                     terrainData.canBeDestroyed,
@@ -47,20 +46,6 @@ public class TerrainLoader {
         } catch (IOException e) {
             Gdx.app.error("TerrainLoader", "Failed to load terrains", e);
         }
-    }
-
-    private static List<Texture> loadTextures(Object textureData) {
-        List<Texture> textures = new ArrayList<>();
-
-        if (textureData instanceof String) {
-            textures.add(new Texture((String) textureData));
-        } else if (textureData instanceof List) {
-            for (String path : (List<String>) textureData) {
-                textures.add(new Texture(path));
-            }
-        }
-
-        return textures;
     }
 
     private static List<Texture> loadDamagedTextures(TerrainData data) {
@@ -97,7 +82,6 @@ public class TerrainLoader {
         public String id;
         public String terrainName;
         public boolean excludeTilePicker;
-        public Object texturePath; // Supports both String and List<String>
         public float defense;
         public float speed;
         public boolean canBeDestroyed;
