@@ -404,6 +404,41 @@ public class MapMaker implements Screen, InputProcessor {
         }
     }
 
+
+    // used to check what base terrain to set a sea tile : horizontal check
+    private boolean checkSeaTilesHorizontalRow(int x, int y, String baseTerrain){
+        for (int i = x; i > 0; i--) {
+            if (!map.getTile(i, y).getTerrain().getTextureId().contains("S")) {
+                
+                for (int j=x; j < MAP_WIDTH; j++){
+                    if (!map.getTile(j, y).getTerrain().getTextureId().contains("S")) {
+                        if (map.getTile(i, y).getTerrainBaseType().equals(baseTerrain) && map.getTile(j, y).getTerrainBaseType().equals(baseTerrain)){
+                            return true;
+                        }
+                    }
+                }
+            } 
+        }
+        return false;
+    }
+
+    // used to check what base terrain to set a sea tile : vertical check
+    private boolean checkSeaTilesVerticalRow(int x, int y, String baseTerrain){
+        for (int i = y; i > 0; i--) {
+            if (!map.getTile(x, i).getTerrain().getTextureId().contains("S")) {
+                for (int j=y; j < MAP_HEIGHT; j++){
+                    if (!map.getTile(x, j).getTerrain().getTextureId().contains("S")) {
+                        if (map.getTile(x, i).getTerrainBaseType().equals(baseTerrain) && map.getTile(x, j).getTerrainBaseType().equals(baseTerrain)){
+                            return true;
+                        }
+                    }
+                }
+            } 
+        }
+        return false;
+    }
+
+
     private void updateSeaTileGuaranteed(int x, int y) {
         // Safe neighbor checking with boundary verification
 
@@ -422,7 +457,32 @@ public class MapMaker implements Screen, InputProcessor {
         boolean southwest = (x > 0) && (y > 0) &&
             map.getTile(x - 1, y - 1).getTerrain().getTextureId().contains("S");
 
+        
 
+        // check for desert
+        boolean checkDesertHorizontalBaseTerrains = x < MAP_WIDTH - 1 && x>0 && checkSeaTilesHorizontalRow(x, y, "D");     
+        boolean checkDesertVerticalBaseTerrains = y < MAP_HEIGHT - 1 && y>0 && checkSeaTilesVerticalRow(x, y, "D");
+
+        // check for plains
+        boolean checkPlainsHorizontalBaseTerrains = x < MAP_WIDTH - 1 && x>0 && checkSeaTilesHorizontalRow(x, y, "P");
+        boolean checkPlainsVerticalBaseTerrains = y < MAP_HEIGHT - 1 && y>0 && checkSeaTilesVerticalRow(x, y, "P");
+
+        /*  check for winter (uncomment when winter is implemented)
+        boolean checkWinterHorizontalBaseTerrains = x < MAP_WIDTH - 1 && x>0 && checkSeaTilesHorizontalRow(x, y, "W");
+        boolean checkWinterVerticalBaseTerrains = y < MAP_HEIGHT - 1 && y>0 && checkSeaTilesVerticalRow(x, y, "W");
+        */
+
+        if (checkDesertHorizontalBaseTerrains || checkDesertVerticalBaseTerrains){
+            map.getTile(x, y).setTerrainBaseType("D");
+        }
+        if (checkPlainsHorizontalBaseTerrains || checkPlainsVerticalBaseTerrains){
+            map.getTile(x, y).setTerrainBaseType("P");
+        }
+        /*if (checkWinterHorizontalBaseTerrains || checkWinterVerticalBaseTerrains){
+            map.getTile(x, y).setTerrainBaseType("W");
+        }*/
+
+        
         // checking to see if the tile is at the edges of the terrain
         // north edge straight
         if ((y == MAP_HEIGHT-1) && (x < MAP_WIDTH-1) && (x > 0)){
