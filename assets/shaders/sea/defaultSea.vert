@@ -12,7 +12,7 @@ varying vec2 v_texCoord;
 varying vec4 v_color;
 
 // Uniforms
-uniform mat4 u_projTrans; // The projection transformation matrix
+uniform mat4 u_projTrans;
 uniform vec2 u_screenSize;
 void main() {
     v_texCoord = a_texCoord0;

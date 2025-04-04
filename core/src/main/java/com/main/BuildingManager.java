@@ -1,6 +1,8 @@
 package com.main;
 
 import com.badlogic.gdx.graphics.Texture;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +41,12 @@ public class BuildingManager {
     }
 
     // Method to get all buildings
-    public Building[] getBuildings() {
-        return buildings.values().toArray(new Building[0]);
+//    public Building[] getBuildings() {
+//        return buildings.values().toArray(new Building[0]);
+//    }
+
+    public List<Building> getBuildings() {
+        return new ArrayList<>(buildings.values());
     }
 
     // Method to get a specific building by ID

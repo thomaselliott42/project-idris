@@ -13,6 +13,7 @@ public class AtlasManager {
     // singelton that contains cases to return texture region
     private TextureAtlas atlas = new TextureAtlas(Gdx.files.internal("atlas/terrain.atlas"));
     private TextureAtlas uiAtlas = new TextureAtlas(Gdx.files.internal("atlas/mapEditorUI.atlas"));
+    private TextureAtlas buildingAtlas = new TextureAtlas(Gdx.files.internal("atlas/buildings.atlas"));
 
     private Map<String, TextureRegion> textureCache = new HashMap<>();
 
@@ -37,6 +38,10 @@ public class AtlasManager {
 
 
         return textureCache.get(textureId);
+    }
+
+    public TextureRegion getBuildingTextureRegion(String textureId) {
+        return buildingAtlas.findRegion(textureId);
     }
 
     public TextureRegion getTexture(String textureId, String baseTexture) {

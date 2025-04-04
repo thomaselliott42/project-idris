@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Iterator;
 
 public class BuildingLoader {
-    private static final String BUILDINGS_JSON_PATH = "assets/data/terrain.json";
+    private static final String BUILDINGS_JSON_PATH = "assets/data/buildings.json";
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     public static void loadBuildings() {

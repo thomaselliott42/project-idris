@@ -185,6 +185,22 @@ public class Map {
                         batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
                     }
 
+                    if(tile.getBuilding() != null) {
+
+                        ShaderManager.getInstance().useShader("buildingColourChange");
+                        batch.setShader(ShaderManager.getInstance().getCurrentShader());
+                        if (tile.getFaction() == 1) {
+                            ShaderManager.getInstance().setUniformf("u_tintColor", 1.0f, 0.0f, 0.0f, 1.0f); // Red tint
+                        } else if (tile.getFaction() == 2) {
+                            ShaderManager.getInstance().setUniformf("u_tintColor", 0.10588f, 0.51765f, 0.91765f, 1.0f); // Blue tint
+                        }
+                        shaderManager.setUniformi("u_ownership", tile.getFaction());
+                        TextureRegion buildingTexture = AtlasManager.getInstance().getBuildingTextureRegion(tile.getBuilding().getTextureId());
+                        batch.draw(buildingTexture,drawX, drawY, TILE_SIZE, buildingTexture.getRegionHeight() * (TILE_SIZE / 16f) );
+                        batch.setShader(null);
+
+                    }
+
                 }
             }
         }
@@ -220,63 +236,63 @@ public class Map {
     }
 
     public String checkSurroundingBaseTerrain(int x, int y) {
-//        if (checkBounds(x + 1, y) && checkBounds(x - 1, y) && checkBounds(x, y - 1) && checkBounds(x, y + 1)) {
-//            Tile currentTile = getTile(x, y); // Access current tile directly
-//            String currentBaseType = currentTile.getTerrainBaseType();
-//
-//            // Get surrounding terrain base types
-//            Tile leftTile = getTile(x - 1, y);
-//            Tile rightTile = getTile(x + 1, y);
-//            Tile topTile = getTile(x, y - 1);
-//            Tile bottomTile = getTile(x, y + 1);
-//
-//
-//            String leftBase = leftTile.getTerrainBaseType();
-//            String rightBase = rightTile.getTerrainBaseType();
-//            String topBase = topTile.getTerrainBaseType();
-//            String bottomBase = bottomTile.getTerrainBaseType();
-//
-//            if(!leftBase.equalsIgnoreCase(currentBaseType) && leftBase.equals(rightBase)){
-//                //Gdx.app.log("Map", "!leftBase.equalsIgnoreCase(currentBaseType) && leftBase.equals(rightBase) New Base :" + leftBase);
-//
-//                return leftBase;
-//            }
-//
-//            else if(!topBase.equalsIgnoreCase(currentBaseType) && topBase.equals(bottomBase)){
-//                //Gdx.app.log("Map", "!topBase.equalsIgnoreCase(currentBaseType) && topBase.equals(bottomBase) New Base :" + topBase);
-//
-//                return topBase;
-//            }
-//
-//            else if(!leftBase.equals(rightBase) && !rightBase.equals("S") && !leftBase.equals("S")){
-//                //Gdx.app.log("Map", "!leftBase.equals(rightBase) New Base :" + leftBase);
-//
-//                return leftBase+"/"+rightBase;
-//            }
-//            else if(!topBase.equals(bottomBase) && !topBase.equals("S") && !bottomBase.equals("S")){
-//                //Gdx.app.log("Map", "!topBase.equals(bottomBase) New Base :" + topBase);
-//
-//                return topBase +"/"+bottomBase;
-//            }
-//
-//
-//            else if (!leftBase.equalsIgnoreCase(currentBaseType) && rightTile.getTerrainId().contains("S") && !rightBase.equals("S") && !leftBase.equals("S")) {
-//                //Gdx.app.log("Map", "!leftBase.equalsIgnoreCase(currentBaseType) && rightTile.getTerrainId().contains(\"S\") New Base :" + leftBase);
-//                return leftBase;
-//            } else if(!rightBase.equalsIgnoreCase(currentBaseType) && leftTile.getTerrainId().contains("S")&& !rightBase.equals("S") && !leftBase.equals("S")){
-//                //Gdx.app.log("Map", "!rightBase.equalsIgnoreCase(currentBaseType) && leftTile.getTerrainId().contains(\"S\") New Base :" + rightBase);
-//                return rightBase;
-//            }else if(topBase.equalsIgnoreCase(currentBaseType) && bottomTile.getTerrainId().contains("S")&& !topBase.equals("S") && !bottomBase.equals("S")){
-//                //Gdx.app.log("Map", "topBase.equalsIgnoreCase(currentBaseType) && bottomTile.getTerrainId().contains(\"S\") New Base :" + topBase);
-//                return topBase;
-//            }else if(bottomBase.equalsIgnoreCase(currentBaseType) && topTile.getTerrainId().contains("S")&& !topBase.equals("S") && !bottomBase.equals("S")){
-//                //Gdx.app.log("Map", "bottomBase.equalsIgnoreCase(currentBaseType) && topTile.getTerrainId().contains(\"S\") New Base :" + bottomBase);
-//                return bottomBase;
-//            }
-//
-//
-//        }
-//        return "P";
+        if (checkBounds(x + 1, y) && checkBounds(x - 1, y) && checkBounds(x, y - 1) && checkBounds(x, y + 1)) {
+            Tile currentTile = getTile(x, y); // Access current tile directly
+            String currentBaseType = currentTile.getTerrainBaseType();
+
+            // Get surrounding terrain base types
+            Tile leftTile = getTile(x - 1, y);
+            Tile rightTile = getTile(x + 1, y);
+            Tile topTile = getTile(x, y - 1);
+            Tile bottomTile = getTile(x, y + 1);
+
+
+            String leftBase = leftTile.getTerrainBaseType();
+            String rightBase = rightTile.getTerrainBaseType();
+            String topBase = topTile.getTerrainBaseType();
+            String bottomBase = bottomTile.getTerrainBaseType();
+
+            if(!leftBase.equalsIgnoreCase(currentBaseType) && leftBase.equals(rightBase)){
+                //Gdx.app.log("Map", "!leftBase.equalsIgnoreCase(currentBaseType) && leftBase.equals(rightBase) New Base :" + leftBase);
+
+                return leftBase;
+            }
+
+            else if(!topBase.equalsIgnoreCase(currentBaseType) && topBase.equals(bottomBase)){
+                //Gdx.app.log("Map", "!topBase.equalsIgnoreCase(currentBaseType) && topBase.equals(bottomBase) New Base :" + topBase);
+
+                return topBase;
+            }
+
+            else if(!leftBase.equals(rightBase) && !rightBase.equals("S") && !leftBase.equals("S")){
+                //Gdx.app.log("Map", "!leftBase.equals(rightBase) New Base :" + leftBase);
+
+                return leftBase+"/"+rightBase;
+            }
+            else if(!topBase.equals(bottomBase) && !topBase.equals("S") && !bottomBase.equals("S")){
+                //Gdx.app.log("Map", "!topBase.equals(bottomBase) New Base :" + topBase);
+
+                return topBase +"/"+bottomBase;
+            }
+
+
+            else if (!leftBase.equalsIgnoreCase(currentBaseType) && rightTile.getTerrainId().contains("S") && !rightBase.equals("S") && !leftBase.equals("S")) {
+                //Gdx.app.log("Map", "!leftBase.equalsIgnoreCase(currentBaseType) && rightTile.getTerrainId().contains(\"S\") New Base :" + leftBase);
+                return leftBase;
+            } else if(!rightBase.equalsIgnoreCase(currentBaseType) && leftTile.getTerrainId().contains("S")&& !rightBase.equals("S") && !leftBase.equals("S")){
+                //Gdx.app.log("Map", "!rightBase.equalsIgnoreCase(currentBaseType) && leftTile.getTerrainId().contains(\"S\") New Base :" + rightBase);
+                return rightBase;
+            }else if(topBase.equalsIgnoreCase(currentBaseType) && bottomTile.getTerrainId().contains("S")&& !topBase.equals("S") && !bottomBase.equals("S")){
+                //Gdx.app.log("Map", "topBase.equalsIgnoreCase(currentBaseType) && bottomTile.getTerrainId().contains(\"S\") New Base :" + topBase);
+                return topBase;
+            }else if(bottomBase.equalsIgnoreCase(currentBaseType) && topTile.getTerrainId().contains("S")&& !topBase.equals("S") && !bottomBase.equals("S")){
+                //Gdx.app.log("Map", "bottomBase.equalsIgnoreCase(currentBaseType) && topTile.getTerrainId().contains(\"S\") New Base :" + bottomBase);
+                return bottomBase;
+            }
+
+
+        }
+
         boolean checkDesertHorizontalBaseTerrains = x < MAP_WIDTH - 1 && x > 0 && checkSeaTilesHorizontalRow(x, y, "D");
         boolean checkDesertVerticalBaseTerrains = y < MAP_HEIGHT - 1 && y > 0 && checkSeaTilesVerticalRow(x, y, "D");
 
@@ -293,7 +309,7 @@ public class Map {
         else if (checkPlainsHorizontalBaseTerrains || checkPlainsVerticalBaseTerrains) {return "P";}
         else if (checkWinterHorizontalBaseTerrains || checkWinterVerticalBaseTerrains) {return "W";}
 
-        return "S";
+        return "P";
     }
 
 

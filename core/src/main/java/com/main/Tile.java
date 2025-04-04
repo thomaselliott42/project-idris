@@ -18,8 +18,8 @@ public class Tile {
     private boolean IsWalkable;
     private float damageSwitchPercentage = 0.0f;
     private int damagedStateIndex = -1;
-    private boolean fire= false;
     private String terrainBaseType = "P";
+    private String faction =null;
 
     public Tile(Terrain terrain, Unit unit, Building building) {
         this.terrain = terrain;
@@ -29,12 +29,36 @@ public class Tile {
         //Gdx.app.log("Tile", "Created tile " + terrain.getTextureId() + " " + unit + " " + building);
     }
 
+    public int getFaction() {
+        if(faction == null){
+            return 0;
+        } else{
+            return 2;
+        }
+    }
+
     public void updateTerrain(Terrain terrain) {
         tileHealth = 1.0f;
         damagedStateIndex = -1;
         this.terrain = terrain;
         updateTerrainBaseType();
 
+    }
+
+    public void updateFaction(String faction) {
+        this.faction = faction;
+    }
+
+    public void updateBuilding(Building building) {
+        this.building = building;
+    }
+
+    public Building getBuilding() {
+        return building;
+    }
+
+    public void removeBuilding() {
+        this.building = null;
     }
 
     private void updateTerrainBaseType(){

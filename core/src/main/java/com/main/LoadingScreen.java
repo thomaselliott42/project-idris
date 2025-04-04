@@ -50,12 +50,14 @@ public class LoadingScreen implements Screen {
     }
 
     private void compileShaders() {
-        shaderManager.loadShader("sea","shaders/buildings/default.vert","shaders/buildings/colourChange.frag");
+        shaderManager.loadShader("sea","shaders/sea/defaultSea.vert","shaders/sea/sea.frag");
+        shaderManager.loadShader("buildingColourChange","shaders/buildings/defaultColourChange.vert","shaders/buildings/colourChange.frag");
     }
 
     private void loadAssets() {
         TerrainLoader.loadTerrains();
         BuildingLoader.loadBuildings();
+        Gdx.app.log("LoadingScreen", "Loaded Terrains");
     }
 
     private void createFonts() {
