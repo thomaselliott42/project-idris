@@ -18,7 +18,8 @@ public class Map {
     List<int[]> mergedCoords = new ArrayList<>();
 
     // shaders
-    private float time = 0f;;
+    private float time = 0f;
+    ;
 
 
     // testing
@@ -26,7 +27,6 @@ public class Map {
     private Texture plainForest = new Texture(Gdx.files.internal("plainForest4x4.png"));
     private Texture plain = new Texture(Gdx.files.internal("plain4x4.png"));
     private Texture desert = new Texture(Gdx.files.internal("desert4x4.png"));
-
 
 
     // debuging
@@ -127,8 +127,9 @@ public class Map {
                 String terrainTextureId = tile.getTerrain().getTextureId();
                 String baseTextureId = tile.getBaseTerrainId();
                 if (!terrainTextureId.equals(previousTextureId)) {
-                    if (terrainTextureId.startsWith("S")) {
-
+                    if (terrainTextureId.contains("S")) {
+                        String cSBT = checkSurroundingBaseTerrain(x, y);
+                        Gdx.app.log("Map", "Terrain: " + terrainTextureId + " (" + cSBT + ")");
                         terrainTexture = terrainAtlas.getTexture(terrainTextureId, checkSurroundingBaseTerrain(x, y));
                     } else {
                         terrainTexture = terrainAtlas.getTexture(terrainTextureId);
@@ -171,30 +172,29 @@ public class Map {
                 } // if the terrain doesn't begin with S then we draw a base texture
 
                 drawCallCounter++;
-                if(terrainTextureId.equals("S")){
+                if (terrainTextureId.equals("S")) {
                     shaderManager.useShader("sea");
                     batch.setShader(shaderManager.getCurrentShader());
-
                     shaderManager.setUniformf("u_time", time);
-                    if (terrainTexture != null){
-                    batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
-                    batch.setShader(null);
+                    if (terrainTexture != null) {
+                        batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
+                        batch.setShader(null);
                     }
-                }else{
-                    if (terrainTexture != null){
+                } else {
+                    if (terrainTexture != null) {
                         batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
                     }
-     
+
                 }
             }
         }
 
-       // batch.setColor(1, 1, 1, 1); // Reset color back to full opacity
+        // batch.setColor(1, 1, 1, 1); // Reset color back to full opacity
 
     }
 
     public boolean inMergedCoords(int x, int y) {
-        for (int[] mergedCoord : mergedCoords ) {
+        for (int[] mergedCoord : mergedCoords) {
             if (mergedCoord[0] == x && mergedCoord[1] == y) {
                 return true;
             }
@@ -211,72 +211,122 @@ public class Map {
         return drawCallCounter;
     }
 
-    public int tTC(){
+    public int tTC() {
         return counterTexture;
     }
 
-    public int bTC(){
+    public int bTC() {
         return counterBaseTexture;
     }
 
-    private String checkSurroundingBaseTerrain(int x, int y) {
-        if (checkBounds(x + 1, y) && checkBounds(x - 1, y) && checkBounds(x, y - 1) && checkBounds(x, y + 1)) {
-            Tile currentTile = getTile(x, y); // Access current tile directly
-            String currentBaseType = currentTile.getTerrainBaseType();
+    public String checkSurroundingBaseTerrain(int x, int y) {
+//        if (checkBounds(x + 1, y) && checkBounds(x - 1, y) && checkBounds(x, y - 1) && checkBounds(x, y + 1)) {
+//            Tile currentTile = getTile(x, y); // Access current tile directly
+//            String currentBaseType = currentTile.getTerrainBaseType();
+//
+//            // Get surrounding terrain base types
+//            Tile leftTile = getTile(x - 1, y);
+//            Tile rightTile = getTile(x + 1, y);
+//            Tile topTile = getTile(x, y - 1);
+//            Tile bottomTile = getTile(x, y + 1);
+//
+//
+//            String leftBase = leftTile.getTerrainBaseType();
+//            String rightBase = rightTile.getTerrainBaseType();
+//            String topBase = topTile.getTerrainBaseType();
+//            String bottomBase = bottomTile.getTerrainBaseType();
+//
+//            if(!leftBase.equalsIgnoreCase(currentBaseType) && leftBase.equals(rightBase)){
+//                //Gdx.app.log("Map", "!leftBase.equalsIgnoreCase(currentBaseType) && leftBase.equals(rightBase) New Base :" + leftBase);
+//
+//                return leftBase;
+//            }
+//
+//            else if(!topBase.equalsIgnoreCase(currentBaseType) && topBase.equals(bottomBase)){
+//                //Gdx.app.log("Map", "!topBase.equalsIgnoreCase(currentBaseType) && topBase.equals(bottomBase) New Base :" + topBase);
+//
+//                return topBase;
+//            }
+//
+//            else if(!leftBase.equals(rightBase) && !rightBase.equals("S") && !leftBase.equals("S")){
+//                //Gdx.app.log("Map", "!leftBase.equals(rightBase) New Base :" + leftBase);
+//
+//                return leftBase+"/"+rightBase;
+//            }
+//            else if(!topBase.equals(bottomBase) && !topBase.equals("S") && !bottomBase.equals("S")){
+//                //Gdx.app.log("Map", "!topBase.equals(bottomBase) New Base :" + topBase);
+//
+//                return topBase +"/"+bottomBase;
+//            }
+//
+//
+//            else if (!leftBase.equalsIgnoreCase(currentBaseType) && rightTile.getTerrainId().contains("S") && !rightBase.equals("S") && !leftBase.equals("S")) {
+//                //Gdx.app.log("Map", "!leftBase.equalsIgnoreCase(currentBaseType) && rightTile.getTerrainId().contains(\"S\") New Base :" + leftBase);
+//                return leftBase;
+//            } else if(!rightBase.equalsIgnoreCase(currentBaseType) && leftTile.getTerrainId().contains("S")&& !rightBase.equals("S") && !leftBase.equals("S")){
+//                //Gdx.app.log("Map", "!rightBase.equalsIgnoreCase(currentBaseType) && leftTile.getTerrainId().contains(\"S\") New Base :" + rightBase);
+//                return rightBase;
+//            }else if(topBase.equalsIgnoreCase(currentBaseType) && bottomTile.getTerrainId().contains("S")&& !topBase.equals("S") && !bottomBase.equals("S")){
+//                //Gdx.app.log("Map", "topBase.equalsIgnoreCase(currentBaseType) && bottomTile.getTerrainId().contains(\"S\") New Base :" + topBase);
+//                return topBase;
+//            }else if(bottomBase.equalsIgnoreCase(currentBaseType) && topTile.getTerrainId().contains("S")&& !topBase.equals("S") && !bottomBase.equals("S")){
+//                //Gdx.app.log("Map", "bottomBase.equalsIgnoreCase(currentBaseType) && topTile.getTerrainId().contains(\"S\") New Base :" + bottomBase);
+//                return bottomBase;
+//            }
+//
+//
+//        }
+//        return "P";
+        boolean checkDesertHorizontalBaseTerrains = x < MAP_WIDTH - 1 && x > 0 && checkSeaTilesHorizontalRow(x, y, "D");
+        boolean checkDesertVerticalBaseTerrains = y < MAP_HEIGHT - 1 && y > 0 && checkSeaTilesVerticalRow(x, y, "D");
 
-            // Get surrounding terrain base types
-            Tile leftTile = getTile(x - 1, y);
-            Tile rightTile = getTile(x + 1, y);
-            Tile topTile = getTile(x, y - 1);
-            Tile bottomTile = getTile(x, y + 1);
+        // check for plains
+        boolean checkPlainsHorizontalBaseTerrains = x < MAP_WIDTH - 1 && x > 0 && checkSeaTilesHorizontalRow(x, y, "P");
+        boolean checkPlainsVerticalBaseTerrains = y < MAP_HEIGHT - 1 && y > 0 && checkSeaTilesVerticalRow(x, y, "P");
+
+        // check for winter (uncomment when winter is implemented)
+        boolean checkWinterHorizontalBaseTerrains = x < MAP_WIDTH - 1 && x>0 && checkSeaTilesHorizontalRow(x, y, "W");
+        boolean checkWinterVerticalBaseTerrains = y < MAP_HEIGHT - 1 && y>0 && checkSeaTilesVerticalRow(x, y, "W");
 
 
-            String leftBase = leftTile.getTerrainBaseType();
-            String rightBase = rightTile.getTerrainBaseType();
-            String topBase = topTile.getTerrainBaseType();
-            String bottomBase = bottomTile.getTerrainBaseType();
+        if (checkDesertHorizontalBaseTerrains || checkDesertVerticalBaseTerrains) {return "D";}
+        else if (checkPlainsHorizontalBaseTerrains || checkPlainsVerticalBaseTerrains) {return "P";}
+        else if (checkWinterHorizontalBaseTerrains || checkWinterVerticalBaseTerrains) {return "W";}
 
-            if(!leftBase.equalsIgnoreCase(currentBaseType) && leftBase.equals(rightBase)){
-                //Gdx.app.log("Map", "!leftBase.equalsIgnoreCase(currentBaseType) && leftBase.equals(rightBase) New Base :" + leftBase);
+        return "S";
+    }
 
-                return leftBase;
+
+    private boolean checkSeaTilesHorizontalRow(int x, int y, String baseTerrain){
+        for (int i = x; i > 0; i--) {
+            if (!getTile(i, y).getTerrain().getTextureId().contains("S")) {
+
+                for (int j=x; j < MAP_WIDTH; j++){
+                    if (!getTile(j, y).getTerrain().getTextureId().contains("S")) {
+                        if (getTile(i, y).getTerrainBaseType().equals(baseTerrain) && getTile(j, y).getTerrainBaseType().equals(baseTerrain)){
+                            return true;
+                        }
+                    }
+                }
             }
-
-            else if(!topBase.equalsIgnoreCase(currentBaseType) && topBase.equals(bottomBase)){
-                //Gdx.app.log("Map", "!topBase.equalsIgnoreCase(currentBaseType) && topBase.equals(bottomBase) New Base :" + topBase);
-
-                return topBase;
-            }
-
-            else if(!leftBase.equals(rightBase) && !rightBase.equals("S") && !leftBase.equals("S")){
-                //Gdx.app.log("Map", "!leftBase.equals(rightBase) New Base :" + leftBase);
-
-                return leftBase+"/"+rightBase;
-            }
-            else if(!topBase.equals(bottomBase) && !topBase.equals("S") && !bottomBase.equals("S")){
-                //Gdx.app.log("Map", "!topBase.equals(bottomBase) New Base :" + topBase);
-
-                return topBase +"/"+bottomBase;
-            }
-
-
-            else if (!leftBase.equalsIgnoreCase(currentBaseType) && rightTile.getTerrainId().contains("S") && !rightBase.equals("S") && !leftBase.equals("S")) {
-                //Gdx.app.log("Map", "!leftBase.equalsIgnoreCase(currentBaseType) && rightTile.getTerrainId().contains(\"S\") New Base :" + leftBase);
-                return leftBase;
-            } else if(!rightBase.equalsIgnoreCase(currentBaseType) && leftTile.getTerrainId().contains("S")&& !rightBase.equals("S") && !leftBase.equals("S")){
-                //Gdx.app.log("Map", "!rightBase.equalsIgnoreCase(currentBaseType) && leftTile.getTerrainId().contains(\"S\") New Base :" + rightBase);
-                return rightBase;
-            }else if(topBase.equalsIgnoreCase(currentBaseType) && bottomTile.getTerrainId().contains("S")&& !topBase.equals("S") && !bottomBase.equals("S")){
-                //Gdx.app.log("Map", "topBase.equalsIgnoreCase(currentBaseType) && bottomTile.getTerrainId().contains(\"S\") New Base :" + topBase);
-                return topBase;
-            }else if(bottomBase.equalsIgnoreCase(currentBaseType) && topTile.getTerrainId().contains("S")&& !topBase.equals("S") && !bottomBase.equals("S")){
-                //Gdx.app.log("Map", "bottomBase.equalsIgnoreCase(currentBaseType) && topTile.getTerrainId().contains(\"S\") New Base :" + bottomBase);
-                return bottomBase;
-            }
-
-
         }
-        return "P";
+        return false;
+    }
+
+    // used to check what base terrain to set a sea tile : vertical check
+    private boolean checkSeaTilesVerticalRow(int x, int y, String baseTerrain){
+        for (int i = y; i > 0; i--) {
+            if (!getTile(x, i).getTerrain().getTextureId().contains("S")) {
+                for (int j=y; j < MAP_HEIGHT; j++){
+                    if (!getTile(x, j).getTerrain().getTextureId().contains("S")) {
+                        if (getTile(x, i).getTerrainBaseType().equals(baseTerrain) && getTile(x, j).getTerrainBaseType().equals(baseTerrain)){
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private boolean checkMergeable(int x, int y) {

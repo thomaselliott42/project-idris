@@ -40,12 +40,12 @@ public class AtlasManager {
     }
 
     public TextureRegion getTexture(String textureId, String baseTexture) {
-        textureId = textureId.toLowerCase();
-        if(!textureId.equals("s")){
-            textureId = baseTexture.toLowerCase()+"/"+textureId;
-        }else{
-            textureId = textureId;
-        }
+//        if(!textureId.equals("s")){
+//            textureId = baseTexture.toLowerCase()+"/"+textureId;
+//        }else{
+//            textureId = textureId;
+//        }
+        textureId = baseTexture.toLowerCase()+"/"+textureId.toLowerCase();
 
         // Check if texture is already cached
         if (!textureCache.containsKey(textureId)) {
