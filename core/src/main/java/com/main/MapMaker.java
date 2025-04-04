@@ -83,8 +83,14 @@ public class MapMaker implements Screen, InputProcessor {
         shapeRenderer = new ShapeRenderer();
         cameraManager = CameraManager.getInstance();
     
-        // Initialize InfoScreen
-        infoScreen = new InfoScreen();
+        // Get the first terrain icon from the tile picker
+        TextureRegion firstTerrainIcon = null;
+        if (!includedTerrains.isEmpty()) {
+            firstTerrainIcon = AtlasManager.getInstance().getTexture(includedTerrains.get(0).getTextureId());
+        }
+    
+        // Initialize InfoScreen and pass tool icons and the first terrain icon
+        infoScreen = new InfoScreen(grabIcon, damageIcon, fillIcon, firstTerrainIcon);
     
         // Cursor Sprite
         createGrabCursor();
@@ -125,10 +131,12 @@ public class MapMaker implements Screen, InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
     
-        // Update camera and handle movement
-        cameraManager.handleCameraMovement();
-        cameraManager.updateCameraPosition();
-        cameraManager.updateCameraZoom(delta);
+        // Update camera and handle movement only if the Info Screen is not visible
+        if (!infoScreenVisible) {
+            cameraManager.handleCameraMovement();
+            cameraManager.updateCameraPosition();
+            cameraManager.updateCameraZoom(delta);
+        }
     
         // Render the map layer
         renderMap(delta);
@@ -141,23 +149,22 @@ public class MapMaker implements Screen, InputProcessor {
     
         // Render the Info Screen if visible
         if (infoScreenVisible) {
-            infoScreen.render();
+            infoScreen.render(); 
     
-            // Exit Info Screen on any key press or mouse click
-            if (Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY)) {
+            // Check if ESCAPE is pressed to hide the Info Screen
+            if (infoScreen.shouldHide()) {
                 infoScreenVisible = false; // Close the Info Screen
             }
+        } else {
+            // Render the cursor and handle map interactions only when the Info Screen is not visible
+            handleMapInteractions();
         }
     
         // Render the tile picker layer if it is open
         if (tilePickerOpen) {
             drawTilePicker((Gdx.graphics.getWidth() - TILE_SIZE * 3 - 40) / 2, Gdx.graphics.getHeight() - TILE_PICKER_HEIGHT - 20);
-        } else {
-            // Handle map interactions only if the tile picker is not open
-            handleMapInteractions();
         }
     }
-
 
     public void renderDebugInfo(int gridX, int gridY) {
         long currentTime = System.currentTimeMillis();
@@ -1209,10 +1216,15 @@ public class MapMaker implements Screen, InputProcessor {
     }
 
     @Override
-    public boolean scrolled(float amountX, float amountY) {
-        cameraManager.scrolled(amountX, amountY);
-        return true;
+public boolean scrolled(float amountX, float amountY) {
+    // Disable input when the Info Screen is visible
+    if (infoScreenVisible) {
+        return false; // Ignore input
     }
+
+    cameraManager.scrolled(amountX, amountY);
+    return true;
+}
     @Override
     public void resize(int width, int height) {
         cameraManager.resize(width, height);
@@ -1233,7 +1245,11 @@ public class MapMaker implements Screen, InputProcessor {
 
     @Override
     public boolean keyDown(int keycode) {
-
+        // Disable input when the Info Screen is visible
+        if (infoScreenVisible) {
+            return false; // Ignore input
+        }
+    
         // Movement keys
         switch (keycode) {
             case Input.Keys.UP:
@@ -1253,7 +1269,7 @@ public class MapMaker implements Screen, InputProcessor {
                 cameraManager.setMovingRight(true);
                 return true;
         }
-
+    
         // Track zoom key states
         if (keycode == Input.Keys.Z) {
             cameraManager.setZoomingIn(true);
@@ -1263,19 +1279,17 @@ public class MapMaker implements Screen, InputProcessor {
             cameraManager.setZoomingOut(true);
             return true;
         }
-
-        // Sprinting key
-        if (keycode == Input.Keys.SHIFT_LEFT || keycode == Input.Keys.SHIFT_RIGHT) {
-            cameraManager.setSprinting(true); // Enable sprinting
-            return true;
-        }
-
+    
         return false;
     }
-
+    
     @Override
     public boolean keyUp(int keycode) {
-
+        // Disable input when the Info Screen is visible
+        if (infoScreenVisible) {
+            return false; // Ignore input
+        }
+    
         // Movement keys
         switch (keycode) {
             case Input.Keys.UP:
@@ -1295,7 +1309,7 @@ public class MapMaker implements Screen, InputProcessor {
                 cameraManager.setMovingRight(false);
                 return true;
         }
-
+    
         // Stop zooming when keys are released
         if (keycode == Input.Keys.Z) {
             cameraManager.setZoomingIn(false);
@@ -1305,13 +1319,7 @@ public class MapMaker implements Screen, InputProcessor {
             cameraManager.setZoomingOut(false);
             return true;
         }
-
-        // Sprinting key
-        if (keycode == Input.Keys.SHIFT_LEFT || keycode == Input.Keys.SHIFT_RIGHT) {
-            cameraManager.setSprinting(false); // Disable sprinting
-            return true;
-        }
-
+    
         return false;
     }
 
@@ -1319,6 +1327,11 @@ public class MapMaker implements Screen, InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        if (infoScreenVisible){
+            return false;
+        }
+        else {
+
         if (button == Input.Buttons.LEFT) {
             int flippedY = Gdx.graphics.getHeight() - screenY;
     
@@ -1353,12 +1366,18 @@ public class MapMaker implements Screen, InputProcessor {
             // If the tile picker is not open, handle map interactions
             isDraggingToPlace = true;
             return true; // Important: return true to get subsequent drag events
+            }
         }
         return false;
     }
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        // Disable input when the Info Screen is visible
+        if (infoScreenVisible) {
+            return false; // Ignore input
+        }
+    
         if (button == Input.Buttons.LEFT) {
             isDraggingToPlace = false;
             return true; // Consume the event
@@ -1368,6 +1387,11 @@ public class MapMaker implements Screen, InputProcessor {
 
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
+        // Disable input when the Info Screen is visible
+        if (infoScreenVisible) {
+            return false; // Ignore input
+        }
+    
         // Continue dragging if we're in that state
         return isDraggingToPlace;
     }
