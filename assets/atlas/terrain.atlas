@@ -43,25 +43,25 @@ bounds:1,1,16,16
 
 terrain9.png
 size:256,32
-sscbdp
+d/p/sscb
 bounds:1,1,16,16
-sscbpd
+p/d/sscb
 bounds:19,1,16,16
-sscldp
+d/p/sscl
 bounds:37,1,16,16
-ssclpd
+p/d/sscl
 bounds:55,1,16,16
-sscrdp
+d/p/sscr
 bounds:73,1,16,16
-sscrpd
+p/d/sscr
 bounds:91,1,16,16
-ssctdp
+d/p/ssct
 bounds:109,1,16,16
-ssctpd
+p/d/ssct
 bounds:127,1,16,16
-svsdp
+d/p/svs
 bounds:145,1,16,16
-svspd
+p/d/svs
 bounds:163,1,16,16
 
 terrain10.png
@@ -262,4 +262,3 @@ d/stft
 bounds:109,37,16,16
 d/svs
 bounds:109,19,16,16
-
