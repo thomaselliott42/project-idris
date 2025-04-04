@@ -12,7 +12,6 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.TimeUtils;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +37,8 @@ public class MapMaker implements Screen, InputProcessor {
 
     Cursor grabCursor;
 
+    private List<String> mapBackup; // 
+
     private boolean isGrabbing = false;
 
     private final int TILE_PICKER_HEIGHT = 64; // Height of the tile picker
@@ -48,11 +49,14 @@ public class MapMaker implements Screen, InputProcessor {
     private SpriteBatch batch;
     private BitmapFont font;
 
+    private boolean justSelectedTile = false;
+
     private ShapeRenderer shapeRenderer;
     private CameraManager cameraManager;
 
     private String selectedTile = "P";  // Default selected tile
     private boolean inspect = false;
+    private boolean tilePickerActive = false;
 
     private final float ZOOM_2D_THRESHOLD = 0.5f; // Zoom level where we switch to 3D
     private boolean is3DView = false;
@@ -82,7 +86,6 @@ public class MapMaker implements Screen, InputProcessor {
         Gdx.input.setInputProcessor(this);
 
 
-
         // Center camera on map initially
         cameraManager.getMapCamera().position.set(
             (MAP_WIDTH * TILE_SIZE) / 2f,
@@ -90,7 +93,6 @@ public class MapMaker implements Screen, InputProcessor {
             0
         );
         cameraManager.getMapCamera().update();
-
 
         this.map = new Map(MAP_WIDTH, MAP_HEIGHT);
         map.generateMap();
@@ -112,159 +114,39 @@ public class MapMaker implements Screen, InputProcessor {
         pixmap.dispose();
     }
 
-
     @Override
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-        // View switching and camera handling remains the same
-        boolean shouldBe3D = cameraManager.getZoomLevel() < ZOOM_2D_THRESHOLD;
-        if (shouldBe3D != is3DView) {
-            is3DView = shouldBe3D;
-            Gdx.app.log("MapMaker", "Switched to " + (is3DView ? "3D" : "2D") + " view");
-        }
-
-        // Updating camera
+    
+        // Update camera and handle movement
         cameraManager.handleCameraMovement();
         cameraManager.updateCameraPosition();
         cameraManager.updateCameraZoom(delta);
-
-        // Map rendering
-        long startTime = TimeUtils.nanoTime();
+    
+        // Render the map layer
         renderMap(delta);
-        long endTime = TimeUtils.nanoTime();
-        mapRenderDuration = (endTime - startTime) / 1000000.0f;
-
-
-        // UI rendering
+    
+        // Render the UI layer (toolbar, palette bar, etc.)
         batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
         shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
         drawToolbar();
         drawPaletteBar();
-
-
-        cameraManager.getUiCamera().update();
-
-        // Initialize tile coordinates outside the if block
-        int gridX = -1;
-        int gridY = -1;
-        boolean mouseOverMap = false;
-
-        // Mouse position handling
-        Vector3 mouseWorldPos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
-        cameraManager.getMapCamera().unproject(mouseWorldPos);
-
-        float mapStartX = (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2f;
-        float mapStartY = (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2f;
-        float mapEndX = mapStartX + MAP_WIDTH * TILE_SIZE;
-        float mapEndY = mapStartY + MAP_HEIGHT * TILE_SIZE;
-
-        if (mouseWorldPos.x >= mapStartX && mouseWorldPos.x <= mapEndX &&
-            mouseWorldPos.y >= mapStartY && mouseWorldPos.y <= mapEndY) {
-
-            gridX = (int)((mouseWorldPos.x - mapStartX) / TILE_SIZE);
-            gridY = (int)((mouseWorldPos.y - mapStartY) / TILE_SIZE);
-            mouseOverMap = map.checkBounds(gridX, gridY);
-
-            if (mouseOverMap) {
-                if(!isGrabbing){
-                    // Draw cursor
-                    batch.setProjectionMatrix(cameraManager.getMapCamera().combined);
-                    batch.begin();
-                    float cursorSize = TILE_SIZE;
-                    float cursorX = mapStartX + gridX * TILE_SIZE;
-                    float cursorY = mapStartY + gridY * TILE_SIZE;
-                    batch.draw(cursor,
-                        cursorX - (cursorSize - TILE_SIZE)/2,
-                        cursorY - (cursorSize - TILE_SIZE)/2,
-                        cursorSize, cursorSize);
-                    batch.end();
-                }
-
-
-                // Handle continuous placement while dragging
-                if ((Gdx.input.isButtonPressed(Input.Buttons.LEFT) && isDraggingToPlace && isPlacing && !tilePickerOpen)) {
-                    int mouseX = Gdx.input.getX();
-                    int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
-
-                    if (!isClickInTilePicker(mouseX, mouseY)) {
-                        if (selectedTile.equals("S")) {
-                            smartPlaceSea(gridX, gridY);
-                        } else {
-                            map.getTile(gridX, gridY).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
-                            forceUpdateAllSeaTiles(gridX, gridY);
-                        }
-                        //map.printMapToTerminal();
-                    }
-                }else if(isGrabbing){
-
-
-                } else if(!isPlacing){
-                    int mouseX = Gdx.input.getX();
-                    int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
-                    if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-                        applyDamageInRadius(mouseX, mouseY);
-                    }
-                    drawDamageRadius(mouseX, mouseY);
-                }
-
-
-            }
-        }
-
-        // Toolbar handling (using screen coordinates)
+    
+        // Render the debug window
         int mouseX = Gdx.input.getX();
         int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
-
-        // Handle toolbar clicks (UI camera coordinates)
-        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-            if (mouseX >= 0 && mouseX <= 64) {
-                if (mouseY >= Gdx.graphics.getHeight() - 128 && mouseY <= Gdx.graphics.getHeight() - 64) {
-                    isGrabbing = !isGrabbing;
-
-                    if(isGrabbing){
-                        Gdx.graphics.setCursor(grabCursor);
-
-                        isPlacing = false;
-                    }else{
-                        Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
-
-                        isPlacing = true;
-                    }
-                }
-                else if (mouseY >= Gdx.graphics.getHeight() - 192 && mouseY <= Gdx.graphics.getHeight() - 128) {
-                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
-                    isGrabbing = false;
-                    isPlacing = false;
-                }
-                else if (mouseY >= Gdx.graphics.getHeight() - 256 && mouseY <= Gdx.graphics.getHeight() - 192) {
-                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
-
-                    fillBoard();
-                }
-                else if (mouseY >= Gdx.graphics.getHeight() - 320 && mouseY <= Gdx.graphics.getHeight() - 256) {
-                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
-
-                    reloadJson();
-                }
-                else if (mouseY >= Gdx.graphics.getHeight() - 384 && mouseY <= Gdx.graphics.getHeight() - 320) {
-                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
-
-                    // Save Map
-                    fillBoard();
-                }
-                else if (mouseY >= Gdx.graphics.getHeight() - 448 && mouseY <= Gdx.graphics.getHeight() - 384) {
-                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
-
-                    inspect = !inspect;
-                }
-            }
-        }
-
-        // Debug info
+        int gridX = (int) ((mouseX - (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2) / TILE_SIZE);
+        int gridY = (int) ((mouseY - (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2) / TILE_SIZE);
         renderDebugInfo(gridX, gridY);
-
+    
+        // Render the tile picker layer if it is open
+        if (tilePickerOpen) {
+            drawTilePicker((Gdx.graphics.getWidth() - TILE_SIZE * 3 - 40) / 2, Gdx.graphics.getHeight() - TILE_PICKER_HEIGHT - 20);
+        } else {
+            // Handle map interactions only if the tile picker is not open
+            handleMapInteractions();
+        }
     }
 
     public void renderDebugInfo(int gridX, int gridY) {
@@ -285,7 +167,6 @@ public class MapMaker implements Screen, InputProcessor {
         shapeRenderer.setColor(0, 0, 0, 0.5f); // Black with 50% transparency
         shapeRenderer.rect(cameraManager.getUiCamera().viewportWidth - 225, 5, 225, 200);
         shapeRenderer.end();
-
 
         batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
         batch.begin();
@@ -413,7 +294,6 @@ public class MapMaker implements Screen, InputProcessor {
         }
     }
 
-
     // used to check what base terrain to set a sea tile : horizontal check
     private boolean checkSeaTilesHorizontalRow(int x, int y, String baseTerrain){
         for (int i = x; i > 0; i--) {
@@ -446,7 +326,6 @@ public class MapMaker implements Screen, InputProcessor {
         }
         return false;
     }
-
 
     private void updateSeaTileGuaranteed(int x, int y) {
         // Safe neighbor checking with boundary verification
@@ -699,7 +578,6 @@ public class MapMaker implements Screen, InputProcessor {
                 }
                 break;
 
-
             case 5:
 
                 // lake extending corners
@@ -735,7 +613,6 @@ public class MapMaker implements Screen, InputProcessor {
                     returnString = "SLECTRH";
                     break;
                 }
-
 
                 // t functions
                 if (!west && !northeast && !southeast){
@@ -802,7 +679,6 @@ public class MapMaker implements Screen, InputProcessor {
                     returnString = "SLMCNCR";
                     break;
                 }
-
 
                 break;
             case 6:
@@ -1024,11 +900,9 @@ public class MapMaker implements Screen, InputProcessor {
 
 
 
-
 //        if (isInfoIconClicked && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
 //            game.setScreen(new InfoScreen(game));
 //        }
-
 
         // Existing icons (moved up to make space)
         drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 128, grabIcon, iconSize);
@@ -1082,36 +956,36 @@ public class MapMaker implements Screen, InputProcessor {
         int paletteBarHeight = TILE_PICKER_HEIGHT + 20;
         int startX = (Gdx.graphics.getWidth() - paletteBarWidth) / 2;
         int startY = Gdx.graphics.getHeight() - paletteBarHeight;
-        
+    
         selectedTerrain = getTerrainByTextureId(selectedTile, includedTerrains);
-
+    
         float terrainX = startX + 55;
         float factionX = terrainX + TILE_SIZE + 10;
         float buildingX = factionX + TILE_SIZE + 10;
-
+    
         // Track mouse position
         float mouseX = Gdx.input.getX();
         float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
-
+    
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f));
         shapeRenderer.rect(startX - 10, startY, paletteBarWidth + 50, paletteBarHeight - 10);
         shapeRenderer.end();
-
+    
         batch.begin();
         font.setColor(Color.WHITE);
-        font.draw(batch, "Palette:", startX , startY + paletteBarHeight / 2);
+        font.draw(batch, "Palette:", startX, startY + paletteBarHeight / 2);
         batch.end();
-
+    
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-
+    
         // Draw hover effect and logic for when clicked
-        drawHoverEffectAndHandleClick(terrainX, startY, "Terrain", paletteBarHeight - 10, mouseX, mouseY, () -> drawTilePicker((int)terrainX, startY + 15));
+        drawHoverEffectAndHandleClick(terrainX, startY, "Terrain", paletteBarHeight - 10, mouseX, mouseY, () -> drawTilePicker((int) terrainX, startY + 15));
         drawHoverEffectAndHandleClick(factionX, startY, "Faction", paletteBarHeight - 10, mouseX, mouseY, () -> drawFactionPicker());
         drawHoverEffectAndHandleClick(buildingX, startY, "Building", paletteBarHeight - 10, mouseX, mouseY, () -> drawBuildingPicker());
-
+    
         shapeRenderer.end();
-
+    
         // Draw the icons
         batch.begin();
         if (selectedTerrain != null) {
@@ -1125,9 +999,59 @@ public class MapMaker implements Screen, InputProcessor {
             batch.draw(selectedBuilding, buildingX, startY + 15, TILE_SIZE, TILE_SIZE);
         }
         batch.end();
+    }
 
-        if(tilePickerOpen){
-            drawTilePicker((int)terrainX, startY + 15);
+    private void handleMapInteractions() {
+        if (tilePickerActive || justSelectedTile) {
+            justSelectedTile = false; // Reset the flag
+            return; // Skip map interactions
+        }
+    
+        int gridX = -1;
+        int gridY = -1;
+        boolean mouseOverMap = false;
+    
+        // Mouse position handling
+        Vector3 mouseWorldPos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+        cameraManager.getMapCamera().unproject(mouseWorldPos);
+    
+        float mapStartX = (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2f;
+        float mapStartY = (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2f;
+        float mapEndX = mapStartX + MAP_WIDTH * TILE_SIZE;
+        float mapEndY = mapStartY + MAP_HEIGHT * TILE_SIZE;
+    
+        if (mouseWorldPos.x >= mapStartX && mouseWorldPos.x <= mapEndX &&
+            mouseWorldPos.y >= mapStartY && mouseWorldPos.y <= mapEndY) {
+    
+            gridX = (int) ((mouseWorldPos.x - mapStartX) / TILE_SIZE);
+            gridY = (int) ((mouseWorldPos.y - mapStartY) / TILE_SIZE);
+            mouseOverMap = map.checkBounds(gridX, gridY);
+    
+            if (mouseOverMap) {
+                if (!isGrabbing) {
+                    // Draw cursor
+                    batch.setProjectionMatrix(cameraManager.getMapCamera().combined);
+                    batch.begin();
+                    float cursorSize = TILE_SIZE;
+                    float cursorX = mapStartX + gridX * TILE_SIZE;
+                    float cursorY = mapStartY + gridY * TILE_SIZE;
+                    batch.draw(cursor,
+                        cursorX - (cursorSize - TILE_SIZE) / 2,
+                        cursorY - (cursorSize - TILE_SIZE) / 2,
+                        cursorSize, cursorSize);
+                    batch.end();
+                }
+    
+                // Handle continuous placement while dragging
+                if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) && isDraggingToPlace && isPlacing) {
+                    if (selectedTile.equals("S")) {
+                        smartPlaceSea(gridX, gridY);
+                    } else {
+                        map.getTile(gridX, gridY).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
+                        forceUpdateAllSeaTiles(gridX, gridY);
+                    }
+                }
+            }
         }
     }
 
@@ -1151,76 +1075,107 @@ public class MapMaker implements Screen, InputProcessor {
     }
 
     private void drawTilePicker(int startX, int startY) {
+        if (!tilePickerOpen) {
+            // Backup the current map state
+            mapBackup = new ArrayList<>();
+            for (int y = 0; y < MAP_HEIGHT; y++) {
+                for (int x = 0; x < MAP_WIDTH; x++) {
+                    mapBackup.add(map.getTile(x, y).getTerrain().getTextureId());
+                }
+            }
+        }
+    
         tilePickerOpen = true;
+        tilePickerActive = true; // Mark the tile picker as active
         batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
         shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
-
+    
         int pickerHeight = TILE_PICKER_HEIGHT * 5 + 20;
         int pickerWidth = TILE_SIZE * 3 + 40;
-
+    
         int tilePickerStartY = startY - pickerHeight - 15;
-
+    
         int numTiles = includedTerrains.size();
-
+    
         // Draw background for tile picker
         shapeRenderer.end();
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f)); // Dark background
         shapeRenderer.rect(startX, tilePickerStartY + 70, pickerWidth, pickerHeight - 70);
-
+    
         // Draw the header
         shapeRenderer.setColor(new Color(0.0f, 0.3f, 0.8f, 1f)); // Blue background
         shapeRenderer.rect(startX, tilePickerStartY + pickerHeight - 30, pickerWidth, 30); // Draw header bar with 30 height
         shapeRenderer.end();
-
+    
         batch.begin();
         font.setColor(Color.WHITE);
         font.draw(batch, "Select Terrain", startX + 10, tilePickerStartY + pickerHeight - 10); // Slightly below the top of the header
         batch.draw(closeButton, startX + pickerWidth - 25, tilePickerStartY + pickerHeight - 26, 20, 20); // Close button
-
+    
         // Display the grid of tiles
         for (int i = 0; i < numTiles; i++) {
             Terrain terrain = includedTerrains.get(i);
             int col = i % 3;
             int row = i / 3;
-
+    
             float tileX = startX + col * TILE_SIZE + 10;
             float tileY = tilePickerStartY + pickerHeight + row * TILE_PICKER_HEIGHT - 250;
-
+    
             batch.draw(AtlasManager.getInstance().getTexture(terrain.getTextureId()), tileX, tileY, TILE_SIZE, TILE_PICKER_HEIGHT);
         }
         batch.end();
-
+    
         // Handle clicks
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             int mouseX = Gdx.input.getX();
             int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
-
+    
+            // Check if the click is inside the tile picker grid
             if (mouseX >= startX && mouseX <= startX + pickerWidth &&
                 mouseY >= tilePickerStartY + 70 && mouseY <= tilePickerStartY + 70 + pickerHeight) {
-
+    
                 int relativeX = mouseX - startX - 10;
                 int relativeY = mouseY - (tilePickerStartY + 70);
-
+    
                 int clickedCol = relativeX / TILE_SIZE;
                 int clickedRow = relativeY / TILE_PICKER_HEIGHT;
-
+    
                 int clickedIndex = clickedRow * 3 + clickedCol;
-
+    
                 if (clickedIndex >= 0 && clickedIndex < numTiles) {
                     Terrain clickedTerrain = includedTerrains.get(clickedIndex);
                     selectedTile = clickedTerrain.getTextureId();
                     tilePickerOpen = false;
+                    tilePickerActive = false; // Reset the flag when the tile picker is closed
+                    justSelectedTile = true; // Prevent map interactions
+                    reloadMapFromBackup(); // Reload the map from the backup
+                    System.out.println("Selected Tile: " + selectedTile);
                 }
-            }else{
-                tilePickerOpen = false;
+            } else {
+                tilePickerOpen = false; // Close the tile picker if clicked outside
+                tilePickerActive = false; // Reset the flag
+                reloadMapFromBackup(); // Reload the map from the backup
             }
-
-
+    
             // Handle close button click
             if (mouseX >= startX + pickerWidth - 25 && mouseX <= startX + pickerWidth - 5 &&
                 mouseY >= tilePickerStartY + pickerHeight - 26 && mouseY <= tilePickerStartY + pickerHeight - 6) {
                 tilePickerOpen = false;
+                tilePickerActive = false; // Reset the flag
+                reloadMapFromBackup(); // Reload the map from the backup
+            }
+        }
+    }
+
+    private void reloadMapFromBackup() {
+        if (mapBackup != null && mapBackup.size() == MAP_WIDTH * MAP_HEIGHT) {
+            int index = 0;
+            for (int y = 0; y < MAP_HEIGHT; y++) {
+                for (int x = 0; x < MAP_WIDTH; x++) {
+                    String terrainId = mapBackup.get(index++);
+                    map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain(terrainId));
+                }
             }
         }
     }
@@ -1355,33 +1310,36 @@ public class MapMaker implements Screen, InputProcessor {
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.LEFT) {
             int flippedY = Gdx.graphics.getHeight() - screenY;
-
-            // Check if click is in tilepicker first
-//            if (isClickInTilePicker(screenX, flippedY)) {
-//                List<Terrain> includedTerrains = getIncludedTerrains();
-//                int numTiles = includedTerrains.size();
-//                int pickerWidth = numTiles * TILE_SIZE + 20;
-//                int startX = (Gdx.graphics.getWidth() - pickerWidth) / 2;
-//
-//                // Calculate which terrain was clicked
-//                int clickedTerrainIndex = (screenX - startX - 10) / TILE_SIZE;
-//
-//                if (clickedTerrainIndex >= 0 && clickedTerrainIndex < numTiles) {
-//                    Terrain clickedTerrain = includedTerrains.get(clickedTerrainIndex);
-//                    isPlacing = true;
-//                    selectedTile = clickedTerrain.getTextureId();
-//                    Gdx.app.log("TilePicker", "Selected tile: " + selectedTile);
-//                }
-//                return true; // Consume the event
-//            }
-
-            // Check if click is in toolbar
-            if (screenX >= 0 && screenX <= 64) {
-                // Handle toolbar clicks...
+    
+            // Check if the tile picker is open and handle its input
+            if (tilePickerOpen && isClickInTilePicker(screenX, flippedY)) {
+                int numTiles = includedTerrains.size();
+                int pickerWidth = TILE_SIZE * 3 + 40;
+                int startX = (Gdx.graphics.getWidth() - pickerWidth) / 2;
+    
+                // Calculate which terrain was clicked
+                int relativeX = screenX - startX - 10;
+                int relativeY = flippedY - (Gdx.graphics.getHeight() - TILE_PICKER_HEIGHT - 20);
+    
+                int clickedCol = relativeX / TILE_SIZE;
+                int clickedRow = relativeY / TILE_PICKER_HEIGHT;
+    
+                int clickedIndex = clickedRow * 3 + clickedCol;
+    
+                if (clickedIndex >= 0 && clickedIndex < numTiles) {
+                    Terrain clickedTerrain = includedTerrains.get(clickedIndex);
+                    selectedTile = clickedTerrain.getTextureId();
+                    tilePickerOpen = false;
+                    tilePickerActive = false; // Reset the flag
+                    justSelectedTile = true; // Prevent map interactions
+                    reloadMapFromBackup(); // Reload the map from the backup
+                    System.out.println("Selected Tile: " + selectedTile);
+                }
+    
                 return true; // Consume the event
             }
-
-            // If we get here, it's a map click - start dragging
+    
+            // If the tile picker is not open, handle map interactions
             isDraggingToPlace = true;
             return true; // Important: return true to get subsequent drag events
         }
@@ -1410,18 +1368,16 @@ public class MapMaker implements Screen, InputProcessor {
         return false;
     }
 
-
     private boolean isClickInTilePicker(int screenX, int screenY) {
-        int numTiles = getIncludedTerrains().size();
-        int pickerWidth = numTiles * TILE_SIZE + 20;
-        int pickerHeight = TILE_PICKER_HEIGHT + 20;
+        int pickerWidth = TILE_SIZE * 3 + 40;
+        int pickerHeight = TILE_PICKER_HEIGHT * 5 + 20;
         int startX = (Gdx.graphics.getWidth() - pickerWidth) / 2;
         int startY = Gdx.graphics.getHeight() - pickerHeight;
-
+    
         return screenX >= startX &&
-            screenX <= startX + pickerWidth &&
-            screenY >= startY &&
-            screenY <= startY + pickerHeight;
+               screenX <= startX + pickerWidth &&
+               screenY >= startY &&
+               screenY <= startY + pickerHeight;
     }
 
     private List<Terrain> getIncludedTerrains() {
@@ -1451,3 +1407,5 @@ public class MapMaker implements Screen, InputProcessor {
         map.dispose();
     }
 }
+
+

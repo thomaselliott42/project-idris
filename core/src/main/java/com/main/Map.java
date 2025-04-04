@@ -176,10 +176,15 @@ public class Map {
                     batch.setShader(shaderManager.getCurrentShader());
 
                     shaderManager.setUniformf("u_time", time);
+                    if (terrainTexture != null){
                     batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
                     batch.setShader(null);
+                    }
                 }else{
-                    batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
+                    if (terrainTexture != null){
+                        batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
+                    }
+     
                 }
             }
         }
@@ -232,40 +237,40 @@ public class Map {
             String bottomBase = bottomTile.getTerrainBaseType();
 
             if(!leftBase.equalsIgnoreCase(currentBaseType) && leftBase.equals(rightBase)){
-                Gdx.app.log("Map", "!leftBase.equalsIgnoreCase(currentBaseType) && leftBase.equals(rightBase) New Base :" + leftBase);
+                //Gdx.app.log("Map", "!leftBase.equalsIgnoreCase(currentBaseType) && leftBase.equals(rightBase) New Base :" + leftBase);
 
                 return leftBase;
             }
 
             else if(!topBase.equalsIgnoreCase(currentBaseType) && topBase.equals(bottomBase)){
-                Gdx.app.log("Map", "!topBase.equalsIgnoreCase(currentBaseType) && topBase.equals(bottomBase) New Base :" + topBase);
+                //Gdx.app.log("Map", "!topBase.equalsIgnoreCase(currentBaseType) && topBase.equals(bottomBase) New Base :" + topBase);
 
                 return topBase;
             }
 
             else if(!leftBase.equals(rightBase) && !rightBase.equals("S") && !leftBase.equals("S")){
-                Gdx.app.log("Map", "!leftBase.equals(rightBase) New Base :" + leftBase);
+                //Gdx.app.log("Map", "!leftBase.equals(rightBase) New Base :" + leftBase);
 
                 return leftBase+"/"+rightBase;
             }
             else if(!topBase.equals(bottomBase) && !topBase.equals("S") && !bottomBase.equals("S")){
-                Gdx.app.log("Map", "!topBase.equals(bottomBase) New Base :" + topBase);
+                //Gdx.app.log("Map", "!topBase.equals(bottomBase) New Base :" + topBase);
 
                 return topBase +"/"+bottomBase;
             }
 
 
             else if (!leftBase.equalsIgnoreCase(currentBaseType) && rightTile.getTerrainId().contains("S") && !rightBase.equals("S") && !leftBase.equals("S")) {
-                Gdx.app.log("Map", "!leftBase.equalsIgnoreCase(currentBaseType) && rightTile.getTerrainId().contains(\"S\") New Base :" + leftBase);
+                //Gdx.app.log("Map", "!leftBase.equalsIgnoreCase(currentBaseType) && rightTile.getTerrainId().contains(\"S\") New Base :" + leftBase);
                 return leftBase;
             } else if(!rightBase.equalsIgnoreCase(currentBaseType) && leftTile.getTerrainId().contains("S")&& !rightBase.equals("S") && !leftBase.equals("S")){
-                Gdx.app.log("Map", "!rightBase.equalsIgnoreCase(currentBaseType) && leftTile.getTerrainId().contains(\"S\") New Base :" + rightBase);
+                //Gdx.app.log("Map", "!rightBase.equalsIgnoreCase(currentBaseType) && leftTile.getTerrainId().contains(\"S\") New Base :" + rightBase);
                 return rightBase;
             }else if(topBase.equalsIgnoreCase(currentBaseType) && bottomTile.getTerrainId().contains("S")&& !topBase.equals("S") && !bottomBase.equals("S")){
-                Gdx.app.log("Map", "topBase.equalsIgnoreCase(currentBaseType) && bottomTile.getTerrainId().contains(\"S\") New Base :" + topBase);
+                //Gdx.app.log("Map", "topBase.equalsIgnoreCase(currentBaseType) && bottomTile.getTerrainId().contains(\"S\") New Base :" + topBase);
                 return topBase;
             }else if(bottomBase.equalsIgnoreCase(currentBaseType) && topTile.getTerrainId().contains("S")&& !topBase.equals("S") && !bottomBase.equals("S")){
-                Gdx.app.log("Map", "bottomBase.equalsIgnoreCase(currentBaseType) && topTile.getTerrainId().contains(\"S\") New Base :" + bottomBase);
+                //Gdx.app.log("Map", "bottomBase.equalsIgnoreCase(currentBaseType) && topTile.getTerrainId().contains(\"S\") New Base :" + bottomBase);
                 return bottomBase;
             }
 
