@@ -87,6 +87,7 @@ public class MapMaker implements Screen, InputProcessor {
     private long maxMemory = Runtime.getRuntime().maxMemory() / 1024 / 1024;
     private float mapRenderDuration;
 
+
     public MapMaker(Main game) {
         this.game = game;
     }
@@ -1451,17 +1452,18 @@ public boolean scrolled(float amountX, float amountY) {
             case Input.Keys.D:
                 cameraManager.setMovingRight(true);
                 return true;
+            case Input.Keys.Z:
+                cameraManager.setZoomingIn(true);
+                return true;
+            case Input.Keys.X:
+                cameraManager.setZoomingOut(true);
+                return true;
+            case Input.Keys.SHIFT_LEFT:
+                cameraManager.setSprinting(true);
+                return true;
+
         }
 
-        // Track zoom key states
-        if (keycode == Input.Keys.Z) {
-            cameraManager.setZoomingIn(true);
-            return true;
-        }
-        if (keycode == Input.Keys.X) {
-            cameraManager.setZoomingOut(true);
-            return true;
-        }
 
         return false;
     }
@@ -1491,17 +1493,17 @@ public boolean scrolled(float amountX, float amountY) {
             case Input.Keys.D:
                 cameraManager.setMovingRight(false);
                 return true;
+            case Input.Keys.Z:
+                cameraManager.setZoomingIn(false);
+                return true;
+            case Input.Keys.X:
+                cameraManager.setZoomingOut(false);
+                return true;
+            case Input.Keys.SHIFT_LEFT:
+                cameraManager.setSprinting(false);
+                return true;
         }
 
-        // Stop zooming when keys are released
-        if (keycode == Input.Keys.Z) {
-            cameraManager.setZoomingIn(false);
-            return true;
-        }
-        if (keycode == Input.Keys.X) {
-            cameraManager.setZoomingOut(false);
-            return true;
-        }
 
         return false;
     }
