@@ -975,8 +975,15 @@ public class MapMaker implements Screen, InputProcessor {
         // Draw the icons
         batch.begin();
         if (selectedTerrain != null) {
-            TextureRegion terrain = AtlasManager.getInstance().getTexture(selectedTerrain.getTextureId());
-            batch.draw(terrain, terrainX, startY + 15, TILE_SIZE, terrain.getRegionHeight() * (TILE_SIZE / 16f));
+            if(selectedTerrain.getTextureId().contains("S")){
+                TextureRegion terrain = AtlasManager.getInstance().getTexture(selectedTerrain.getTextureId(), "S");
+
+                batch.draw(terrain, terrainX, startY + 15, TILE_SIZE, terrain.getRegionHeight() * (TILE_SIZE / 16f));
+            }else{
+                TextureRegion terrain = AtlasManager.getInstance().getTexture(selectedTerrain.getTextureId());
+
+                batch.draw(terrain, terrainX, startY + 15, TILE_SIZE, terrain.getRegionHeight() * (TILE_SIZE / 16f));
+            }
         }
         if (selectedFaction != null) {
             batch.draw(selectedFaction, factionX, startY + 15, TILE_SIZE, TILE_SIZE);
@@ -1108,7 +1115,11 @@ public class MapMaker implements Screen, InputProcessor {
             float tileX = startX + col * TILE_SIZE + 10;
             float tileY = tilePickerStartY + pickerHeight + row * TILE_PICKER_HEIGHT - 250;
 
-            batch.draw(AtlasManager.getInstance().getTexture(terrain.getTextureId()), tileX, tileY, TILE_SIZE, TILE_PICKER_HEIGHT);
+            if(terrain.getTextureId().contains("S")){
+                batch.draw(AtlasManager.getInstance().getTexture(terrain.getTextureId(), "S"), tileX, tileY, TILE_SIZE, TILE_PICKER_HEIGHT);
+            }else{
+                batch.draw(AtlasManager.getInstance().getTexture(terrain.getTextureId()), tileX, tileY, TILE_SIZE, TILE_PICKER_HEIGHT);
+            }
         }
         batch.end();
 

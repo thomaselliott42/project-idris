@@ -219,7 +219,7 @@ public class Map {
         return counterBaseTexture;
     }
 
-    private String checkSurroundingBaseTerrain(int x, int y) {
+    public String checkSurroundingBaseTerrain(int x, int y) {
 //        if (checkBounds(x + 1, y) && checkBounds(x - 1, y) && checkBounds(x, y - 1) && checkBounds(x, y + 1)) {
 //            Tile currentTile = getTile(x, y); // Access current tile directly
 //            String currentBaseType = currentTile.getTerrainBaseType();
@@ -293,7 +293,7 @@ public class Map {
         else if (checkPlainsHorizontalBaseTerrains || checkPlainsVerticalBaseTerrains) {return "P";}
         else if (checkWinterHorizontalBaseTerrains || checkWinterVerticalBaseTerrains) {return "W";}
 
-        return "P";
+        return "S";
     }
 
 
