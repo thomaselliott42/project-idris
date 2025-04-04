@@ -33,11 +33,12 @@ public class MapMaker implements Screen, InputProcessor {
     private final TextureRegion grabIcon = AtlasManager.getInstance().getMapUItexture("grabIcon");;
     private final TextureRegion damageIcon = AtlasManager.getInstance().getMapUItexture("damageIcon");
     private final TextureRegion damageRadius = AtlasManager.getInstance().getMapUItexture("damageRadius");;
+    private final TextureRegion infoIcon = new TextureRegion(new Texture(Gdx.files.internal("ui/infoIcon.png")));
     private final Texture closeButton = new Texture(Gdx.files.internal("ui/closeButton.png"));
 
     Cursor grabCursor;
 
-    private List<String> mapBackup; // 
+    private List<String> mapBackup; 
 
     private boolean isGrabbing = false;
 
@@ -46,10 +47,13 @@ public class MapMaker implements Screen, InputProcessor {
     private boolean isDraggingToPlace = false;
     private  Map map;
 
+    private InfoScreen infoScreen;
+
     private SpriteBatch batch;
     private BitmapFont font;
 
     private boolean justSelectedTile = false;
+    private boolean infoScreenVisible = false; // Tracks if the Info Screen is visible
 
     private ShapeRenderer shapeRenderer;
     private CameraManager cameraManager;
@@ -78,14 +82,16 @@ public class MapMaker implements Screen, InputProcessor {
         font = new BitmapFont();
         shapeRenderer = new ShapeRenderer();
         cameraManager = CameraManager.getInstance();
-
+    
+        // Initialize InfoScreen
+        infoScreen = new InfoScreen();
+    
         // Cursor Sprite
-       createGrabCursor();
-
+        createGrabCursor();
+    
         // Set this class as the input processor
         Gdx.input.setInputProcessor(this);
-
-
+    
         // Center camera on map initially
         cameraManager.getMapCamera().position.set(
             (MAP_WIDTH * TILE_SIZE) / 2f,
@@ -93,7 +99,7 @@ public class MapMaker implements Screen, InputProcessor {
             0
         );
         cameraManager.getMapCamera().update();
-
+    
         this.map = new Map(MAP_WIDTH, MAP_HEIGHT);
         map.generateMap();
     }
@@ -133,12 +139,15 @@ public class MapMaker implements Screen, InputProcessor {
         drawToolbar();
         drawPaletteBar();
     
-        // Render the debug window
-        int mouseX = Gdx.input.getX();
-        int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
-        int gridX = (int) ((mouseX - (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2) / TILE_SIZE);
-        int gridY = (int) ((mouseY - (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2) / TILE_SIZE);
-        renderDebugInfo(gridX, gridY);
+        // Render the Info Screen if visible
+        if (infoScreenVisible) {
+            infoScreen.render();
+    
+            // Exit Info Screen on any key press or mouse click
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY)) {
+                infoScreenVisible = false; // Close the Info Screen
+            }
+        }
     
         // Render the tile picker layer if it is open
         if (tilePickerOpen) {
@@ -148,6 +157,7 @@ public class MapMaker implements Screen, InputProcessor {
             handleMapInteractions();
         }
     }
+
 
     public void renderDebugInfo(int gridX, int gridY) {
         long currentTime = System.currentTimeMillis();
@@ -889,28 +899,29 @@ public class MapMaker implements Screen, InputProcessor {
         int toolbarWidth = 64;
         int toolbarHeight = Gdx.graphics.getHeight();
         int iconSize = 64;
-
+    
+        // Draw the taskbar background
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f));
         shapeRenderer.rect(0, 0, toolbarWidth, toolbarHeight);
         shapeRenderer.end();
-
+    
         int mouseX = Gdx.input.getX();
         int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
-
-
-
-//        if (isInfoIconClicked && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-//            game.setScreen(new InfoScreen(game));
-//        }
-
-        // Existing icons (moved up to make space)
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 128, grabIcon, iconSize);
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 192, damageIcon, iconSize);
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 256, fillIcon, iconSize);
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 320, reloadIcon, iconSize);
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 384, saveIcon, iconSize);
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 448, inspectIcon, iconSize);
+    
+        // Add the Info Screen button at the top of the taskbar
+        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - iconSize, infoIcon, iconSize)) {
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                infoScreenVisible = true; // Show the Info Screen
+            }
+        }
+    
+        // Existing icons (shifted down to make space for the Info Screen button)
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 2 * iconSize, grabIcon, iconSize);
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 3 * iconSize, damageIcon, iconSize);
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 4 * iconSize, fillIcon, iconSize);
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 5 * iconSize, reloadIcon, iconSize);
+        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 6 * iconSize, saveIcon, iconSize);
     }
 
     private boolean drawAndHighlightIcon(int mouseX, int mouseY, int x, int y, TextureRegion icon, int iconSize) {
