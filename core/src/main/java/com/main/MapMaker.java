@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.TimeUtils;
 
 
 import java.util.ArrayList;
@@ -23,6 +24,8 @@ public class MapMaker implements Screen, InputProcessor {
     private final int MAP_WIDTH = 100; // 20
     private final int MAP_HEIGHT = 100; // 20
 
+    // convert this to a texture manager class instead of instancing it here with id mapeditor so we
+    // can dispose of it when out of it
     private final TextureRegion cursor = AtlasManager.getInstance().getMapUItexture("cursor");;
     private final TextureRegion fillIcon = AtlasManager.getInstance().getMapUItexture("fillmapIcon");;
     private final TextureRegion reloadIcon = AtlasManager.getInstance().getMapUItexture("reloadIcon");;
@@ -31,7 +34,7 @@ public class MapMaker implements Screen, InputProcessor {
     private final TextureRegion grabIcon = AtlasManager.getInstance().getMapUItexture("grabIcon");;
     private final TextureRegion damageIcon = AtlasManager.getInstance().getMapUItexture("damageIcon");
     private final TextureRegion damageRadius = AtlasManager.getInstance().getMapUItexture("damageRadius");;
-
+    private final Texture closeButton = new Texture(Gdx.files.internal("ui/closeButton.png"));
 
     Cursor grabCursor;
 
@@ -59,6 +62,7 @@ public class MapMaker implements Screen, InputProcessor {
     private long lastMemoryUpdateTime = 0;
     private long usedMemory = 0;
     private long maxMemory = Runtime.getRuntime().maxMemory() / 1024 / 1024;
+    private float mapRenderDuration;
 
     public MapMaker(Main game) {
         this.game = game;
@@ -127,14 +131,17 @@ public class MapMaker implements Screen, InputProcessor {
         cameraManager.updateCameraZoom(delta);
 
         // Map rendering
-        renderMap();
+        long startTime = TimeUtils.nanoTime();
+        renderMap(delta);
+        long endTime = TimeUtils.nanoTime();
+        mapRenderDuration = (endTime - startTime) / 1000000.0f;
 
 
         // UI rendering
         batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
         shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
         drawToolbar();
-        drawTilePicker();  // Now drawn with UI camera
+        drawPaletteBar();
 
 
         cameraManager.getUiCamera().update();
@@ -177,7 +184,7 @@ public class MapMaker implements Screen, InputProcessor {
 
 
                 // Handle continuous placement while dragging
-                if ((Gdx.input.isButtonPressed(Input.Buttons.LEFT) && isDraggingToPlace && isPlacing)) {
+                if ((Gdx.input.isButtonPressed(Input.Buttons.LEFT) && isDraggingToPlace && isPlacing && !tilePickerOpen)) {
                     int mouseX = Gdx.input.getX();
                     int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
 
@@ -255,9 +262,6 @@ public class MapMaker implements Screen, InputProcessor {
             }
         }
 
-
-
-
         // Debug info
         renderDebugInfo(gridX, gridY);
 
@@ -279,7 +283,7 @@ public class MapMaker implements Screen, InputProcessor {
         shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0, 0, 0, 0.5f); // Black with 50% transparency
-        shapeRenderer.rect(cameraManager.getUiCamera().viewportWidth - 225, 5, 225, 150);
+        shapeRenderer.rect(cameraManager.getUiCamera().viewportWidth - 225, 5, 225, 200);
         shapeRenderer.end();
 
 
@@ -289,26 +293,31 @@ public class MapMaker implements Screen, InputProcessor {
         // **Use StringBuilder to reduce font.draw() calls**
         StringBuilder debugText = new StringBuilder();
 
-        if (inspect && mouseOverMap) {
-            debugText.append("Tile: ").append(map.getTile(gridX, gridY).getTerrainId()).append("\n");
+        if (mouseOverMap) {
+            debugText.append("Merging: ").append(map.isMergeable()).append("\n");
+            debugText.append("TTC: ").append(map.tTC()).append("\n");
+            debugText.append("BTC: ").append(map.bTC()).append("\n");
+
         }
 
         if (mouseOverMap) {
-            debugText.append("Mouse: ").append(gridY).append(",").append(gridX).append("\n");
+            debugText.append("Mouse: ").append(gridY).append(",").append(gridX).append(" : ").append(map.getTile(gridX, gridY).getTerrainId()).append(" : ").append(map.getTile(gridX, gridY).getTerrainBaseType()).append("\n");
+
         }
 
         debugText.append("FPS: ").append(Gdx.graphics.getFramesPerSecond()).append("\n")
             .append("Used Mem: ").append(usedMemory).append(" MB\n")
-            .append("Max Mem: ").append(maxMemory).append(" MB");
+            .append("Max Mem: ").append(maxMemory).append(" MB\n")
+            .append("Render Time: ").append(mapRenderDuration).append("\n")
+            .append("Draw Call Counter: ").append(map.getDrawCallCounter());
 
-        font.draw(batch, debugText.toString(), cameraManager.getUiCamera().viewportWidth - 220, 100);
+        font.draw(batch, debugText.toString(), cameraManager.getUiCamera().viewportWidth - 220, 180);
 
         batch.end();
     }
 
-    public void renderMap(){
+    public void renderMap(float delta){
         batch.setProjectionMatrix(cameraManager.getMapCamera().combined);
-        batch.begin();
 
         float camX = cameraManager.getMapCamera().position.x;
         float camY = cameraManager.getMapCamera().position.y;
@@ -333,8 +342,8 @@ public class MapMaker implements Screen, InputProcessor {
 
         //Gdx.app.log("MapMaker", "StartX " + startX + " StartY " + startY + " EndX " + endX + " EndY " + endY);
 
-
-        map.renderMap(TILE_SIZE, batch, is3DView, startX, startY, endX, endY);
+        batch.begin();
+        map.renderMap(TILE_SIZE, batch, is3DView, startX, startY, endX, endY, delta);
         batch.end();
     }
 
@@ -346,10 +355,10 @@ public class MapMaker implements Screen, InputProcessor {
         }
     }
 
-
     private void reloadJson() {
         TerrainLoader.loadTerrains();
         forceUpdateAllSeaTiles();
+        includedTerrains = getIncludedTerrainsDPB();
     }
 
     private void smartPlaceSea(int x, int y) {
@@ -362,6 +371,7 @@ public class MapMaker implements Screen, InputProcessor {
 
         // Immediately update all sea tiles on the map
         forceUpdateAllSeaTiles(x, y);
+
     }
 
     private void forceUpdateAllSeaTiles(int gridX, int gridY) {
@@ -385,7 +395,6 @@ public class MapMaker implements Screen, InputProcessor {
             updateSeaTileGuaranteed(pos[0], pos[1]);
         }
     }
-
 
     private void forceUpdateAllSeaTiles() {
         // Create a copy of all sea tile positions
@@ -1047,91 +1056,191 @@ public class MapMaker implements Screen, InputProcessor {
         return isMouseOver;
     }
 
-    private void drawTilePicker() {
-        // Set up for UI rendering
-        batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
-        shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
-
+    private List<Terrain> getIncludedTerrainsDPB(){
         TerrainManager terrainManager = TerrainManager.getInstance();
         List<Terrain> includedTerrains = new ArrayList<>();
 
-        // Collect only the terrains that are not excluded from the tile picker
+        // Collect terrains
         for (Terrain terrain : terrainManager.getTerrains()) {
             if (!terrain.isExcludeTilePicker()) {
                 includedTerrains.add(terrain);
             }
         }
+        return includedTerrains;
+    }
 
-        // Calculate width based on number of tiles
-        int numTiles = includedTerrains.size();
-        int pickerWidth = numTiles * TILE_SIZE + 20; // 10px padding on each side
-        int pickerHeight = TILE_PICKER_HEIGHT + 20; // Add some extra height for padding
-        int startX = (Gdx.graphics.getWidth() - pickerWidth) / 2;
-        int startY = Gdx.graphics.getHeight() - pickerHeight;
+    private Terrain selectedTerrain = null; // Store the currently selected terrain
+    private Texture selectedFaction = new Texture(Gdx.files.internal("natoLogo.png"));; // Store the currently selected faction (not yet implemented)
+    private Texture selectedBuilding = new Texture(Gdx.files.internal("buildings/city.png"));; // Store the currently selected building (not yet implemented)
 
-        // Draw background for the tile picker
+    private List<Terrain> includedTerrains = getIncludedTerrainsDPB(); // Your terrains list
+
+    private boolean tilePickerOpen = false;
+
+    private void drawPaletteBar() {
+        int paletteBarWidth = TILE_SIZE * 3 + 40;
+        int paletteBarHeight = TILE_PICKER_HEIGHT + 20;
+        int startX = (Gdx.graphics.getWidth() - paletteBarWidth) / 2;
+        int startY = Gdx.graphics.getHeight() - paletteBarHeight;
+        
+        selectedTerrain = getTerrainByTextureId(selectedTile, includedTerrains);
+
+        float terrainX = startX + 55;
+        float factionX = terrainX + TILE_SIZE + 10;
+        float buildingX = factionX + TILE_SIZE + 10;
+
+        // Track mouse position
+        float mouseX = Gdx.input.getX();
+        float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f));  // Dark background
-        shapeRenderer.rect(startX - 2, startY - 2, pickerWidth + 4, pickerHeight + 4);  // Outer border
-        shapeRenderer.setColor(new Color(0.2f, 0.2f, 0.2f, 1f));  // Slightly lighter inner area
-        shapeRenderer.rect(startX, startY, pickerWidth, pickerHeight);  // Inner area
+        shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f));
+        shapeRenderer.rect(startX - 10, startY, paletteBarWidth + 50, paletteBarHeight - 10);
         shapeRenderer.end();
 
         batch.begin();
-
-        // Draw the terrains with some padding from the edges
-        int tilePickerContentStartY = startY + 10; // Add 10px padding from bottom
-        for (int i = 0; i < numTiles; i++) {
-            Terrain terrain = includedTerrains.get(i);
-            batch.draw(AtlasManager.getInstance().getTexture(terrain.getTextureId()),
-                startX + i * TILE_SIZE + 10, // Add 10px padding from left
-                tilePickerContentStartY,
-                TILE_SIZE,
-                TILE_PICKER_HEIGHT);
-        }
-
+        font.setColor(Color.WHITE);
+        font.draw(batch, "Palette:", startX , startY + paletteBarHeight / 2);
         batch.end();
 
-        // Draw selection highlight
-        int selectedTileIndex = getSelectedTileIndex(selectedTile, includedTerrains);
-        if (selectedTileIndex >= 0) {
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-            shapeRenderer.setColor(Color.YELLOW);
-            shapeRenderer.rect(
-                startX + selectedTileIndex * TILE_SIZE + 10, // Match the padding from left
-                tilePickerContentStartY,
-                TILE_SIZE,
-                TILE_PICKER_HEIGHT);
-            shapeRenderer.end();
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+
+        // Draw hover effect and logic for when clicked
+        drawHoverEffectAndHandleClick(terrainX, startY, "Terrain", paletteBarHeight - 10, mouseX, mouseY, () -> drawTilePicker((int)terrainX, startY + 15));
+        drawHoverEffectAndHandleClick(factionX, startY, "Faction", paletteBarHeight - 10, mouseX, mouseY, () -> drawFactionPicker());
+        drawHoverEffectAndHandleClick(buildingX, startY, "Building", paletteBarHeight - 10, mouseX, mouseY, () -> drawBuildingPicker());
+
+        shapeRenderer.end();
+
+        // Draw the icons
+        batch.begin();
+        if (selectedTerrain != null) {
+            TextureRegion terrain = AtlasManager.getInstance().getTexture(selectedTerrain.getTextureId());
+            batch.draw(terrain, terrainX, startY + 15, TILE_SIZE, terrain.getRegionHeight() * (TILE_SIZE / 16f));
         }
+        if (selectedFaction != null) {
+            batch.draw(selectedFaction, factionX, startY + 15, TILE_SIZE, TILE_SIZE);
+        }
+        if (selectedBuilding != null) {
+            batch.draw(selectedBuilding, buildingX, startY + 15, TILE_SIZE, TILE_SIZE);
+        }
+        batch.end();
 
-        // Handle tile selection (using screen coordinates)
-        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-            // Convert mouse coordinates to screen coordinates
-            int mouseX = Gdx.input.getX();
-            int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY(); // Flip Y coordinate
+        if(tilePickerOpen){
+            drawTilePicker((int)terrainX, startY + 15);
+        }
+    }
 
-            // Check if click is within the tile picker area
-            if (mouseX >= startX && mouseX <= startX + pickerWidth &&
-                mouseY >= startY && mouseY <= startY + pickerHeight) {
+    // helper method
+    private void drawHoverEffectAndHandleClick(float x, float y, String label,int backgroundHeight, float mouseX, float mouseY, Runnable onClick) {
+        boolean isHovered = mouseX >= x && mouseX <= x + TILE_SIZE && mouseY >= y && mouseY <= y + TILE_SIZE;
+        if (isHovered) {
+            shapeRenderer.setColor(new Color(0.3f, 0.3f, 0.3f, 1f));
+            shapeRenderer.rect(x-5, y, TILE_SIZE + 10, backgroundHeight);
 
-                // Calculate which terrain was clicked
-                int clickedTerrainIndex = (mouseX - startX - 10) / TILE_SIZE; // Account for padding
-
-                if (clickedTerrainIndex >= 0 && clickedTerrainIndex < numTiles) {
-                    Terrain clickedTerrain = includedTerrains.get(clickedTerrainIndex);
-                    isPlacing = true;
-                    isGrabbing = false;
-                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
-                    selectedTile = clickedTerrain.getTextureId();
-
-                    // Optional: Play a sound or provide feedback
-                    Gdx.app.log("TilePicker", "Selected tile: " + selectedTile);
+            // Handle click event (select the terrain/faction/building)
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                if (tilePickerOpen) {
+                    // Close the tile picker if it's open
+                    tilePickerOpen = false;
+                } else {
+                    onClick.run();
                 }
             }
         }
     }
 
+    private void drawTilePicker(int startX, int startY) {
+        tilePickerOpen = true;
+        batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
+        shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
+
+        int pickerHeight = TILE_PICKER_HEIGHT * 5 + 20;
+        int pickerWidth = TILE_SIZE * 3 + 40;
+
+        int tilePickerStartY = startY - pickerHeight - 15;
+
+        int numTiles = includedTerrains.size();
+
+        // Draw background for tile picker
+        shapeRenderer.end();
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f)); // Dark background
+        shapeRenderer.rect(startX, tilePickerStartY + 70, pickerWidth, pickerHeight - 70);
+
+        // Draw the header
+        shapeRenderer.setColor(new Color(0.0f, 0.3f, 0.8f, 1f)); // Blue background
+        shapeRenderer.rect(startX, tilePickerStartY + pickerHeight - 30, pickerWidth, 30); // Draw header bar with 30 height
+        shapeRenderer.end();
+
+        batch.begin();
+        font.setColor(Color.WHITE);
+        font.draw(batch, "Select Terrain", startX + 10, tilePickerStartY + pickerHeight - 10); // Slightly below the top of the header
+        batch.draw(closeButton, startX + pickerWidth - 25, tilePickerStartY + pickerHeight - 26, 20, 20); // Close button
+
+        // Display the grid of tiles
+        for (int i = 0; i < numTiles; i++) {
+            Terrain terrain = includedTerrains.get(i);
+            int col = i % 3;
+            int row = i / 3;
+
+            float tileX = startX + col * TILE_SIZE + 10;
+            float tileY = tilePickerStartY + pickerHeight + row * TILE_PICKER_HEIGHT - 250;
+
+            batch.draw(AtlasManager.getInstance().getTexture(terrain.getTextureId()), tileX, tileY, TILE_SIZE, TILE_PICKER_HEIGHT);
+        }
+        batch.end();
+
+        // Handle clicks
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+            int mouseX = Gdx.input.getX();
+            int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+
+            if (mouseX >= startX && mouseX <= startX + pickerWidth &&
+                mouseY >= tilePickerStartY + 70 && mouseY <= tilePickerStartY + 70 + pickerHeight) {
+
+                int relativeX = mouseX - startX - 10;
+                int relativeY = mouseY - (tilePickerStartY + 70);
+
+                int clickedCol = relativeX / TILE_SIZE;
+                int clickedRow = relativeY / TILE_PICKER_HEIGHT;
+
+                int clickedIndex = clickedRow * 3 + clickedCol;
+
+                if (clickedIndex >= 0 && clickedIndex < numTiles) {
+                    Terrain clickedTerrain = includedTerrains.get(clickedIndex);
+                    selectedTile = clickedTerrain.getTextureId();
+                    tilePickerOpen = false;
+                }
+            }else{
+                tilePickerOpen = false;
+            }
+
+
+            // Handle close button click
+            if (mouseX >= startX + pickerWidth - 25 && mouseX <= startX + pickerWidth - 5 &&
+                mouseY >= tilePickerStartY + pickerHeight - 26 && mouseY <= tilePickerStartY + pickerHeight - 6) {
+                tilePickerOpen = false;
+            }
+        }
+    }
+
+    private void drawFactionPicker() {
+        Gdx.app.log("drawFactionPicker","Faction Picker Opened");
+    }
+
+    private void drawBuildingPicker() {
+        Gdx.app.log("drawBuildingPicker","Building Picker Opened");
+    }
+
+    private Terrain getTerrainByTextureId(String textureId, List<Terrain> terrains) {
+        for (Terrain terrain : terrains) {
+            if (terrain.getTextureId().equals(textureId)) {
+                return terrain;
+            }
+        }
+        return null;
+    }
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
@@ -1248,23 +1357,23 @@ public class MapMaker implements Screen, InputProcessor {
             int flippedY = Gdx.graphics.getHeight() - screenY;
 
             // Check if click is in tilepicker first
-            if (isClickInTilePicker(screenX, flippedY)) {
-                List<Terrain> includedTerrains = getIncludedTerrains();
-                int numTiles = includedTerrains.size();
-                int pickerWidth = numTiles * TILE_SIZE + 20;
-                int startX = (Gdx.graphics.getWidth() - pickerWidth) / 2;
-
-                // Calculate which terrain was clicked
-                int clickedTerrainIndex = (screenX - startX - 10) / TILE_SIZE;
-
-                if (clickedTerrainIndex >= 0 && clickedTerrainIndex < numTiles) {
-                    Terrain clickedTerrain = includedTerrains.get(clickedTerrainIndex);
-                    isPlacing = true;
-                    selectedTile = clickedTerrain.getTextureId();
-                    Gdx.app.log("TilePicker", "Selected tile: " + selectedTile);
-                }
-                return true; // Consume the event
-            }
+//            if (isClickInTilePicker(screenX, flippedY)) {
+//                List<Terrain> includedTerrains = getIncludedTerrains();
+//                int numTiles = includedTerrains.size();
+//                int pickerWidth = numTiles * TILE_SIZE + 20;
+//                int startX = (Gdx.graphics.getWidth() - pickerWidth) / 2;
+//
+//                // Calculate which terrain was clicked
+//                int clickedTerrainIndex = (screenX - startX - 10) / TILE_SIZE;
+//
+//                if (clickedTerrainIndex >= 0 && clickedTerrainIndex < numTiles) {
+//                    Terrain clickedTerrain = includedTerrains.get(clickedTerrainIndex);
+//                    isPlacing = true;
+//                    selectedTile = clickedTerrain.getTextureId();
+//                    Gdx.app.log("TilePicker", "Selected tile: " + selectedTile);
+//                }
+//                return true; // Consume the event
+//            }
 
             // Check if click is in toolbar
             if (screenX >= 0 && screenX <= 64) {

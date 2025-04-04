@@ -1,0 +1,16 @@
+{
+  "metaData" : {
+    "Name" : "",
+    "Creator" : "",
+    "Date Created" : "",
+    "Number of Plays" : "",
+    "Rating" : "",
+    "imagePath": ""
+
+  },
+  "map" : {
+    "tiles" : [
+
+    ]
+  }
+}

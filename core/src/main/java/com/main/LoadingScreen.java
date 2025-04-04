@@ -21,6 +21,7 @@ public class LoadingScreen implements Screen {
     private Texture loadingBarBg;
     private Texture loadingBarFg;
     private Rectangle loadingBarBounds;
+    private ShaderManager shaderManager;
 
     private float progress = 0;
     private final float LOAD_TIME = 0.5f;
@@ -30,8 +31,12 @@ public class LoadingScreen implements Screen {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         batch = new SpriteBatch();
+        shaderManager = ShaderManager.getInstance();
+
+        // Loading
         loadAssets();
         createFonts();
+        compileShaders();
 
         gameLogo = new Texture("loadingScreen/gameLogo.png");
         loadingBarBg = new Texture("loadingScreen/loading_bar_bg.png");
@@ -44,8 +49,13 @@ public class LoadingScreen implements Screen {
         );
     }
 
+    private void compileShaders() {
+        shaderManager.loadShader("sea","shaders/buildings/default.vert","shaders/buildings/colourChange.frag");
+    }
+
     private void loadAssets() {
         TerrainLoader.loadTerrains();
+        BuildingLoader.loadBuildings();
     }
 
     private void createFonts() {
@@ -69,6 +79,8 @@ public class LoadingScreen implements Screen {
         progress += delta / LOAD_TIME;
         if (progress >= 1) {
             progress = 1;
+
+
             game.setScreen(new MapMaker(game)); // Pass game instance to MapMaker
         }
 

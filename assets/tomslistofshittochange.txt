@@ -1,0 +1,7 @@
+organise the ui and when all is added for the mapeditor convert it into a atlas
+get rid of pngs that are on their own when all atlas are made
+organise folders into sections one for mapedior and one for main game mode or menu stuff
+some ui shared between such as buttons and stuff
+
+need to go into figma and do custom ui later but for now we ball type shit -- Josh Love you Pookie
+

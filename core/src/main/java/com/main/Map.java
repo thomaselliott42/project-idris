@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
-import java.util.Random;
+import java.util.*;
 
 public class Map {
 
@@ -14,12 +14,32 @@ public class Map {
     private final int MAP_HEIGHT;
     private Tile[][] map;
     private AtlasManager terrainAtlas;
+    private ShaderManager shaderManager;
+    List<int[]> mergedCoords = new ArrayList<>();
 
+    // shaders
+    private float time = 0f;;
+
+
+    // testing
+    private float alpha = 1.0f;
+    private Texture plainForest = new Texture(Gdx.files.internal("plainForest4x4.png"));
+    private Texture plain = new Texture(Gdx.files.internal("plain4x4.png"));
+    private Texture desert = new Texture(Gdx.files.internal("desert4x4.png"));
+
+
+
+    // debuging
+    private boolean mergeTiles = false;
+    private int counterTexture = 0;
+    private int counterBaseTexture = 0;
+    private int drawCallCounter = 0;
 
     public Map(int width, int height) {
         this.MAP_WIDTH = width;
         this.MAP_HEIGHT = height;
         this.terrainAtlas = AtlasManager.getInstance();
+        this.shaderManager = ShaderManager.getInstance();
 
         this.map = new Tile[MAP_HEIGHT][MAP_WIDTH];
     }
@@ -40,7 +60,7 @@ public class Map {
     }
 
     public boolean checkBounds(int x, int y) {
-        if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT){
+        if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
             return true;
         }
         return false;
@@ -50,22 +70,230 @@ public class Map {
         return map[y][x];
     }
 
-    public void renderMap(int TILE_SIZE, Batch batch, boolean is3DView, int startX, int startY, int endX, int endY) {
+    public void renderMap(int TILE_SIZE, Batch batch, boolean is3DView, int startX, int startY, int endX, int endY, float delta) {
         int screenWidth = Gdx.graphics.getWidth();
         int screenHeight = Gdx.graphics.getHeight();
         int offsetX = (screenWidth - MAP_WIDTH * TILE_SIZE) / 2;
         int offsetY = (screenHeight - MAP_HEIGHT * TILE_SIZE) / 2;
+        time += Gdx.graphics.getDeltaTime(); // Keep increasing time
 
+        render2DMap(TILE_SIZE, batch, offsetX, offsetY, startX, startY, endX, endY);
 
 //        if (is3DView) {
-//            //render3DMap(TILE_SIZE, batch, offsetX, offsetY);
+//            render3DMap(TILE_SIZE, batch, offsetX, offsetY, startX, startY, endX, endY);
 //        } else {
+////            alpha = CameraManager.getInstance().getZoomLevel() - 0.000001f;
+//
 //            render2DMap(TILE_SIZE, batch, offsetX, offsetY, startX, startY, endX, endY);
 //        }
-        render2DMap(TILE_SIZE, batch, offsetX, offsetY, startX, startY, endX, endY);
+
+//        Gdx.app.log("Map", "3d :" + is3DView);
+
     }
 
     public void render2DMap(int TILE_SIZE, Batch batch, int offsetX, int offsetY, int startX, int startY, int endX, int endY) {
+
+        TextureRegion baseTexture = null;
+        TextureRegion terrainTexture = null;
+        String previousTextureId = null;
+        String previousBaseTextureId = null;
+        counterTexture = 0;
+        counterBaseTexture = 0;
+        drawCallCounter = 0;
+
+
+        float zoomLevel = CameraManager.getInstance().getZoomLevel();
+        mergeTiles = zoomLevel > 1; // D
+        mergedCoords.clear();
+
+//        batch.setColor(1, 1, 1, alpha); // Set alpha to 50%
+
+        for (int y = endY; y >= startY; y--) {
+            for (int x = endX; x >= startX; x--) {
+                if (x < 0 || y < 0 || x >= MAP_WIDTH || y >= MAP_HEIGHT) {
+                    continue;
+                }
+
+                Tile tile = getTile(x, y);
+
+                if (tile == null) {
+                    continue;
+                }
+
+                if (inMergedCoords(x, y)) {
+                    continue;
+                }
+
+                String terrainTextureId = tile.getTerrain().getTextureId();
+                String baseTextureId = tile.getBaseTerrainId();
+                if (!terrainTextureId.equals(previousTextureId)) {
+                    if (terrainTextureId.startsWith("S")) {
+
+                        terrainTexture = terrainAtlas.getTexture(terrainTextureId, checkSurroundingBaseTerrain(x, y));
+                    } else {
+                        terrainTexture = terrainAtlas.getTexture(terrainTextureId);
+
+                    }
+                    previousTextureId = terrainTextureId;
+                    counterTexture++;
+                }
+
+                if (!baseTextureId.equals(previousBaseTextureId)) {
+                    baseTexture = terrainAtlas.getTexture(baseTextureId);
+                    previousBaseTextureId = baseTextureId;
+                    counterBaseTexture++;
+                }
+
+//                if (mergeTiles && x % 2 == 0 && y % 2 == 0 && checkMergeable(x, y)) {
+//                    // Render a 2x2 merged tile
+//                    mergedCoords.add(new int[]{x+1, y});
+//                    mergedCoords.add(new int[]{x, y+1});
+//                    mergedCoords.add(new int[]{x+1, y+1});
+//
+//                    Gdx.app.log("Map", "merge tiles");
+//                    if (terrainTextureId.equals("P")) {
+//                        drawCallCounter ++;
+//                        batch.draw(desert, x * TILE_SIZE + offsetX, y * TILE_SIZE + offsetY, TILE_SIZE * 2, TILE_SIZE * 2);
+//
+//                    }
+//
+//
+//
+//                    continue;
+//                }
+
+                float drawX = x * TILE_SIZE + offsetX;
+                float drawY = y * TILE_SIZE + offsetY;
+
+                if (!terrainTextureId.startsWith("S")) {
+                    drawCallCounter++;
+                    batch.draw(baseTexture, drawX, drawY, TILE_SIZE, TILE_SIZE);
+                } // if the terrain doesn't begin with S then we draw a base texture
+
+                drawCallCounter++;
+                if(terrainTextureId.equals("S")){
+                    shaderManager.useShader("sea");
+                    batch.setShader(shaderManager.getCurrentShader());
+
+                    shaderManager.setUniformf("u_time", time);
+                    batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
+                    batch.setShader(null);
+                }else{
+                    batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
+                }
+            }
+        }
+
+       // batch.setColor(1, 1, 1, 1); // Reset color back to full opacity
+
+    }
+
+    public boolean inMergedCoords(int x, int y) {
+        for (int[] mergedCoord : mergedCoords ) {
+            if (mergedCoord[0] == x && mergedCoord[1] == y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public Boolean isMergeable() {
+        return mergeTiles;
+    }
+
+    public int getDrawCallCounter() {
+        return drawCallCounter;
+    }
+
+    public int tTC(){
+        return counterTexture;
+    }
+
+    public int bTC(){
+        return counterBaseTexture;
+    }
+
+    private String checkSurroundingBaseTerrain(int x, int y) {
+        if (checkBounds(x + 1, y) && checkBounds(x - 1, y) && checkBounds(x, y - 1) && checkBounds(x, y + 1)) {
+            Tile currentTile = getTile(x, y); // Access current tile directly
+            String currentBaseType = currentTile.getTerrainBaseType();
+
+            // Get surrounding terrain base types
+            Tile leftTile = getTile(x - 1, y);
+            Tile rightTile = getTile(x + 1, y);
+            Tile topTile = getTile(x, y - 1);
+            Tile bottomTile = getTile(x, y + 1);
+
+
+            String leftBase = leftTile.getTerrainBaseType();
+            String rightBase = rightTile.getTerrainBaseType();
+            String topBase = topTile.getTerrainBaseType();
+            String bottomBase = bottomTile.getTerrainBaseType();
+
+            if(!leftBase.equalsIgnoreCase(currentBaseType) && leftBase.equals(rightBase)){
+                Gdx.app.log("Map", "!leftBase.equalsIgnoreCase(currentBaseType) && leftBase.equals(rightBase) New Base :" + leftBase);
+
+                return leftBase;
+            }
+
+            else if(!topBase.equalsIgnoreCase(currentBaseType) && topBase.equals(bottomBase)){
+                Gdx.app.log("Map", "!topBase.equalsIgnoreCase(currentBaseType) && topBase.equals(bottomBase) New Base :" + topBase);
+
+                return topBase;
+            }
+
+            else if(!leftBase.equals(rightBase) && !rightBase.equals("S") && !leftBase.equals("S")){
+                Gdx.app.log("Map", "!leftBase.equals(rightBase) New Base :" + leftBase);
+
+                return leftBase+"/"+rightBase;
+            }
+            else if(!topBase.equals(bottomBase) && !topBase.equals("S") && !bottomBase.equals("S")){
+                Gdx.app.log("Map", "!topBase.equals(bottomBase) New Base :" + topBase);
+
+                return topBase +"/"+bottomBase;
+            }
+
+
+            else if (!leftBase.equalsIgnoreCase(currentBaseType) && rightTile.getTerrainId().contains("S") && !rightBase.equals("S") && !leftBase.equals("S")) {
+                Gdx.app.log("Map", "!leftBase.equalsIgnoreCase(currentBaseType) && rightTile.getTerrainId().contains(\"S\") New Base :" + leftBase);
+                return leftBase;
+            } else if(!rightBase.equalsIgnoreCase(currentBaseType) && leftTile.getTerrainId().contains("S")&& !rightBase.equals("S") && !leftBase.equals("S")){
+                Gdx.app.log("Map", "!rightBase.equalsIgnoreCase(currentBaseType) && leftTile.getTerrainId().contains(\"S\") New Base :" + rightBase);
+                return rightBase;
+            }else if(topBase.equalsIgnoreCase(currentBaseType) && bottomTile.getTerrainId().contains("S")&& !topBase.equals("S") && !bottomBase.equals("S")){
+                Gdx.app.log("Map", "topBase.equalsIgnoreCase(currentBaseType) && bottomTile.getTerrainId().contains(\"S\") New Base :" + topBase);
+                return topBase;
+            }else if(bottomBase.equalsIgnoreCase(currentBaseType) && topTile.getTerrainId().contains("S")&& !topBase.equals("S") && !bottomBase.equals("S")){
+                Gdx.app.log("Map", "bottomBase.equalsIgnoreCase(currentBaseType) && topTile.getTerrainId().contains(\"S\") New Base :" + bottomBase);
+                return bottomBase;
+            }
+
+
+        }
+        return "P";
+    }
+
+    private boolean checkMergeable(int x, int y) {
+        if (x + 1 >= MAP_WIDTH || y + 1 >= MAP_HEIGHT) return false;
+
+        Tile left = getTile(x, y);
+        Tile right = getTile(x + 1, y);
+        Tile below = getTile(x, y + 1);
+        Tile belowRight = getTile(x + 1, y + 1);
+
+        if (left == null || right == null || below == null || belowRight == null) {
+            return false;
+        }
+
+        String terrainId = left.getTerrain().getTextureId();
+        return terrainId.equals(right.getTerrain().getTextureId()) &&
+            terrainId.equals(below.getTerrain().getTextureId()) &&
+            terrainId.equals(belowRight.getTerrain().getTextureId());
+    }
+
+
+    public void render3DMap(int TILE_SIZE, Batch batch, int offsetX, int offsetY, int startX, int startY, int endX, int endY) {
 
         TextureRegion baseTexture = null;
         TextureRegion terrainTexture = null;
@@ -89,9 +317,9 @@ public class Map {
                 String terrainTextureId = tile.getTerrain().getTextureId();
                 String baseTextureId = tile.getBaseTerrainId();
                 if (!terrainTextureId.equals(previousTextureId)) {
-                    if(terrainTextureId.startsWith("S")) {
+                    if (terrainTextureId.startsWith("S")) {
                         terrainTexture = terrainAtlas.getTexture(terrainTextureId, tile.getBaseTerrainId());
-                    }else{
+                    } else {
                         terrainTexture = terrainAtlas.getTexture(terrainTextureId);
 
                     }
@@ -99,7 +327,7 @@ public class Map {
                     counterTexture++;
                 }
 
-                if(!baseTextureId.equals(previousBaseTextureId)) {
+                if (!baseTextureId.equals(previousBaseTextureId)) {
                     baseTexture = terrainAtlas.getTexture(baseTextureId);
                     previousBaseTextureId = baseTextureId;
                     counterBaseTexture++;
@@ -108,19 +336,18 @@ public class Map {
                 float drawX = x * TILE_SIZE + offsetX;
                 float drawY = y * TILE_SIZE + offsetY;
 
-                if(!terrainTextureId.startsWith("S")) {
+                if (!terrainTextureId.startsWith("S")) {
                     batch.draw(baseTexture, drawX, drawY, TILE_SIZE, TILE_SIZE);
                 }
 
                 if (terrainTextureId.startsWith("F")) {
                     batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, TILE_SIZE);
-                }else if (terrainTextureId.equals("SS") && baseTextureId.equals("D")) {
+                } else if (terrainTextureId.equals("SS") && baseTextureId.equals("D")) {
                     batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
                 } else if (terrainTextureId.startsWith("S")) {
 //                        Texture cT = checkSurroundingBaseTerrain(tile, x, y);
                     batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, TILE_SIZE);
-                }
-                else if (terrainTextureId.startsWith("M")) {
+                } else if (terrainTextureId.startsWith("M")) {
                     batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
                 }
 
@@ -129,128 +356,55 @@ public class Map {
         }
         Gdx.app.log("Map", "Times Texture Changed :" + counterTexture);
         Gdx.app.log("Map", "Times Base Texture Changed :" + counterBaseTexture);
+        batch.setColor(1, 1, 1, 1); // Reset color back to full opacity
 
     }
 
-//    public void render3DMap(int TILE_SIZE, Batch batch, int offsetX, int offsetY) {
-//        // Render non-mountain tiles first
+//
+
+
+
+        // Debug functions
+//    public void printMapBaseTerrain(){
 //        for (int y = 0; y < MAP_HEIGHT; y++) {
+//            StringBuilder row = new StringBuilder();
 //            for (int x = 0; x < MAP_WIDTH; x++) {
 //                Tile tile = getTile(x, y);
-//                String terrainId = tile.getTerrain().getTextureId();
-//                float drawX = x * TILE_SIZE + offsetX;
-//                float drawY = y * TILE_SIZE + offsetY;
-//
-//                if (!terrainId.startsWith("M")) {
-//                    if (terrainId.startsWith("F")) {
-//                        String textureKey = terrainId.endsWith("P") ? "P" : terrainId.endsWith("D") ? "D" : null;
-//                        if (textureKey != null) {
-//                            batch.draw(TerrainManager.getInstance().getTerrain(textureKey).getTexture().get(0), drawX, drawY, TILE_SIZE, TILE_SIZE);
-//                        }
-//                        batch.draw(tile.getTerrainTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
-//
-//                    } else if (terrainId.startsWith("S")) {
-//                        Texture cT = checkSurroundingBaseTerrain(tile, x, y);
-//                        batch.draw(cT, drawX, drawY, TILE_SIZE, TILE_SIZE);
-//
-//                    }else{
-//                        batch.draw(tile.getTerrainTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
-//                    }
+//                if (tile != null && tile.getTerrain() != null) {
+//                    row.append(tile.getTerrainBaseType()).append(" ");
+//                } else {
+//                    row.append("?? "); // Unknown terrain
 //                }
 //            }
+//            System.out.println(row.toString().trim()); // Print each row
 //        }
+//        System.out.println("------------------------------------");
 //
-//        // Render mountain tiles and buildings from bottom-right to top-left
-//        for (int y = MAP_HEIGHT - 1; y >= 0; y--) {
-//            for (int x = MAP_WIDTH - 1; x >= 0; x--) {
+//    }
+
+//    public void printMapToTerminal() {
+//        for (int y = 0; y < MAP_HEIGHT; y++) {
+//            StringBuilder row = new StringBuilder();
+//            for (int x = 0; x < MAP_WIDTH; x++) {
 //                Tile tile = getTile(x, y);
-//                String terrainId = tile.getTerrain().getId();
-//                float drawX = x * TILE_SIZE + offsetX;
-//                float drawY = y * TILE_SIZE + offsetY;
-//
-//                if (terrainId.startsWith("M")) {
-//                    String textureKey = terrainId.endsWith("P") ? "P" : terrainId.endsWith("D") ? "D" : null;
-//                    if (textureKey != null) {
-//                        batch.draw(TerrainManager.getInstance().getTerrain(textureKey).getTexture().get(0), drawX, drawY, TILE_SIZE, TILE_SIZE);
-//                    }
-//                    batch.draw(tile.getTerrainTexture(), drawX, drawY, TILE_SIZE, tile.getTerrain().getTexture().get(0).getHeight() * (TILE_SIZE / 16f));
-//                }
-//
-//                if (terrainId.equals("SS") && tile.getBaseType().equals("Desert")) {
-//                    batch.draw(tile.getBaseTerrainTexture(), drawX, drawY, TILE_SIZE, TILE_SIZE);
-//                    batch.draw(tile.getTerrainTexture(), drawX, drawY, TILE_SIZE, tile.getTerrainTexture().getHeight() * (TILE_SIZE / 16f));
+//                if (tile != null && tile.getTerrain() != null) {
+//                    row.append(tile.getTerrain().getTextureId()).append(" ");
+//                } else {
+//                    row.append("?? "); // Unknown terrain
 //                }
 //            }
+//            System.out.println(row.toString().trim()); // Print each row
 //        }
+//        System.out.println("------------------------------------");
 //
-//        // render units
 //    }
 
-//    private Texture checkSurroundingBaseTerrain(Tile tile, int x, int y) {
-//        if(checkBounds(x+1, y) && checkBounds(x-1,y)){
-//            String lBT = getTile(x+1,y).getTerrainBaseType();
-//            String rBt = getTile(x-1,y).getTerrainBaseType();
-//            if(!lBT.equals(rBt)){
-//                if(lBT.equals("P")){
-//                    if(tile.getTerrain().getJoinigTextures().get(2) != null){
-//                        return tile.getTerrain().getJoinigTextures().get(2);
-//                    }
-//                    return tile.getTerrainTexture();
-//
-//                } else if (lBT.equals("D")) {
-//                    if(tile.getTerrain().getJoinigTextures().get(0) != null){
-//                        return tile.getTerrain().getJoinigTextures().get(0);
-//                    }
-//                    return tile.getTerrainTexture();
-//                }
-//            }else if(!tile.getTerrainBaseType().equals(lBT)){
-//                tile.setTerrainBaseType(lBT);
-//            }
-//        }
-//        return tile.getTerrainTexture();
-//    }
-
-    // Debug functions
-    public void printMapBaseTerrain(){
-        for (int y = 0; y < MAP_HEIGHT; y++) {
-            StringBuilder row = new StringBuilder();
-            for (int x = 0; x < MAP_WIDTH; x++) {
-                Tile tile = getTile(x, y);
-                if (tile != null && tile.getTerrain() != null) {
-                    row.append(tile.getTerrainBaseType()).append(" ");
-                } else {
-                    row.append("?? "); // Unknown terrain
-                }
+        public void dispose() {
+            if (terrainAtlas != null) {
+                terrainAtlas.dispose();
+                Gdx.app.log("AtlasManager", "TextureAtlas disposed.");
             }
-            System.out.println(row.toString().trim()); // Print each row
         }
-        System.out.println("------------------------------------");
 
     }
 
-    public void printMapToTerminal() {
-        for (int y = 0; y < MAP_HEIGHT; y++) {
-            StringBuilder row = new StringBuilder();
-            for (int x = 0; x < MAP_WIDTH; x++) {
-                Tile tile = getTile(x, y);
-                if (tile != null && tile.getTerrain() != null) {
-                    row.append(tile.getTerrain().getTextureId()).append(" ");
-                } else {
-                    row.append("?? "); // Unknown terrain
-                }
-            }
-            System.out.println(row.toString().trim()); // Print each row
-        }
-        System.out.println("------------------------------------");
-
-    }
-
-    public void dispose() {
-        if (terrainAtlas != null) {
-            terrainAtlas.dispose();
-            Gdx.app.log("AtlasManager", "TextureAtlas disposed.");
-        }
-    }
-
-
-}

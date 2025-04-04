@@ -1,4 +1,4 @@
-package com.main;
+package com.main.tools;
 
 
 import com.badlogic.gdx.tools.texturepacker.TexturePacker;
@@ -13,6 +13,6 @@ public class AtlasPacker {
         // Input folder: "assets/terrain"
         // Output folder: "assets/atlas"
         // Atlas name: "terrain"
-        TexturePacker.process(settings, "assets/ui/d", "assets/atlas", "mapEditorUI");
+        TexturePacker.process(settings, "assets/buildings", "assets/atlas", "buildings");
     }
 }

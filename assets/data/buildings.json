@@ -1,0 +1,98 @@
+{
+  "captials": [
+    {
+      "id": "nH",
+      "name": "Nato Headquaters",
+      "faction": "nato",
+      "defense": 1.0,
+      "speed": 1.0,
+      "canHeal": false,
+      "canReful": false,
+      "canBeDestroyed": true,
+      "damagedTextures": []
+    }
+  ],
+  "buildings" : [
+    {
+      "id": "city",
+      "name": "City",
+      "defense": 1.0,
+      "speed": 1.0,
+      "canHeal": false,
+      "canReful": false,
+      "canBeDestroyed": true,
+      "damagedTextures": []
+    },
+    {
+      "id": "factory",
+      "name": "Factory",
+      "defense": 1.0,
+      "speed": 1.0,
+      "canHeal": false,
+      "canReful": false,
+      "canBeDestroyed": true,
+      "damagedTextures": []
+    },
+    {
+      "id": "port",
+      "name": "Port",
+      "defense": 1.0,
+      "speed": 1.0,
+      "canHeal": false,
+      "canReful": false,
+      "canBeDestroyed": true,
+      "damagedTextures": []
+    },
+    {
+      "id": "airport",
+      "name": "Airport",
+      "defense": 1.0,
+      "speed": 1.0,
+      "canHeal": false,
+      "canReful": false,
+      "canBeDestroyed": true,
+      "damagedTextures": []
+    },
+    {
+      "id": "missileSilo",
+      "name": "Missile Silo",
+      "defense": 1.0,
+      "speed": 1.0,
+      "canHeal": false,
+      "canReful": false,
+      "canBeDestroyed": true,
+      "damagedTextures": []
+    },
+    {
+      "id": "communicationTower",
+      "name": "Communication Tower",
+      "defense": 1.0,
+      "speed": 1.0,
+      "canHeal": false,
+      "canReful": false,
+      "canBeDestroyed": true,
+      "damagedTextures": []
+    },
+    {
+      "id": "forecastTower",
+      "name": "Forecast Tower",
+      "defense": 1.0,
+      "speed": 1.0,
+      "canHeal": false,
+      "canReful": false,
+      "canBeDestroyed": true,
+      "damagedTextures": []
+    },
+    {
+      "id": "radarTower",
+      "name": "radar Tower",
+      "defense": 1.0,
+      "speed": 1.0,
+      "canHeal": false,
+      "canReful": false,
+      "canBeDestroyed": true,
+      "damagedTextures": []
+    }
+  ]
+
+}

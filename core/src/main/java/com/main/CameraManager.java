@@ -9,17 +9,16 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class CameraManager {
     private static CameraManager instance;
-    private final int TILE_SIZE = 32;
-    private final int MAP_WIDTH = 500;
-    private final int MAP_HEIGHT = 500;
+
+
     private OrthographicCamera mapCamera;
     private Viewport mapViewport;
 
     private OrthographicCamera uiCamera;
     private Viewport uiViewport;
 
-    private static final float VIRTUAL_WIDTH = Gdx.graphics.getWidth(); // Dynamically fetch screen width
-    private static final float VIRTUAL_HEIGHT = Gdx.graphics.getHeight(); // Dynamically fetch screen height
+    private static final float VIRTUAL_WIDTH = Gdx.graphics.getWidth();
+    private static final float VIRTUAL_HEIGHT = Gdx.graphics.getHeight();
 
     private float zoomLevel = 1.0f;
     private final float MIN_ZOOM = 0.1f;

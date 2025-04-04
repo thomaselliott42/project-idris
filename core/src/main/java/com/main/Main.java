@@ -7,6 +7,7 @@ public class Main extends Game {
     public void create() {
         // Start with the loading screen
         AtlasManager.getInstance();
+        //setScreen(new shaderExample(this));
         setScreen(new LoadingScreen(this));
     }
 }

@@ -46,6 +46,8 @@ public class Tile {
             }else if(terrain.getTextureId().contains("W")){
                 terrainBaseType = "W";
             }
+        }else{
+            terrainBaseType = "S";
         }
     }
 
