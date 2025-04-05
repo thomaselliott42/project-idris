@@ -36,6 +36,10 @@ public class MapMaker implements Screen, InputProcessor {
     private final TextureRegion infoIcon = new TextureRegion(new Texture(Gdx.files.internal("ui/infoIcon.png")));
     private final Texture closeButton = new Texture(Gdx.files.internal("ui/closeButton.png"));
 
+    private final Texture defense = new Texture(Gdx.files.internal("defense.png"));
+    private final Texture movement = new Texture(Gdx.files.internal("movement.png"));
+
+
     Cursor grabCursor;
 
     private List<String> mapBackup;
@@ -241,8 +245,64 @@ public class MapMaker implements Screen, InputProcessor {
     }
 
     public void renderDebugInfo(int gridX, int gridY) {
+
+        Vector3 mouseWorldPos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+        cameraManager.getMapCamera().unproject(mouseWorldPos);
+
+        float mapStartX = (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2f;
+        float mapStartY = (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2f;
+        float mapEndX = mapStartX + MAP_WIDTH * TILE_SIZE;
+        float mapEndY = mapStartY + MAP_HEIGHT * TILE_SIZE;
+
+        if (mouseWorldPos.x >= mapStartX && mouseWorldPos.x <= mapEndX &&
+            mouseWorldPos.y >= mapStartY && mouseWorldPos.y <= mapEndY) {
+
+            gridX = (int) ((mouseWorldPos.x - mapStartX) / TILE_SIZE);
+            gridY = (int) ((mouseWorldPos.y - mapStartY) / TILE_SIZE);
+
+            mouseOverMap = map.checkBounds(gridX, gridY);
+
+            if (mouseOverMap) {
+                Tile tile = map.getTile(gridX, gridY);
+                Terrain terrain = tile.getTerrain();
+                TextureRegion terrainTexture;
+
+                if (terrain.getTextureId().contains("S")) {
+                    terrainTexture = AtlasManager.getInstance().getTexture(tile.getTerrainId(), map.checkSurroundingBaseTerrain(gridX, gridY));
+                } else {
+                    terrainTexture = AtlasManager.getInstance().getTexture(tile.getTerrainId());
+                }
+
+                float infoX = cameraManager.getUiCamera().viewportWidth - 220;
+                float infoY = 300;
+
+                shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
+                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                shapeRenderer.setColor(0, 0, 0, 0.7f);
+                shapeRenderer.rect(infoX - 5, infoY - 50, 220, 100);
+                shapeRenderer.end();
+
+                batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
+                batch.begin();
+
+                batch.draw(terrainTexture, infoX, infoY, 32, 32);
+
+                float defenseCost = tile.getTerrain().getDefense();
+                for (int i = 0; i < defenseCost; i++) {
+                    batch.draw(defense, infoX + i * 18, infoY - 20, 16, 16);
+                }
+                float moveCost = tile.getTerrain().getSpeed();
+                for (int i = 0; i < moveCost; i++) {
+                    batch.draw(movement, infoX + i * 18, infoY - 40, 16, 16);
+                }
+
+
+
+                batch.end();
+            }
+        }
+
         long currentTime = System.currentTimeMillis();
-        mouseOverMap = map.checkBounds(gridX, gridY);
 
         // **Update memory usage every 500ms instead of every frame**
         if (currentTime - lastMemoryUpdateTime > 500) {

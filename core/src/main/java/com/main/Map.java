@@ -154,11 +154,9 @@ public class Map {
 //                    Gdx.app.log("Map", "merge tiles");
 //                    if (terrainTextureId.equals("P")) {
 //                        drawCallCounter ++;
-//                        batch.draw(desert, x * TILE_SIZE + offsetX, y * TILE_SIZE + offsetY, TILE_SIZE * 2, TILE_SIZE * 2);
+//                        batch.draw(plain, x * TILE_SIZE + offsetX, y * TILE_SIZE + offsetY, TILE_SIZE * 2, TILE_SIZE * 2);
 //
 //                    }
-//
-//
 //
 //                    continue;
 //                }
