@@ -23,6 +23,8 @@ public class MapMaker implements Screen, InputProcessor {
     private final int MAP_WIDTH = 50; // 20
     private final int MAP_HEIGHT = 50; // 20
 
+    private String[][] mapState; // 2D array to store terrain/texture IDs
+
     // convert this to a texture manager class instead of instancing it here with id mapeditor so we
     // can dispose of it when out of it
     private final TextureRegion cursor = AtlasManager.getInstance().getMapUItexture("cursor");;
@@ -34,6 +36,8 @@ public class MapMaker implements Screen, InputProcessor {
     private final TextureRegion damageIcon = AtlasManager.getInstance().getMapUItexture("damageIcon");
     private final TextureRegion damageRadius = AtlasManager.getInstance().getMapUItexture("damageRadius");;
     private final TextureRegion infoIcon = new TextureRegion(new Texture(Gdx.files.internal("ui/infoIcon.png")));
+    private final TextureRegion undoIcon = new TextureRegion(new Texture(Gdx.files.internal("ui/undoIcon.png")));
+
     private final Texture closeButton = new Texture(Gdx.files.internal("ui/closeButton.png"));
 
     private final Texture defense = new Texture(Gdx.files.internal("defense.png"));
@@ -43,6 +47,8 @@ public class MapMaker implements Screen, InputProcessor {
     Cursor grabCursor;
 
     private List<String> mapBackup;
+    private final List<String[][]> mapStateHistory = new ArrayList<>();
+    private final int MAX_HISTORY_SIZE = 10; // Maximum size of the history
 
     private boolean isGrabbing = false;
 
@@ -131,6 +137,9 @@ public class MapMaker implements Screen, InputProcessor {
 
         this.map = new Map(MAP_WIDTH, MAP_HEIGHT);
         map.generateMap();
+
+        // Save the initial state of the map
+        saveMapState();
     }
 
     public void createGrabCursor() {
@@ -198,49 +207,7 @@ public class MapMaker implements Screen, InputProcessor {
             drawBuildingPicker((int)paletteBarBuildingX, paletteBarStartY + 15);
         }
 
-        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-            if (mouseX >= 0 && mouseX <= 64) {
-                if (mouseY >= Gdx.graphics.getHeight() - 128 && mouseY <= Gdx.graphics.getHeight() - 64) {
-                    isGrabbing = !isGrabbing;
-
-                    if(isGrabbing){
-                        Gdx.graphics.setCursor(grabCursor);
-
-                        isPlacing = false;
-                    }else{
-                        Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
-
-                        isPlacing = true;
-                    }
-                }
-                else if (mouseY >= Gdx.graphics.getHeight() - 192 && mouseY <= Gdx.graphics.getHeight() - 128) {
-                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
-                    isGrabbing = false;
-                    isPlacing = false;
-                }
-                else if (mouseY >= Gdx.graphics.getHeight() - 256 && mouseY <= Gdx.graphics.getHeight() - 192) {
-                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
-
-                    fillBoard();
-                }
-                else if (mouseY >= Gdx.graphics.getHeight() - 320 && mouseY <= Gdx.graphics.getHeight() - 256) {
-                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
-
-                    reloadJson();
-                }
-                else if (mouseY >= Gdx.graphics.getHeight() - 384 && mouseY <= Gdx.graphics.getHeight() - 320) {
-                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
-
-                    // Save Map
-                    fillBoard();
-                }
-                else if (mouseY >= Gdx.graphics.getHeight() - 448 && mouseY <= Gdx.graphics.getHeight() - 384) {
-                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
-
-                    inspect = !inspect;
-                }
-            }
-        }
+       
 
     }
 
@@ -379,6 +346,7 @@ public class MapMaker implements Screen, InputProcessor {
     }
 
     private void fillBoard() {
+        saveMapState();
         for (int y = 0; y < MAP_HEIGHT; y++) {
             for (int x = 0; x < MAP_WIDTH; x++) {
                 map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
@@ -981,29 +949,79 @@ public class MapMaker implements Screen, InputProcessor {
         int toolbarWidth = 64;
         int toolbarHeight = Gdx.graphics.getHeight();
         int iconSize = 64;
-
+    
         // Draw the taskbar background
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f));
         shapeRenderer.rect(0, 0, toolbarWidth, toolbarHeight);
         shapeRenderer.end();
-
+    
         int mouseX = Gdx.input.getX();
         int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
-
+    
         // Add the Info Screen button at the top of the taskbar
         if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - iconSize, infoIcon, iconSize)) {
             if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
                 infoScreenVisible = true; // Show the Info Screen
             }
         }
-
-        // Existing icons (shifted down to make space for the Info Screen button)
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 2 * iconSize, grabIcon, iconSize);
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 3 * iconSize, damageIcon, iconSize);
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 4 * iconSize, fillIcon, iconSize);
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 5 * iconSize, reloadIcon, iconSize);
-        drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 6 * iconSize, saveIcon, iconSize);
+    
+        // Add the Undo button below the Info Screen button
+        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 2 * iconSize, undoIcon, iconSize)) {
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                undoLastAction(); // Undo the last action
+            }
+        }
+    
+        // Add the Grab Tool button below the Undo button
+        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 3 * iconSize, grabIcon, iconSize)) {
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                isGrabbing = !isGrabbing;
+    
+                if (isGrabbing) {
+                    Gdx.graphics.setCursor(grabCursor);
+                    isPlacing = false;
+                } else {
+                    Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow); // Revert to the default cursor
+                    isPlacing = true;
+                }
+            }
+        }
+    
+        // Add the Damage Tool button
+        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 4 * iconSize, damageIcon, iconSize)) {
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                System.out.println("Damage Tool clicked!");
+            }
+        }
+    
+        // Add the Fill Tool button
+        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 5 * iconSize, fillIcon, iconSize)) {
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                fillBoard(); // Fill the board
+            }
+        }
+    
+        // Add the Reload button
+        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 6 * iconSize, reloadIcon, iconSize)) {
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                reloadJson(); // Reload the JSON
+            }
+        }
+    
+        // Add the Save button
+        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 7 * iconSize, saveIcon, iconSize)) {
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                System.out.println("Save button clicked!");
+            }
+        }
+    
+        // Add the Inspect button
+        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 8 * iconSize, inspectIcon, iconSize)) {
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                inspect = !inspect; // Toggle inspect mode
+            }
+        }
     }
 
     private boolean drawAndHighlightIcon(int mouseX, int mouseY, int x, int y, TextureRegion icon, int iconSize) {
@@ -1147,27 +1165,27 @@ public class MapMaker implements Screen, InputProcessor {
             justSelectedTile = false; // Reset the flag
             return; // Skip map interactions
         }
-
+    
         int gridX = -1;
         int gridY = -1;
         boolean mouseOverMap = false;
-
+    
         // Mouse position handling
         Vector3 mouseWorldPos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
         cameraManager.getMapCamera().unproject(mouseWorldPos);
-
+    
         float mapStartX = (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2f;
         float mapStartY = (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2f;
         float mapEndX = mapStartX + MAP_WIDTH * TILE_SIZE;
         float mapEndY = mapStartY + MAP_HEIGHT * TILE_SIZE;
-
+    
         if (mouseWorldPos.x >= mapStartX && mouseWorldPos.x <= mapEndX &&
             mouseWorldPos.y >= mapStartY && mouseWorldPos.y <= mapEndY) {
-
+    
             gridX = (int) ((mouseWorldPos.x - mapStartX) / TILE_SIZE);
             gridY = (int) ((mouseWorldPos.y - mapStartY) / TILE_SIZE);
             mouseOverMap = map.checkBounds(gridX, gridY);
-
+    
             if (mouseOverMap) {
                 if (!isGrabbing) {
                     // Draw cursor
@@ -1182,27 +1200,34 @@ public class MapMaker implements Screen, InputProcessor {
                         cursorSize, cursorSize);
                     batch.end();
                 }
-
+    
                 // Handle continuous placement while dragging
                 if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) && isDraggingToPlace && isPlacing) {
-                    if(currentlySelcted.equals("T")){
+                    boolean tileModified = false;
+    
+                    if (currentlySelcted.equals("T")) {
                         if (selectedTile.equals("S")) {
-                            map.getTile(gridX,gridY).removeBuilding();
+                            map.getTile(gridX, gridY).removeBuilding();
                             smartPlaceSea(gridX, gridY);
+                            tileModified = true;
                         } else {
-                            if(map.getTile(gridX, gridY).getTerrainId().contains("F") || map.getTile(gridX, gridY).getTerrainId().contains("M")){
-                                map.getTile(gridX,gridY).removeBuilding();
+                            if (map.getTile(gridX, gridY).getTerrainId().contains("F") || map.getTile(gridX, gridY).getTerrainId().contains("M")) {
+                                map.getTile(gridX, gridY).removeBuilding();
                             }
                             map.getTile(gridX, gridY).updateTerrain(TerrainManager.getInstance().getTerrain(selectedTile));
                             forceUpdateAllSeaTiles(gridX, gridY);
+                            tileModified = true;
                         }
-                    }else if(currentlySelcted.equals("B")){
-                        if(!map.getTile(gridX, gridY).getTerrainId().contains("S") || !map.getTile(gridX, gridY).getTerrainId().contains("F") || !map.getTile(gridX, gridY).getTerrainId().contains("M")){
+                    } else if (currentlySelcted.equals("B")) {
+                        if (!map.getTile(gridX, gridY).getTerrainId().contains("S") || !map.getTile(gridX, gridY).getTerrainId().contains("F") || !map.getTile(gridX, gridY).getTerrainId().contains("M")) {
                             map.getTile(gridX, gridY).updateBuilding(selectedBuilding);
+                            tileModified = true;
                         }
                     }
-
-
+    
+                    if (tileModified) {
+                        saveMapState(); // Save the map state only if a tile or building was modified
+                    }
                 }
             }
         }
@@ -1669,6 +1694,98 @@ public boolean scrolled(float amountX, float amountY) {
             }
         }
         return includedTerrains;
+    }
+
+
+    private void saveMapState() {
+        String[][] currentState = new String[MAP_HEIGHT][MAP_WIDTH];
+    
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            for (int x = 0; x < MAP_WIDTH; x++) {
+                Tile tile = map.getTile(x, y);
+                String terrainId = tile.getTerrain().getTextureId();
+                String buildingId = tile.getBuilding() != null ? tile.getBuilding().getTextureId() : "null";
+                currentState[y][x] = terrainId + "," + buildingId; // Save both terrain and building IDs
+            }
+        }
+    
+        // Check if the current state is different from the most recent state
+        if (!mapStateHistory.isEmpty()) {
+            String[][] lastState = mapStateHistory.get(mapStateHistory.size() - 1);
+            if (areStatesEqual(currentState, lastState)) {
+                System.out.println("Map state is identical to the last state. Not saving.");
+                return; // Skip saving if the state is identical
+            }
+        }
+    
+        // Add the current state to the history list
+        mapStateHistory.add(currentState);
+    
+        // Ensure the history list does not exceed the maximum size
+        if (mapStateHistory.size() > MAX_HISTORY_SIZE) {
+            mapStateHistory.remove(0); // Remove the oldest state
+        }
+    
+        System.out.println("Map state saved. Total states: " + mapStateHistory.size());
+    }
+
+    private boolean areStatesEqual(String[][] state1, String[][] state2) {
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            for (int x = 0; x < MAP_WIDTH; x++) {
+                if (!state1[y][x].equals(state2[y][x])) {
+                    return false; // States are different
+                }
+            }
+        }
+        return true; // States are identical
+    }
+
+    private void loadMapState() {
+        if (mapStateHistory.isEmpty()) {
+            System.out.println("No saved map states to load.");
+            return;
+        }
+    
+        // Get the most recent state
+        String[][] lastState = mapStateHistory.get(mapStateHistory.size() - 1);
+    
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            for (int x = 0; x < MAP_WIDTH; x++) {
+                String[] data = lastState[y][x].split(",");
+                String terrainId = data[0];
+                String buildingId = data[1];
+    
+                // Restore terrain
+                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain(terrainId));
+    
+                // Restore building if it exists
+                if (!buildingId.equals("null")) {
+                    map.getTile(x, y).updateBuilding(BuildingManager.getInstance().getBuilding(buildingId));
+                } else {
+                    map.getTile(x, y).removeBuilding();
+                }
+            }
+        }
+    
+        System.out.println("Map state loaded.");
+    
+        // Trigger a re-render of the map
+        renderMap(0); // Pass 0 as delta time for immediate rendering
+    }
+
+    private void undoLastAction() {
+        if (mapStateHistory.size() <= 1) { // Keep at least the initial state
+            System.out.println("No more actions to undo.");
+            return;
+        }
+    
+        // Remove the most recent state
+        mapStateHistory.remove(mapStateHistory.size() - 1);
+    
+        // Load the new most recent state
+        loadMapState();
+    
+        System.out.println("Undo performed. Remaining states: " + mapStateHistory.size());
     }
 
     @Override
