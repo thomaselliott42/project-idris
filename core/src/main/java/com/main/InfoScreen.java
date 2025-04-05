@@ -30,11 +30,14 @@ public class InfoScreen {
     private Texture dKey;
     private Texture zKey;
     private Texture xKey;
+    private Texture ctrlZKey;
+
 
     // Tool icons
     private TextureRegion grabToolIcon;
     private TextureRegion damageToolIcon;
     private TextureRegion fillToolIcon;
+    private Texture infoScreenIcon;
 
     // Palette icon
     private TextureRegion firstTerrainIcon;
@@ -61,6 +64,11 @@ public class InfoScreen {
         dKey = new Texture(Gdx.files.internal("keyboardKeys/dKey.png"));
         zKey = new Texture(Gdx.files.internal("keyboardKeys/zKey.png"));
         xKey = new Texture(Gdx.files.internal("keyboardKeys/xKey.png"));
+        ctrlZKey = new Texture(Gdx.files.internal("keyboardKeys/ctrlZKey.png"));
+
+        // load info screen icon
+        // Load the InfoScreen icon texture
+        infoScreenIcon = new Texture(Gdx.files.internal("ui/infoIcon.png"));
 
         // Assign tool icons
         this.grabToolIcon = grabToolIcon;
@@ -153,6 +161,7 @@ public class InfoScreen {
                 contentY = drawKeyWithText(batch, grabToolIcon, "Grab Tool: Move the map", contentY);
                 contentY = drawKeyWithText(batch, damageToolIcon, "Damage Tool: Apply damage to tiles", contentY);
                 contentY = drawKeyWithText(batch, fillToolIcon, "Fill Tool: Fill the map with the selected terrain", contentY);
+                contentY = drawCombinedKeysWithText(batch, infoScreenIcon, ctrlZKey, "Undo: Revert the last action", contentY); 
                 break;
             case 3:
                 // Palette screen with the first terrain icon and explanation
@@ -192,6 +201,24 @@ public class InfoScreen {
 
         // Handle input for switching screens
         handleInput();
+    }
+
+    private float drawCombinedKeysWithText(SpriteBatch batch, Texture key1, Texture key2, String text, float y) {
+        float keySize = 64; // Size of each key icon
+        float spacing = 10; // Spacing between the keys
+        float keyX = Gdx.graphics.getWidth() / 4f; // Position the first key on the left
+        float textX = keyX + keySize * 2 + spacing + 10; // Position the text to the right of the keys
+    
+        // Draw the first key texture (InfoScreen icon)
+        batch.draw(key1, keyX, y - keySize, keySize, keySize);
+    
+        // Draw the second key texture (Ctrl+Z key) next to the first
+        batch.draw(key2, keyX + keySize + spacing, y - keySize, keySize, keySize);
+    
+        // Draw the text
+        infoFont.draw(batch, text, textX, y - keySize / 2f);
+    
+        return y - keySize - 20; // Move down for the next line
     }
 
     private float drawKeyWithText(SpriteBatch batch, Object keyTexture, String text, float y) {
@@ -246,5 +273,7 @@ public class InfoScreen {
         dKey.dispose();
         zKey.dispose();
         xKey.dispose();
+        ctrlZKey.dispose();
+        infoScreenIcon.dispose();
     }
 }

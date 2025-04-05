@@ -50,6 +50,10 @@ public class MapMaker implements Screen, InputProcessor {
     private final List<String[][]> mapStateHistory = new ArrayList<>();
     private final int MAX_HISTORY_SIZE = 10; // Maximum size of the history
 
+    private boolean isCtrlZHeld = false; // Tracks if Ctrl+Z is being held
+    private long lastUndoTime = 0; // Tracks the last time undo was called
+    private final long UNDO_INTERVAL = 100; // Minimum interval between undo actions in milliseconds
+
     private boolean isGrabbing = false;
 
     private final int TILE_PICKER_HEIGHT = 64; // Height of the tile picker
@@ -168,6 +172,12 @@ public class MapMaker implements Screen, InputProcessor {
             cameraManager.handleCameraMovement();
             cameraManager.updateCameraPosition();
             cameraManager.updateCameraZoom(delta);
+        }
+
+         // Handle continuous undo when Ctrl+Z is held
+        if (isCtrlZHeld && TimeUtils.timeSinceMillis(lastUndoTime) >= UNDO_INTERVAL) {
+            undoLastAction();
+            lastUndoTime = TimeUtils.millis(); // Update the last undo time
         }
 
         // Render the map layer
@@ -1518,6 +1528,14 @@ public boolean scrolled(float amountX, float amountY) {
             return false; // Ignore input
         }
 
+        // Check for Ctrl+Z
+        if ((Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) || Gdx.input.isKeyPressed(Input.Keys.CONTROL_RIGHT)) && keycode == Input.Keys.Z) {
+            isCtrlZHeld = true; // Start holding Ctrl+Z
+            undoLastAction(); // Perform an initial undo immediately
+            lastUndoTime = TimeUtils.millis(); // Record the time of the undo
+            return true;
+        }
+
         // Movement keys
         switch (keycode) {
             case Input.Keys.UP:
@@ -1545,7 +1563,6 @@ public boolean scrolled(float amountX, float amountY) {
             case Input.Keys.SHIFT_LEFT:
                 cameraManager.setSprinting(true);
                 return true;
-
         }
 
 
@@ -1558,6 +1575,12 @@ public boolean scrolled(float amountX, float amountY) {
         if (infoScreenVisible) {
             return false; // Ignore input
         }
+
+          // Stop holding Ctrl+Z when the keys are released
+        if (keycode == Input.Keys.Z || keycode == Input.Keys.CONTROL_LEFT || keycode == Input.Keys.CONTROL_RIGHT) {
+            isCtrlZHeld = false; // Stop holding Ctrl+Z
+        }
+
 
         // Movement keys
         switch (keycode) {
