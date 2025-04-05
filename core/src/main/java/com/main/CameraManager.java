@@ -25,6 +25,9 @@ public class CameraManager {
     private final float MAX_ZOOM = 10.0f;
     private final float ZOOM_SPEED = 0.1f;
 
+
+
+
     private boolean zoomingIn = false;
     private boolean zoomingOut = false;
     private final float ZOOM_KEY_SPEED = 10.0f;
@@ -89,11 +92,22 @@ public class CameraManager {
     public void handleCameraMovement() {
         float currentPanSpeed = sprinting ? PAN_SPEED * 2 : PAN_SPEED; // Double speed if sprinting
 
-        if (movingLeft) movedX -= currentPanSpeed;
-        if (movingRight) movedX += currentPanSpeed;
-        if (movingDown) movedY -= currentPanSpeed;
-        if (movingUp) movedY += currentPanSpeed;
 
+        // height boundary for 1920 1080 resolution
+        float heightBoundaryBuffer = 250f;
+
+        // width boundary for 1920 1080 resolution
+        float widthBoundaryBuffer = 215f;
+       
+        if (movingLeft && mapCamera.position.x > (0) + widthBoundaryBuffer) movedX -= currentPanSpeed;
+        if (movingRight && mapCamera.position.x < (VIRTUAL_WIDTH) - widthBoundaryBuffer) movedX += currentPanSpeed;
+        if (movingDown && mapCamera.position.y > (0)-heightBoundaryBuffer) movedY -= currentPanSpeed;
+        if (movingUp && mapCamera.position.y < (VIRTUAL_HEIGHT)+heightBoundaryBuffer) movedY += currentPanSpeed;
+
+        System.out.println("Current coordinates of camera: " + mapCamera.position.x + " " + mapCamera.position.y);
+        System.out.println("Map width, map height: " + mapViewport.getWorldWidth() + " " + mapViewport.getWorldHeight());
+        System.out.println("Virtual width, height: " + VIRTUAL_WIDTH + " " + VIRTUAL_HEIGHT);
+        System.out.println("ZOOM LEVEL: " + zoomLevel);
         mapCamera.update();
     }
 

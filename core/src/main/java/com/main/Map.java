@@ -129,7 +129,7 @@ public class Map {
                 if (!terrainTextureId.equals(previousTextureId)) {
                     if (terrainTextureId.contains("S")) {
                         String cSBT = checkSurroundingBaseTerrain(x, y);
-                        Gdx.app.log("Map", "Terrain: " + terrainTextureId + " (" + cSBT + ")");
+                        //Gdx.app.log("Map", "Terrain: " + terrainTextureId + " (" + cSBT + ")");
                         terrainTexture = terrainAtlas.getTexture(terrainTextureId, checkSurroundingBaseTerrain(x, y));
                     } else {
                         terrainTexture = terrainAtlas.getTexture(terrainTextureId);
