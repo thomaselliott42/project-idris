@@ -55,7 +55,7 @@ public class MapMaker implements Screen, InputProcessor {
 
     private List<String> mapBackup;
     private final List<String[][]> mapStateHistory = new ArrayList<>();
-    private final int MAX_HISTORY_SIZE = 10; // Maximum size of the history
+    private final int MAX_HISTORY_SIZE = 100000  ; // Maximum size of the history
 
     private boolean isCtrlZHeld = false; // Tracks if Ctrl+Z is being held
     private long lastUndoTime = 0; // Tracks the last time undo was called
@@ -224,25 +224,25 @@ public class MapMaker implements Screen, InputProcessor {
             drawBuildingPicker((int)paletteBarBuildingX, paletteBarStartY + 15);
         }
 
-       
+
 
     }
 
     public void renderDebugInfo(int gridX, int gridY) {
         Vector3 mouseWorldPos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
         cameraManager.getMapCamera().unproject(mouseWorldPos);
-    
+
         float mapStartX = (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2f;
         float mapStartY = (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2f;
         float mapEndX = mapStartX + MAP_WIDTH * TILE_SIZE;
         float mapEndY = mapStartY + MAP_HEIGHT * TILE_SIZE;
-    
+
         if (mouseWorldPos.x >= mapStartX && mouseWorldPos.x <= mapEndX &&
             mouseWorldPos.y >= mapStartY && mouseWorldPos.y <= mapEndY) {
-    
+
             gridX = (int) ((mouseWorldPos.x - mapStartX) / TILE_SIZE);
             gridY = (int) ((mouseWorldPos.y - mapStartY) / TILE_SIZE);
-    
+
             // Ensure gridX and gridY are within bounds
             if (map.checkBounds(gridX, gridY)) {
                 Tile tile = map.getTile(gridX, gridY);
@@ -250,27 +250,27 @@ public class MapMaker implements Screen, InputProcessor {
                     // Existing logic for rendering debug info
                     Terrain terrain = tile.getTerrain();
                     TextureRegion terrainTexture;
-    
+
                     if (terrain.getTextureId().contains("S")) {
                         terrainTexture = AtlasManager.getInstance().getTexture(tile.getTerrainId(), map.checkSurroundingBaseTerrain(gridX, gridY));
                     } else {
                         terrainTexture = AtlasManager.getInstance().getTexture(tile.getTerrainId());
                     }
-    
+
                     float infoX = cameraManager.getUiCamera().viewportWidth - 220;
                     float infoY = 300;
-    
+
                     shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
                     shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
                     shapeRenderer.setColor(0, 0, 0, 0.7f);
                     shapeRenderer.rect(infoX - 5, infoY - 50, 220, 100);
                     shapeRenderer.end();
-    
+
                     batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
                     batch.begin();
-    
+
                     batch.draw(terrainTexture, infoX, infoY, 32, 32);
-    
+
                     float defenseCost = tile.getTerrain().getDefense();
                     for (int i = 0; i < defenseCost; i++) {
                         batch.draw(defense, infoX + i * 18, infoY - 20, 16, 16);
@@ -279,7 +279,7 @@ public class MapMaker implements Screen, InputProcessor {
                     for (int i = 0; i < moveCost; i++) {
                         batch.draw(movement, infoX + i * 18, infoY - 40, 16, 16);
                     }
-    
+
                     batch.end();
                 }
             }
@@ -966,35 +966,35 @@ public class MapMaker implements Screen, InputProcessor {
         int toolbarWidth = 64;
         int toolbarHeight = Gdx.graphics.getHeight();
         int iconSize = 64;
-    
+
         // Draw the taskbar background
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f));
         shapeRenderer.rect(0, 0, toolbarWidth, toolbarHeight);
         shapeRenderer.end();
-    
+
         int mouseX = Gdx.input.getX();
         int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
-    
+
         // Add the Info Screen button at the top of the taskbar
         if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - iconSize, infoIcon, iconSize)) {
             if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
                 infoScreenVisible = true; // Show the Info Screen
             }
         }
-    
+
         // Add the Undo button below the Info Screen button
         if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 2 * iconSize, undoIcon, iconSize)) {
             if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
                 undoLastAction(); // Undo the last action
             }
         }
-    
+
         // Add the Grab Tool button below the Undo button
         if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 3 * iconSize, grabIcon, iconSize)) {
             if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
                 isGrabbing = !isGrabbing;
-    
+
                 if (isGrabbing) {
                     Gdx.graphics.setCursor(grabCursor);
                     isPlacing = false;
@@ -1004,14 +1004,14 @@ public class MapMaker implements Screen, InputProcessor {
                 }
             }
         }
-    
+
         // Add the Damage Tool button
         if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 4 * iconSize, damageIcon, iconSize)) {
             if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
                 System.out.println("Damage Tool clicked!");
             }
         }
-    
+
         // Add the Fill Tool button
         if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 5 * iconSize, fillIcon, iconSize)) {
             if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
@@ -1032,14 +1032,14 @@ public class MapMaker implements Screen, InputProcessor {
                 reloadJson(); // Reload the JSON
             }
         }
-    
+
         // Add the Save button
         if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 8 * iconSize, saveIcon, iconSize)) {
             if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
                 System.out.println("Save button clicked!");
             }
         }
-    
+
         // Add the Inspect button
         if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 9 * iconSize, inspectIcon, iconSize)) {
             if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
@@ -1320,27 +1320,27 @@ public class MapMaker implements Screen, InputProcessor {
             justSelectedTile = false; // Reset the flag
             return; // Skip map interactions
         }
-    
+
         int gridX = -1;
         int gridY = -1;
         boolean mouseOverMap = false;
-    
+
         // Mouse position handling
         Vector3 mouseWorldPos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
         cameraManager.getMapCamera().unproject(mouseWorldPos);
-    
+
         float mapStartX = (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2f;
         float mapStartY = (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2f;
         float mapEndX = mapStartX + MAP_WIDTH * TILE_SIZE;
         float mapEndY = mapStartY + MAP_HEIGHT * TILE_SIZE;
-    
+
         if (mouseWorldPos.x >= mapStartX && mouseWorldPos.x <= mapEndX &&
             mouseWorldPos.y >= mapStartY && mouseWorldPos.y <= mapEndY) {
-    
+
             gridX = (int) ((mouseWorldPos.x - mapStartX) / TILE_SIZE);
             gridY = (int) ((mouseWorldPos.y - mapStartY) / TILE_SIZE);
             mouseOverMap = map.checkBounds(gridX, gridY);
-    
+
             if (mouseOverMap) {
                 if (!isGrabbing) {
                     // Draw cursor
@@ -1355,11 +1355,11 @@ public class MapMaker implements Screen, InputProcessor {
                         cursorSize, cursorSize);
                     batch.end();
                 }
-    
+
                 // Handle continuous placement while dragging
                 if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) && isDraggingToPlace && isPlacing) {
                     boolean tileModified = false;
-    
+
                     if (currentlySelcted.equals("T")) {
                         if (selectedTile.equals("S")) {
                             map.getTile(gridX, gridY).removeBuilding();
@@ -1379,7 +1379,7 @@ public class MapMaker implements Screen, InputProcessor {
                             tileModified = true;
                         }
                     }
-    
+
                     if (tileModified) {
                         saveMapState(); // Save the map state only if a tile or building was modified
                     }
@@ -1674,7 +1674,7 @@ public boolean scrolled(float amountX, float amountY) {
         }
 
         // Check for Ctrl+Z
-        if ((Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) || Gdx.input.isKeyPressed(Input.Keys.CONTROL_RIGHT)) && keycode == Input.Keys.Z) {
+        if ((Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) || Gdx.input.isKeyPressed(Input.Keys.CONTROL_RIGHT)) || Gdx.input.isKeyPressed(Input.Keys.SYM) && keycode == Input.Keys.Z) {
             isCtrlZHeld = true; // Start holding Ctrl+Z
             undoLastAction(); // Perform an initial undo immediately
             lastUndoTime = TimeUtils.millis(); // Record the time of the undo
@@ -1735,7 +1735,7 @@ public boolean scrolled(float amountX, float amountY) {
                 return true;
             case Input.Keys.DOWN:
             case Input.Keys.S:
-            
+
                 cameraManager.setMovingDown(false);
                 return true;
             case Input.Keys.LEFT:
@@ -1886,7 +1886,7 @@ public boolean scrolled(float amountX, float amountY) {
         }
 
         String[][] currentState = new String[MAP_HEIGHT][MAP_WIDTH];
-    
+
         for (int y = 0; y < MAP_HEIGHT; y++) {
             for (int x = 0; x < MAP_WIDTH; x++) {
                 Tile tile = map.getTile(x, y);
@@ -1895,7 +1895,7 @@ public boolean scrolled(float amountX, float amountY) {
                 currentState[y][x] = terrainId + "," + buildingId; // Save both terrain and building IDs
             }
         }
-    
+
         // Check if the current state is different from the most recent state
         if (!mapStateHistory.isEmpty()) {
             String[][] lastState = mapStateHistory.get(mapStateHistory.size() - 1);
@@ -1904,15 +1904,15 @@ public boolean scrolled(float amountX, float amountY) {
                 return; // Skip saving if the state is identical
             }
         }
-    
+
         // Add the current state to the history list
         mapStateHistory.add(currentState);
-    
+
         // Ensure the history list does not exceed the maximum size
         if (mapStateHistory.size() > MAX_HISTORY_SIZE) {
             mapStateHistory.remove(0); // Remove the oldest state
         }
-    
+
         System.out.println("Map state saved. Total states: " + mapStateHistory.size());
     }
 
@@ -1932,19 +1932,19 @@ public boolean scrolled(float amountX, float amountY) {
             System.out.println("No saved map states to load.");
             return;
         }
-    
+
         // Get the most recent state
         String[][] lastState = mapStateHistory.get(mapStateHistory.size() - 1);
-    
+
         for (int y = 0; y < MAP_HEIGHT; y++) {
             for (int x = 0; x < MAP_WIDTH; x++) {
                 String[] data = lastState[y][x].split(",");
                 String terrainId = data[0];
                 String buildingId = data[1];
-    
+
                 // Restore terrain
                 map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain(terrainId));
-    
+
                 // Restore building if it exists
                 if (!buildingId.equals("null")) {
                     map.getTile(x, y).updateBuilding(BuildingManager.getInstance().getBuilding(buildingId));
@@ -1953,9 +1953,9 @@ public boolean scrolled(float amountX, float amountY) {
                 }
             }
         }
-    
+
         System.out.println("Map state loaded.");
-    
+
         // Trigger a re-render of the map
         renderMap(0); // Pass 0 as delta time for immediate rendering
     }
@@ -1965,13 +1965,13 @@ public boolean scrolled(float amountX, float amountY) {
             System.out.println("No more actions to undo.");
             return;
         }
-    
+
         // Remove the most recent state
         mapStateHistory.remove(mapStateHistory.size() - 1);
-    
+
         // Load the new most recent state
         loadMapState();
-    
+
         System.out.println("Undo performed. Remaining states: " + mapStateHistory.size());
     }
 
