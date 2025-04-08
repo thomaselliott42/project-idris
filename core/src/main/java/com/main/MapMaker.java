@@ -9,11 +9,16 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.TimeUtils;
 
+import java.util.Queue;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class MapMaker implements Screen, InputProcessor {
 
@@ -24,6 +29,7 @@ public class MapMaker implements Screen, InputProcessor {
     private final int MAP_HEIGHT = 50; // 20
 
     private String[][] mapState; // 2D array to store terrain/texture IDs
+    private boolean isFillAreaActive = false;
 
     // convert this to a texture manager class instead of instancing it here with id mapeditor so we
     // can dispose of it when out of it
@@ -37,6 +43,7 @@ public class MapMaker implements Screen, InputProcessor {
     private final TextureRegion damageRadius = AtlasManager.getInstance().getMapUItexture("damageRadius");;
     private final TextureRegion infoIcon = new TextureRegion(new Texture(Gdx.files.internal("ui/infoIcon.png")));
     private final TextureRegion undoIcon = new TextureRegion(new Texture(Gdx.files.internal("ui/undoIcon.png")));
+    private final TextureRegion fillAreaIcon = new TextureRegion(new Texture(Gdx.files.internal("ui/fillAreaIcon.png")));
 
     private final Texture closeButton = new Texture(Gdx.files.internal("ui/closeButton.png"));
 
@@ -1011,23 +1018,30 @@ public class MapMaker implements Screen, InputProcessor {
                 fillBoard(); // Fill the board
             }
         }
+
+        // Add the Fill Area Tool button
+        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 6 * iconSize, fillAreaIcon, iconSize)) {
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                fillArea(); // Fill the board
+            }
+        }
     
         // Add the Reload button
-        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 6 * iconSize, reloadIcon, iconSize)) {
+        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 7 * iconSize, reloadIcon, iconSize)) {
             if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
                 reloadJson(); // Reload the JSON
             }
         }
     
         // Add the Save button
-        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 7 * iconSize, saveIcon, iconSize)) {
+        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 8 * iconSize, saveIcon, iconSize)) {
             if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
                 System.out.println("Save button clicked!");
             }
         }
     
         // Add the Inspect button
-        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 8 * iconSize, inspectIcon, iconSize)) {
+        if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 9 * iconSize, inspectIcon, iconSize)) {
             if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
                 inspect = !inspect; // Toggle inspect mode
             }
@@ -1168,6 +1182,137 @@ public class MapMaker implements Screen, InputProcessor {
             batch.draw(AtlasManager.getInstance().getBuildingTextureRegion(selectedBuilding.getTextureId()), paletteBarBuildingX, paletteBarStartY + 15, TILE_SIZE, AtlasManager.getInstance().getBuildingTextureRegion(selectedBuilding.getTextureId()).getRegionHeight() * (TILE_SIZE / 16f));
         }
         batch.end();
+    }
+
+
+    private void fillArea() {
+        if (isFillAreaActive) {
+            // If the tool is already active, reset to the default cursor
+            Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow);
+            isFillAreaActive = false;
+            return;
+        }
+    
+        // Replace the cursor with the fillAreaIcon
+        if (!fillAreaIcon.getTexture().getTextureData().isPrepared()) {
+            fillAreaIcon.getTexture().getTextureData().prepare();
+        }
+        Pixmap originalPixmap = fillAreaIcon.getTexture().getTextureData().consumePixmap();
+    
+        // Ensure the pixmap dimensions are powers of two and within valid cursor size limits
+        int width = MathUtils.nextPowerOfTwo(originalPixmap.getWidth());
+        int height = MathUtils.nextPowerOfTwo(originalPixmap.getHeight());
+    
+        // Limit the cursor size to a maximum of 64x64 (common limit for custom cursors)
+        width = Math.min(width, 64);
+        height = Math.min(height, 64);
+    
+        Pixmap resizedPixmap = new Pixmap(width, height, originalPixmap.getFormat());
+        resizedPixmap.drawPixmap(originalPixmap, 0, 0, originalPixmap.getWidth(), originalPixmap.getHeight(), 0, 0, width, height);
+    
+        // Create the cursor and set it
+        Cursor fillAreaCursor = Gdx.graphics.newCursor(resizedPixmap, width / 2, height / 2);
+        Gdx.graphics.setCursor(fillAreaCursor);
+    
+        // Dispose of the pixmaps to prevent memory leaks
+        originalPixmap.dispose();
+        resizedPixmap.dispose();
+    
+        // Set the flag to indicate the tool is active
+        isFillAreaActive = true;
+    }
+
+    private void fillEnclosedArea(int startX, int startY, String targetTileId, String replacementTileId) {
+        // If the target tile is the same as the replacement tile, do nothing
+        if (targetTileId.equals(replacementTileId)) {
+            System.out.println("Target and replacement tiles are the same. No action taken.");
+            return;
+        }
+    
+        // Check if the starting position is out of bounds
+        if (!map.checkBounds(startX, startY)) {
+            System.out.println("Starting position is out of bounds: " + startX + "," + startY);
+            return;
+        }
+    
+        // Determine if the target tile is a sea tile
+        boolean isSeaTile = targetTileId.contains("S");
+    
+        // Use a queue to perform flood-fill and check for enclosure
+        Queue<int[]> queue = new LinkedList<>();
+        Set<String> visited = new HashSet<>();
+        List<int[]> enclosedTiles = new ArrayList<>();
+        boolean isEnclosed = true;
+    
+        queue.add(new int[]{startX, startY});
+        visited.add(startX + "," + startY);
+    
+        while (!queue.isEmpty()) {
+            int[] current = queue.poll();
+            int x = current[0];
+            int y = current[1];
+    
+            // If the current tile is out of bounds, the area is not enclosed
+            if (!map.checkBounds(x, y)) {
+                System.out.println("Tile out of bounds: " + x + "," + y);
+                isEnclosed = false;
+                continue;
+            }
+    
+            // Get the current tile's terrain ID
+            String currentTileId = map.getTile(x, y).getTerrainId();
+    
+            // If the target is a sea tile, check for sea tiles to replace
+            if (isSeaTile) {
+                if (!currentTileId.contains("S")) {
+                    System.out.println("Tile is not a sea tile: " + x + "," + y);
+                    continue;
+                }
+            } else {
+                // For non-sea tiles, ensure the tile matches the target type
+                if (!currentTileId.equals(targetTileId)) {
+                    System.out.println("Tile does not match target type: " + x + "," + y);
+                    continue;
+                }
+            }
+    
+            // Add the tile to the list of enclosed tiles
+            enclosedTiles.add(current);
+    
+            // Check neighbors
+            int[][] neighbors = {
+                {x + 1, y}, {x - 1, y}, {x, y + 1}, {x, y - 1}
+            };
+    
+            for (int[] neighbor : neighbors) {
+                int nx = neighbor[0];
+                int ny = neighbor[1];
+                String key = nx + "," + ny;
+    
+                // Add the neighbor to the queue if it hasn't been visited yet
+                if (!visited.contains(key)) {
+                    visited.add(key);
+                    queue.add(neighbor);
+                }
+            }
+        }
+    
+        // If the area is enclosed, replace all tiles within the enclosed area
+        if (isEnclosed) {
+            for (int[] tile : enclosedTiles) {
+                int x = tile[0];
+                int y = tile[1];
+                System.out.println("Updating Tile: " + x + "," + y + " to " + replacementTileId);
+                map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain(replacementTileId));
+            }
+    
+            forceUpdateAllSeaTiles();
+    
+            // Save the map state after filling
+            saveMapState();
+        } else {
+            System.out.println("Area is not enclosed. No tiles updated.");
+        }
     }
 
     private void handleMapInteractions() {
@@ -1624,41 +1769,53 @@ public boolean scrolled(float amountX, float amountY) {
             return false;
         }
         else {
-
-        if (button == Input.Buttons.LEFT) {
+            if (button == Input.Buttons.LEFT && isFillAreaActive) {
+                // Convert screen coordinates to map grid coordinates
+                int gridX = (screenX - (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2) / TILE_SIZE;
+                int gridY = (Gdx.graphics.getHeight() - screenY - (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2) / TILE_SIZE;
+        
+                // Check if the click is within bounds
+                if (map.checkBounds(gridX, gridY)) {
+                    String targetTileId = map.getTile(gridX, gridY).getTerrainId();
+                    fillEnclosedArea(gridX, gridY, targetTileId, selectedTile); // Perform the enclosed area fill
+                }
+        
+                return true; // Consume the event
+            }    
+            else if (button == Input.Buttons.LEFT) {
             int flippedY = Gdx.graphics.getHeight() - screenY;
 
-            // Check if the tile picker is open and handle its input
-            if (tilePickerOpen && isClickInTilePicker(screenX, flippedY)) {
-                int numTiles = includedTerrains.size();
-                int pickerWidth = TILE_SIZE * 3 + 40;
-                int startX = (Gdx.graphics.getWidth() - pickerWidth) / 2;
+                // Check if the tile picker is open and handle its input
+                if (tilePickerOpen && isClickInTilePicker(screenX, flippedY)) {
+                    int numTiles = includedTerrains.size();
+                    int pickerWidth = TILE_SIZE * 3 + 40;
+                    int startX = (Gdx.graphics.getWidth() - pickerWidth) / 2;
 
-                // Calculate which terrain was clicked
-                int relativeX = screenX - startX - 10;
-                int relativeY = flippedY - (Gdx.graphics.getHeight() - TILE_PICKER_HEIGHT - 20);
+                    // Calculate which terrain was clicked
+                    int relativeX = screenX - startX - 10;
+                    int relativeY = flippedY - (Gdx.graphics.getHeight() - TILE_PICKER_HEIGHT - 20);
 
-                int clickedCol = relativeX / TILE_SIZE;
-                int clickedRow = relativeY / TILE_PICKER_HEIGHT;
+                    int clickedCol = relativeX / TILE_SIZE;
+                    int clickedRow = relativeY / TILE_PICKER_HEIGHT;
 
-                int clickedIndex = clickedRow * 3 + clickedCol;
+                    int clickedIndex = clickedRow * 3 + clickedCol;
 
-                if (clickedIndex >= 0 && clickedIndex < numTiles) {
-                    Terrain clickedTerrain = includedTerrains.get(clickedIndex);
-                    selectedTile = clickedTerrain.getTextureId();
-                    tilePickerOpen = false;
-                    tilePickerActive = false; // Reset the flag
-                    justSelectedTile = true; // Prevent map interactions
-                    reloadMapFromBackup(); // Reload the map from the backup
-                    System.out.println("Selected Tile: " + selectedTile);
-                }
+                    if (clickedIndex >= 0 && clickedIndex < numTiles) {
+                        Terrain clickedTerrain = includedTerrains.get(clickedIndex);
+                        selectedTile = clickedTerrain.getTextureId();
+                        tilePickerOpen = false;
+                        tilePickerActive = false; // Reset the flag
+                        justSelectedTile = true; // Prevent map interactions
+                        reloadMapFromBackup(); // Reload the map from the backup
+                        System.out.println("Selected Tile: " + selectedTile);
+                    }
 
-                return true; // Consume the event
-            }
+                    return true; // Consume the event
+                    }              
 
-            // If the tile picker is not open, handle map interactions
-            isDraggingToPlace = true;
-            return true; // Important: return true to get subsequent drag events
+                // If the tile picker is not open, handle map interactions
+                isDraggingToPlace = true;
+                return true; // Important: return true to get subsequent drag events
             }
         }
         return false;
@@ -1673,6 +1830,7 @@ public boolean scrolled(float amountX, float amountY) {
 
         if (button == Input.Buttons.LEFT) {
             isDraggingToPlace = false;
+            saveMapState();
             return true; // Consume the event
         }
         return false;
@@ -1721,6 +1879,12 @@ public boolean scrolled(float amountX, float amountY) {
 
 
     private void saveMapState() {
+
+        // ignores if dragging 
+        if (isDraggingToPlace) {
+            return;
+        }
+
         String[][] currentState = new String[MAP_HEIGHT][MAP_WIDTH];
     
         for (int y = 0; y < MAP_HEIGHT; y++) {

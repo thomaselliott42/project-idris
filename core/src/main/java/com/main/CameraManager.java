@@ -103,11 +103,6 @@ public class CameraManager {
         if (movingRight && mapCamera.position.x < (VIRTUAL_WIDTH) - widthBoundaryBuffer) movedX += currentPanSpeed;
         if (movingDown && mapCamera.position.y > (0)-heightBoundaryBuffer) movedY -= currentPanSpeed;
         if (movingUp && mapCamera.position.y < (VIRTUAL_HEIGHT)+heightBoundaryBuffer) movedY += currentPanSpeed;
-
-        System.out.println("Current coordinates of camera: " + mapCamera.position.x + " " + mapCamera.position.y);
-        System.out.println("Map width, map height: " + mapViewport.getWorldWidth() + " " + mapViewport.getWorldHeight());
-        System.out.println("Virtual width, height: " + VIRTUAL_WIDTH + " " + VIRTUAL_HEIGHT);
-        System.out.println("ZOOM LEVEL: " + zoomLevel);
         mapCamera.update();
     }
 
