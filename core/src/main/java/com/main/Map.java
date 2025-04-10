@@ -1,10 +1,10 @@
 package com.main;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.*;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 import java.util.*;
 
@@ -14,8 +14,12 @@ public class Map {
     private final int MAP_HEIGHT;
     private Tile[][] map;
     private AtlasManager terrainAtlas;
+    private ShapeRenderer shapeRenderer = new ShapeRenderer();
     private ShaderManager shaderManager;
     List<int[]> mergedCoords = new ArrayList<>();
+
+    BitmapFont font = new BitmapFont(); // You can load a custom font too
+    SpriteBatch batch = new SpriteBatch(); // Ideally, reuse this outside the method
 
     // shaders
     private float time = 0f;
@@ -428,6 +432,80 @@ public class Map {
         batch.setColor(1, 1, 1, 1); // Reset color back to full opacity
 
     }
+
+//    public void printMiniMap(){
+//        for (int y = map.length; y >= 0; y--) {
+//            for (int x = 0; x >= map.length; x--) {
+//                // font batch forest . dark green plain green . mountian . brown sea blue .
+//                // top left corner not on the map using the ui camera and drawing rectangle lines aroudn where the camera currently is if zoomed in
+//                // using int startX, int startY, int endX, int endY
+//
+//            }
+//        }
+//    }
+
+    public void printMiniMap(int startX, int startY, int endX, int endY) {
+        final int tileSize = 2; // Size of each minimap tile in pixels
+        final int miniMapWidth = map[0].length * tileSize;
+        final int miniMapHeight = map.length * tileSize;
+
+        // Screen dimensions
+        final int screenWidth = Gdx.graphics.getWidth();
+        final int screenHeight = Gdx.graphics.getHeight();
+
+        // Top-right corner positioning with padding
+        final int offsetX = screenWidth - miniMapWidth - 10;
+        final int offsetY = screenHeight - miniMapHeight - 10;
+
+        batch.begin();
+
+        // Draw minimap tiles
+        for (int y = 0; y < map.length; y++) {
+            for (int x = 0; x < map[y].length; x++) {
+                String terrain = map[y][x].getTerrainId();
+                String symbol = ".";
+                Color color = Color.LIGHT_GRAY;
+
+                switch (terrain) {
+                    default:
+                        if (terrain.contains("P")) {
+                            symbol = ".";
+                            color = Color.GREEN;
+                        }else if(terrain.contains("D")){
+                            symbol = ".";
+                            color = Color.YELLOW;
+                        }else if(terrain.contains("S")){
+                            symbol = ".";
+                            color = Color.BLUE;
+                        }else if(terrain.contains("W")){
+                            symbol = ".";
+                            color = Color.WHITE;
+                        }
+                        break;
+                }
+
+                font.setColor(color);
+                float drawX = offsetX + x * tileSize;
+                float drawY = offsetY + y * tileSize;
+                font.draw(batch, symbol, drawX, drawY);
+            }
+        }
+
+        batch.end();
+
+        // Draw camera view box on top
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(Color.RED);
+
+        float rectX = offsetX + startX * tileSize;
+        float rectY = offsetY + startY * tileSize;
+        float rectWidth = (endX - startX) * tileSize;
+        float rectHeight = (endY - startY) * tileSize;
+
+        shapeRenderer.rect(rectX, rectY, rectWidth, rectHeight);
+        shapeRenderer.end();
+    }
+
 
 //
 

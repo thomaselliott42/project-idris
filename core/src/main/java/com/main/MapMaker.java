@@ -25,8 +25,8 @@ public class MapMaker implements Screen, InputProcessor {
     private final Main game;
 
     private final int TILE_SIZE = 32; // 32
-    private final int MAP_WIDTH = 50; // 20
-    private final int MAP_HEIGHT = 50; // 20
+    private final int MAP_WIDTH = 100; // 20
+    private final int MAP_HEIGHT = 100; // 20
 
     private String[][] mapState; // 2D array to store terrain/texture IDs
     private boolean isFillAreaActive = false;
@@ -225,7 +225,6 @@ public class MapMaker implements Screen, InputProcessor {
         }
 
 
-
     }
 
     public void renderDebugInfo(int gridX, int gridY) {
@@ -260,10 +259,11 @@ public class MapMaker implements Screen, InputProcessor {
                     float infoX = cameraManager.getUiCamera().viewportWidth - 220;
                     float infoY = 300;
 
-                    shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
+                    shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined)
+                    ;
                     shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
                     shapeRenderer.setColor(0, 0, 0, 0.7f);
-                    shapeRenderer.rect(infoX - 5, infoY - 50, 220, 100);
+                    shapeRenderer.rect(infoX - 5, 0, 260, Gdx.graphics.getHeight());
                     shapeRenderer.end();
 
                     batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
@@ -284,6 +284,8 @@ public class MapMaker implements Screen, InputProcessor {
                 }
             }
         }
+
+
 
         long currentTime = System.currentTimeMillis();
 
@@ -329,6 +331,22 @@ public class MapMaker implements Screen, InputProcessor {
         font.draw(batch, debugText.toString(), cameraManager.getUiCamera().viewportWidth - 220, 180);
 
         batch.end();
+
+        float camX = cameraManager.getMapCamera().position.x;
+        float camY = cameraManager.getMapCamera().position.y;
+
+        // Get viewport dimensions (assuming an orthographic camera)
+        float viewportWidth = cameraManager.getMapCamera().viewportWidth * cameraManager.getMapCamera().zoom;
+        float viewportHeight = cameraManager.getMapCamera().viewportHeight * cameraManager.getMapCamera().zoom;
+        int offsetX = (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2;
+        int offsetY = (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2;
+
+        // Convert to tile indices (clamp values to avoid out-of-bounds errors)
+        int startX = Math.max(0, (int) ((camX - viewportWidth / 2 - offsetX) / TILE_SIZE));
+        int startY = Math.max(0, (int) ((camY - viewportHeight / 2 - offsetY) / TILE_SIZE));
+        int endX = Math.min(MAP_WIDTH - 1, (int) ((camX + viewportWidth / 2 - offsetX) / TILE_SIZE));
+        int endY = Math.min(MAP_HEIGHT - 1, (int) ((camY + viewportHeight / 2 - offsetY) / TILE_SIZE));
+        map.printMiniMap(startX,startY,endX,endY);
     }
 
     public void renderMap(float delta){
@@ -1025,7 +1043,7 @@ public class MapMaker implements Screen, InputProcessor {
                 fillArea(); // Fill the board
             }
         }
-    
+
         // Add the Reload button
         if (drawAndHighlightIcon(mouseX, mouseY, 0, Gdx.graphics.getHeight() - 7 * iconSize, reloadIcon, iconSize)) {
             if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
@@ -1192,32 +1210,32 @@ public class MapMaker implements Screen, InputProcessor {
             isFillAreaActive = false;
             return;
         }
-    
+
         // Replace the cursor with the fillAreaIcon
         if (!fillAreaIcon.getTexture().getTextureData().isPrepared()) {
             fillAreaIcon.getTexture().getTextureData().prepare();
         }
         Pixmap originalPixmap = fillAreaIcon.getTexture().getTextureData().consumePixmap();
-    
+
         // Ensure the pixmap dimensions are powers of two and within valid cursor size limits
         int width = MathUtils.nextPowerOfTwo(originalPixmap.getWidth());
         int height = MathUtils.nextPowerOfTwo(originalPixmap.getHeight());
-    
+
         // Limit the cursor size to a maximum of 64x64 (common limit for custom cursors)
         width = Math.min(width, 64);
         height = Math.min(height, 64);
-    
+
         Pixmap resizedPixmap = new Pixmap(width, height, originalPixmap.getFormat());
         resizedPixmap.drawPixmap(originalPixmap, 0, 0, originalPixmap.getWidth(), originalPixmap.getHeight(), 0, 0, width, height);
-    
+
         // Create the cursor and set it
         Cursor fillAreaCursor = Gdx.graphics.newCursor(resizedPixmap, width / 2, height / 2);
         Gdx.graphics.setCursor(fillAreaCursor);
-    
+
         // Dispose of the pixmaps to prevent memory leaks
         originalPixmap.dispose();
         resizedPixmap.dispose();
-    
+
         // Set the flag to indicate the tool is active
         isFillAreaActive = true;
     }
@@ -1228,40 +1246,40 @@ public class MapMaker implements Screen, InputProcessor {
             System.out.println("Target and replacement tiles are the same. No action taken.");
             return;
         }
-    
+
         // Check if the starting position is out of bounds
         if (!map.checkBounds(startX, startY)) {
             System.out.println("Starting position is out of bounds: " + startX + "," + startY);
             return;
         }
-    
+
         // Determine if the target tile is a sea tile
         boolean isSeaTile = targetTileId.contains("S");
-    
+
         // Use a queue to perform flood-fill and check for enclosure
         Queue<int[]> queue = new LinkedList<>();
         Set<String> visited = new HashSet<>();
         List<int[]> enclosedTiles = new ArrayList<>();
         boolean isEnclosed = true;
-    
+
         queue.add(new int[]{startX, startY});
         visited.add(startX + "," + startY);
-    
+
         while (!queue.isEmpty()) {
             int[] current = queue.poll();
             int x = current[0];
             int y = current[1];
-    
+
             // If the current tile is out of bounds, the area is not enclosed
             if (!map.checkBounds(x, y)) {
                 System.out.println("Tile out of bounds: " + x + "," + y);
                 isEnclosed = false;
                 continue;
             }
-    
+
             // Get the current tile's terrain ID
             String currentTileId = map.getTile(x, y).getTerrainId();
-    
+
             // If the target is a sea tile, check for sea tiles to replace
             if (isSeaTile) {
                 if (!currentTileId.contains("S")) {
@@ -1275,20 +1293,20 @@ public class MapMaker implements Screen, InputProcessor {
                     continue;
                 }
             }
-    
+
             // Add the tile to the list of enclosed tiles
             enclosedTiles.add(current);
-    
+
             // Check neighbors
             int[][] neighbors = {
                 {x + 1, y}, {x - 1, y}, {x, y + 1}, {x, y - 1}
             };
-    
+
             for (int[] neighbor : neighbors) {
                 int nx = neighbor[0];
                 int ny = neighbor[1];
                 String key = nx + "," + ny;
-    
+
                 // Add the neighbor to the queue if it hasn't been visited yet
                 if (!visited.contains(key)) {
                     visited.add(key);
@@ -1296,7 +1314,7 @@ public class MapMaker implements Screen, InputProcessor {
                 }
             }
         }
-    
+
         // If the area is enclosed, replace all tiles within the enclosed area
         if (isEnclosed) {
             for (int[] tile : enclosedTiles) {
@@ -1305,9 +1323,9 @@ public class MapMaker implements Screen, InputProcessor {
                 System.out.println("Updating Tile: " + x + "," + y + " to " + replacementTileId);
                 map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain(replacementTileId));
             }
-    
+
             forceUpdateAllSeaTiles();
-    
+
             // Save the map state after filling
             saveMapState();
         } else {
@@ -1592,6 +1610,7 @@ public class MapMaker implements Screen, InputProcessor {
                     Building clickedBuilding = paletteBarBuildings.get(clickedIndex);
                     selectedBuilding = clickedBuilding;
                     buildingPickerOpen = false;
+                    isFillAreaActive = false;
                     tilePickerActive = false; // Reset the flag when the tile picker is closed
                     justSelectedTile = true; // Prevent map interactions
                     reloadMapFromBackup(); // Reload the map from the backup
@@ -1773,15 +1792,15 @@ public boolean scrolled(float amountX, float amountY) {
                 // Convert screen coordinates to map grid coordinates
                 int gridX = (screenX - (Gdx.graphics.getWidth() - MAP_WIDTH * TILE_SIZE) / 2) / TILE_SIZE;
                 int gridY = (Gdx.graphics.getHeight() - screenY - (Gdx.graphics.getHeight() - MAP_HEIGHT * TILE_SIZE) / 2) / TILE_SIZE;
-        
+
                 // Check if the click is within bounds
                 if (map.checkBounds(gridX, gridY)) {
                     String targetTileId = map.getTile(gridX, gridY).getTerrainId();
                     fillEnclosedArea(gridX, gridY, targetTileId, selectedTile); // Perform the enclosed area fill
                 }
-        
+
                 return true; // Consume the event
-            }    
+            }
             else if (button == Input.Buttons.LEFT) {
             int flippedY = Gdx.graphics.getHeight() - screenY;
 
@@ -1811,7 +1830,7 @@ public boolean scrolled(float amountX, float amountY) {
                     }
 
                     return true; // Consume the event
-                    }              
+                    }
 
                 // If the tile picker is not open, handle map interactions
                 isDraggingToPlace = true;
@@ -1877,10 +1896,9 @@ public boolean scrolled(float amountX, float amountY) {
         return includedTerrains;
     }
 
-
     private void saveMapState() {
 
-        // ignores if dragging 
+        // ignores if dragging
         if (isDraggingToPlace) {
             return;
         }
