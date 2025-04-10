@@ -1246,67 +1246,64 @@ public class MapMaker implements Screen, InputProcessor {
             System.out.println("Target and replacement tiles are the same. No action taken.");
             return;
         }
-
+    
         // Check if the starting position is out of bounds
         if (!map.checkBounds(startX, startY)) {
             System.out.println("Starting position is out of bounds: " + startX + "," + startY);
             return;
         }
-
+    
         // Determine if the target tile is a sea tile
         boolean isSeaTile = targetTileId.contains("S");
-
+    
         // Use a queue to perform flood-fill and check for enclosure
         Queue<int[]> queue = new LinkedList<>();
         Set<String> visited = new HashSet<>();
         List<int[]> enclosedTiles = new ArrayList<>();
         boolean isEnclosed = true;
-
+    
         queue.add(new int[]{startX, startY});
         visited.add(startX + "," + startY);
-
+    
         while (!queue.isEmpty()) {
             int[] current = queue.poll();
             int x = current[0];
             int y = current[1];
-
+    
             // If the current tile is out of bounds, the area is not enclosed
             if (!map.checkBounds(x, y)) {
-                System.out.println("Tile out of bounds: " + x + "," + y);
                 isEnclosed = false;
                 continue;
             }
-
+    
             // Get the current tile's terrain ID
             String currentTileId = map.getTile(x, y).getTerrainId();
-
+    
             // If the target is a sea tile, check for sea tiles to replace
             if (isSeaTile) {
                 if (!currentTileId.contains("S")) {
-                    System.out.println("Tile is not a sea tile: " + x + "," + y);
                     continue;
                 }
             } else {
                 // For non-sea tiles, ensure the tile matches the target type
                 if (!currentTileId.equals(targetTileId)) {
-                    System.out.println("Tile does not match target type: " + x + "," + y);
                     continue;
                 }
             }
-
+    
             // Add the tile to the list of enclosed tiles
             enclosedTiles.add(current);
-
+    
             // Check neighbors
             int[][] neighbors = {
                 {x + 1, y}, {x - 1, y}, {x, y + 1}, {x, y - 1}
             };
-
+    
             for (int[] neighbor : neighbors) {
                 int nx = neighbor[0];
                 int ny = neighbor[1];
                 String key = nx + "," + ny;
-
+    
                 // Add the neighbor to the queue if it hasn't been visited yet
                 if (!visited.contains(key)) {
                     visited.add(key);
@@ -1314,24 +1311,26 @@ public class MapMaker implements Screen, InputProcessor {
                 }
             }
         }
-
+    
         // If the area is enclosed, replace all tiles within the enclosed area
         if (isEnclosed) {
             for (int[] tile : enclosedTiles) {
                 int x = tile[0];
                 int y = tile[1];
-                System.out.println("Updating Tile: " + x + "," + y + " to " + replacementTileId);
                 map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain(replacementTileId));
             }
-
+    
+            // Force update all sea tiles and save the map state
             forceUpdateAllSeaTiles();
-
-            // Save the map state after filling
             saveMapState();
         } else {
             System.out.println("Area is not enclosed. No tiles updated.");
         }
+    
+        // Refresh the map to ensure proper rendering
+        renderMap(0);
     }
+
 
     private void handleMapInteractions() {
         if (tilePickerActive || justSelectedTile) {
@@ -1693,7 +1692,8 @@ public boolean scrolled(float amountX, float amountY) {
         }
 
         // Check for Ctrl+Z
-        if ((Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) || Gdx.input.isKeyPressed(Input.Keys.CONTROL_RIGHT)) || Gdx.input.isKeyPressed(Input.Keys.SYM) && keycode == Input.Keys.Z) {
+        if ((Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)
+         || Gdx.input.isKeyPressed(Input.Keys.CONTROL_RIGHT)) && keycode == Input.Keys.Z) {
             isCtrlZHeld = true; // Start holding Ctrl+Z
             undoLastAction(); // Perform an initial undo immediately
             lastUndoTime = TimeUtils.millis(); // Record the time of the undo
