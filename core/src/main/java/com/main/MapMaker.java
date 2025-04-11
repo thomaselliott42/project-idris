@@ -25,8 +25,8 @@ public class MapMaker implements Screen, InputProcessor {
     private final Main game;
 
     private final int TILE_SIZE = 32; // 32
-    private final int MAP_WIDTH = 100; // 20
-    private final int MAP_HEIGHT = 100; // 20
+    private final int MAP_WIDTH = 50; // 20
+    private final int MAP_HEIGHT = 50; // 20
 
     private String[][] mapState; // 2D array to store terrain/texture IDs
     private boolean isFillAreaActive = false;
@@ -188,7 +188,14 @@ public class MapMaker implements Screen, InputProcessor {
         }
 
         // Render the map layer
+
+        long startRender = TimeUtils.nanoTime();
         renderMap(delta);
+        long endRender = TimeUtils.nanoTime();
+        mapRenderDuration = (endRender - startRender) / 1_000_000f; // Convert nanoseconds to milliseconds
+        Gdx.app.log("MapMaker", "renderMap duration: " + mapRenderDuration + " ms");
+
+
 
         // Render the UI layer (toolbar, palette bar, etc.)
         batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
@@ -310,17 +317,24 @@ public class MapMaker implements Screen, InputProcessor {
         // **Use StringBuilder to reduce font.draw() calls**
         StringBuilder debugText = new StringBuilder();
 
-        if (mouseOverMap) {
+
             debugText.append("Merging: ").append(map.isMergeable()).append("\n");
             debugText.append("TTC: ").append(map.tTC()).append("\n");
             debugText.append("BTC: ").append(map.bTC()).append("\n");
 
+
+        gridX = (int) ((mouseWorldPos.x - mapStartX) / TILE_SIZE);
+        gridY = (int) ((mouseWorldPos.y - mapStartY) / TILE_SIZE);
+
+        if (map.checkBounds(gridX, gridY)){
+            Tile tile = map.getTile(gridX, gridY);
+            if (tile != null) {
+                debugText.append("Mouse: ").append(gridY).append(",").append(gridX).append(" : ").append(map.getTile(gridX, gridY).getTerrainId()).append(" : ").append(map.getTile(gridX, gridY).getTerrainBaseType()).append("\n");
+
+            }
+
         }
 
-        if (mouseOverMap) {
-            debugText.append("Mouse: ").append(gridY).append(",").append(gridX).append(" : ").append(map.getTile(gridX, gridY).getTerrainId()).append(" : ").append(map.getTile(gridX, gridY).getTerrainBaseType()).append("\n");
-
-        }
 
         debugText.append("FPS: ").append(Gdx.graphics.getFramesPerSecond()).append("\n")
             .append("Used Mem: ").append(usedMemory).append(" MB\n")
@@ -1246,39 +1260,39 @@ public class MapMaker implements Screen, InputProcessor {
             System.out.println("Target and replacement tiles are the same. No action taken.");
             return;
         }
-    
+
         // Check if the starting position is out of bounds
         if (!map.checkBounds(startX, startY)) {
             System.out.println("Starting position is out of bounds: " + startX + "," + startY);
             return;
         }
-    
+
         // Determine if the target tile is a sea tile
         boolean isSeaTile = targetTileId.contains("S");
-    
+
         // Use a queue to perform flood-fill and check for enclosure
         Queue<int[]> queue = new LinkedList<>();
         Set<String> visited = new HashSet<>();
         List<int[]> enclosedTiles = new ArrayList<>();
         boolean isEnclosed = true;
-    
+
         queue.add(new int[]{startX, startY});
         visited.add(startX + "," + startY);
-    
+
         while (!queue.isEmpty()) {
             int[] current = queue.poll();
             int x = current[0];
             int y = current[1];
-    
+
             // If the current tile is out of bounds, the area is not enclosed
             if (!map.checkBounds(x, y)) {
                 isEnclosed = false;
                 continue;
             }
-    
+
             // Get the current tile's terrain ID
             String currentTileId = map.getTile(x, y).getTerrainId();
-    
+
             // If the target is a sea tile, check for sea tiles to replace
             if (isSeaTile) {
                 if (!currentTileId.contains("S")) {
@@ -1290,20 +1304,20 @@ public class MapMaker implements Screen, InputProcessor {
                     continue;
                 }
             }
-    
+
             // Add the tile to the list of enclosed tiles
             enclosedTiles.add(current);
-    
+
             // Check neighbors
             int[][] neighbors = {
                 {x + 1, y}, {x - 1, y}, {x, y + 1}, {x, y - 1}
             };
-    
+
             for (int[] neighbor : neighbors) {
                 int nx = neighbor[0];
                 int ny = neighbor[1];
                 String key = nx + "," + ny;
-    
+
                 // Add the neighbor to the queue if it hasn't been visited yet
                 if (!visited.contains(key)) {
                     visited.add(key);
@@ -1311,7 +1325,7 @@ public class MapMaker implements Screen, InputProcessor {
                 }
             }
         }
-    
+
         // If the area is enclosed, replace all tiles within the enclosed area
         if (isEnclosed) {
             for (int[] tile : enclosedTiles) {
@@ -1319,14 +1333,14 @@ public class MapMaker implements Screen, InputProcessor {
                 int y = tile[1];
                 map.getTile(x, y).updateTerrain(TerrainManager.getInstance().getTerrain(replacementTileId));
             }
-    
+
             // Force update all sea tiles and save the map state
             forceUpdateAllSeaTiles();
             saveMapState();
         } else {
             System.out.println("Area is not enclosed. No tiles updated.");
         }
-    
+
         // Refresh the map to ensure proper rendering
         renderMap(0);
     }

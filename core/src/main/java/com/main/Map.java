@@ -445,7 +445,7 @@ public class Map {
 //    }
 
     public void printMiniMap(int startX, int startY, int endX, int endY) {
-        final int tileSize = 2; // Size of each minimap tile in pixels
+        final int tileSize = 4; // Size of each minimap tile in pixels
         final int miniMapWidth = map[0].length * tileSize;
         final int miniMapHeight = map.length * tileSize;
 
@@ -457,6 +457,7 @@ public class Map {
         final int offsetX = screenWidth - miniMapWidth - 10;
         final int offsetY = screenHeight - miniMapHeight - 10;
 
+        batch.setProjectionMatrix(CameraManager.getInstance().getUiCamera().combined);
         batch.begin();
 
         // Draw minimap tiles
@@ -494,6 +495,7 @@ public class Map {
         batch.end();
 
         // Draw camera view box on top
+        shapeRenderer.setProjectionMatrix(CameraManager.getInstance().getUiCamera().combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         shapeRenderer.setColor(Color.RED);
 
