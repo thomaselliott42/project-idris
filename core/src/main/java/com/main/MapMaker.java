@@ -25,8 +25,8 @@ public class MapMaker implements Screen, InputProcessor {
     private final Main game;
 
     private final int TILE_SIZE = 32; // 32
-    private final int MAP_WIDTH = 50; // 20
-    private final int MAP_HEIGHT = 50; // 20
+    private final int MAP_WIDTH = 20; // 20
+    private final int MAP_HEIGHT = 20; // 20
 
     private String[][] mapState; // 2D array to store terrain/texture IDs
     private boolean isFillAreaActive = false;
@@ -188,13 +188,11 @@ public class MapMaker implements Screen, InputProcessor {
         }
 
         // Render the map layer
-
         long startRender = TimeUtils.nanoTime();
         renderMap(delta);
         long endRender = TimeUtils.nanoTime();
         mapRenderDuration = (endRender - startRender) / 1_000_000f; // Convert nanoseconds to milliseconds
         Gdx.app.log("MapMaker", "renderMap duration: " + mapRenderDuration + " ms");
-
 
 
         // Render the UI layer (toolbar, palette bar, etc.)
@@ -243,6 +241,12 @@ public class MapMaker implements Screen, InputProcessor {
         float mapEndX = mapStartX + MAP_WIDTH * TILE_SIZE;
         float mapEndY = mapStartY + MAP_HEIGHT * TILE_SIZE;
 
+        shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0, 0, 0, 0.7f);
+        shapeRenderer.rect(cameraManager.getUiCamera().viewportWidth - 220 - 5, 0, 260, Gdx.graphics.getHeight());
+        shapeRenderer.end();
+
         if (mouseWorldPos.x >= mapStartX && mouseWorldPos.x <= mapEndX &&
             mouseWorldPos.y >= mapStartY && mouseWorldPos.y <= mapEndY) {
 
@@ -266,12 +270,7 @@ public class MapMaker implements Screen, InputProcessor {
                     float infoX = cameraManager.getUiCamera().viewportWidth - 220;
                     float infoY = 300;
 
-                    shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined)
-                    ;
-                    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-                    shapeRenderer.setColor(0, 0, 0, 0.7f);
-                    shapeRenderer.rect(infoX - 5, 0, 260, Gdx.graphics.getHeight());
-                    shapeRenderer.end();
+
 
                     batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
                     batch.begin();
@@ -304,12 +303,6 @@ public class MapMaker implements Screen, InputProcessor {
             lastMemoryUpdateTime = currentTime;
         }
 
-        // **Render debug background**
-        shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0, 0, 0, 0.5f); // Black with 50% transparency
-        shapeRenderer.rect(cameraManager.getUiCamera().viewportWidth - 225, 5, 225, 200);
-        shapeRenderer.end();
 
         batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
         batch.begin();
@@ -1645,8 +1638,25 @@ public class MapMaker implements Screen, InputProcessor {
         }
     }
 
+
+
     private void drawFactionPicker() {
         Gdx.app.log("drawFactionPicker","Faction Picker Opened");
+    }
+
+    private boolean placementNormal = true;
+    private boolean placementRotate2Q = true;
+    private boolean placementRotate4Q = true;
+    private boolean placementFlipX = true;
+    private boolean placementFlipY = true;
+    private boolean placementFlip4Q = true;
+    private boolean placementDiagonalX = true;
+    private boolean placementDiagonalY = true;
+
+    private void drawSymetricalPicker(int startX, int startY) {
+        // options {none, rotate 2Q, rotate 4Q, flip x, flip y, flip 4q, diagonal x, diagonal y}
+
+
     }
 
     private void reloadMapFromBackup() {
@@ -1706,8 +1716,7 @@ public boolean scrolled(float amountX, float amountY) {
         }
 
         // Check for Ctrl+Z
-        if ((Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)
-         || Gdx.input.isKeyPressed(Input.Keys.CONTROL_RIGHT)) && keycode == Input.Keys.Z) {
+        if ((Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) || Gdx.input.isKeyPressed(Input.Keys.SYM)) && keycode == Input.Keys.Z) {
             isCtrlZHeld = true; // Start holding Ctrl+Z
             undoLastAction(); // Perform an initial undo immediately
             lastUndoTime = TimeUtils.millis(); // Record the time of the undo

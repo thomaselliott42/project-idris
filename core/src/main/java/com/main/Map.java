@@ -149,21 +149,21 @@ public class Map {
                     counterBaseTexture++;
                 }
 
-//                if (mergeTiles && x % 2 == 0 && y % 2 == 0 && checkMergeable(x, y)) {
-//                    // Render a 2x2 merged tile
-//                    mergedCoords.add(new int[]{x+1, y});
-//                    mergedCoords.add(new int[]{x, y+1});
-//                    mergedCoords.add(new int[]{x+1, y+1});
-//
-//                    Gdx.app.log("Map", "merge tiles");
-//                    if (terrainTextureId.equals("P")) {
-//                        drawCallCounter ++;
-//                        batch.draw(plain, x * TILE_SIZE + offsetX, y * TILE_SIZE + offsetY, TILE_SIZE * 2, TILE_SIZE * 2);
-//
-//                    }
-//
-//                    continue;
-//                }
+                if (mergeTiles && x % 2 == 0 && y % 2 == 0 && checkMergeable(x, y)) {
+                    // Render a 2x2 merged tile
+                    mergedCoords.add(new int[]{x+1, y});
+                    mergedCoords.add(new int[]{x, y+1});
+                    mergedCoords.add(new int[]{x+1, y+1});
+
+                    Gdx.app.log("Map", "merge tiles");
+                    if (terrainTextureId.equals("P")) {
+                        drawCallCounter ++;
+                        batch.draw(plain, x * TILE_SIZE + offsetX, y * TILE_SIZE + offsetY, TILE_SIZE * 2, TILE_SIZE * 2);
+
+                    }
+
+                    continue;
+                }
 
                 float drawX = x * TILE_SIZE + offsetX;
                 float drawY = y * TILE_SIZE + offsetY;
@@ -175,31 +175,29 @@ public class Map {
 
                 drawCallCounter++;
                 if (terrainTextureId.equals("S")) {
-                    shaderManager.useShader("sea");
-                    batch.setShader(shaderManager.getCurrentShader());
-                    shaderManager.setUniformf("u_time", time);
-                    if (terrainTexture != null) {
-                        batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
-                        batch.setShader(null);
-                    }
+                    final TextureRegion region = terrainTexture;
+                    applyShader(batch, "sea", () -> {
+                        shaderManager.setUniformf("u_time", time);
+                        batch.draw(region, drawX, drawY, TILE_SIZE, region.getRegionHeight() * (TILE_SIZE / 16f));
+                    });
+
                 } else {
                     if (terrainTexture != null) {
                         batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
                     }
 
                     if(tile.getBuilding() != null) {
+                        final TextureRegion buildingTexture = AtlasManager.getInstance().getBuildingTextureRegion(tile.getBuilding().getTextureId());
+                        applyShader(batch, "buildingColourChange", () -> {
+                            if (tile.getFaction() == 1) {
+                                ShaderManager.getInstance().setUniformf("u_tintColor", 1.0f, 0.0f, 0.0f, 1.0f); // Red tint
+                            } else if (tile.getFaction() == 2) {
+                                ShaderManager.getInstance().setUniformf("u_tintColor", 0.10588f, 0.51765f, 0.91765f, 1.0f); // Blue tint
+                            }
+                            shaderManager.setUniformi("u_ownership", tile.getFaction());
+                            batch.draw(buildingTexture,drawX, drawY, TILE_SIZE, buildingTexture.getRegionHeight() * (TILE_SIZE / 16f) );
 
-                        ShaderManager.getInstance().useShader("buildingColourChange");
-                        batch.setShader(ShaderManager.getInstance().getCurrentShader());
-                        if (tile.getFaction() == 1) {
-                            ShaderManager.getInstance().setUniformf("u_tintColor", 1.0f, 0.0f, 0.0f, 1.0f); // Red tint
-                        } else if (tile.getFaction() == 2) {
-                            ShaderManager.getInstance().setUniformf("u_tintColor", 0.10588f, 0.51765f, 0.91765f, 1.0f); // Blue tint
-                        }
-                        shaderManager.setUniformi("u_ownership", tile.getFaction());
-                        TextureRegion buildingTexture = AtlasManager.getInstance().getBuildingTextureRegion(tile.getBuilding().getTextureId());
-                        batch.draw(buildingTexture,drawX, drawY, TILE_SIZE, buildingTexture.getRegionHeight() * (TILE_SIZE / 16f) );
-                        batch.setShader(null);
+                        });
 
                     }
 
@@ -219,6 +217,14 @@ public class Map {
         }
         return false;
     }
+
+    private void applyShader(Batch batch, String shaderId, Runnable drawCall) {
+        shaderManager.useShader(shaderId);
+        batch.setShader(shaderManager.getCurrentShader());
+        drawCall.run();
+        batch.setShader(null);
+    }
+
 
 
     public Boolean isMergeable() {
