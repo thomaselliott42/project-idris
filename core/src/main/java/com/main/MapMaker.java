@@ -25,8 +25,8 @@ public class MapMaker implements Screen, InputProcessor {
     private final Main game;
 
     private final int TILE_SIZE = 32; // 32
-    private final int MAP_WIDTH = 20; // 20
-    private final int MAP_HEIGHT = 20; // 20
+    private final int MAP_WIDTH = 100; // 20
+    private final int MAP_HEIGHT = 100; // 20
 
     private String[][] mapState; // 2D array to store terrain/texture IDs
     private boolean isFillAreaActive = false;

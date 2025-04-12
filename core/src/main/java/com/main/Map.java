@@ -29,7 +29,7 @@ public class Map {
     // testing
     private float alpha = 1.0f;
     private Texture plainForest = new Texture(Gdx.files.internal("plainForest4x4.png"));
-    private Texture plain = new Texture(Gdx.files.internal("plain4x4.png"));
+    private Texture plain = new Texture(Gdx.files.internal("mergeTest.png"));
     private Texture desert = new Texture(Gdx.files.internal("desert4x4.png"));
 
 
@@ -149,21 +149,21 @@ public class Map {
                     counterBaseTexture++;
                 }
 
-                if (mergeTiles && x % 2 == 0 && y % 2 == 0 && checkMergeable(x, y)) {
-                    // Render a 2x2 merged tile
-                    mergedCoords.add(new int[]{x+1, y});
-                    mergedCoords.add(new int[]{x, y+1});
-                    mergedCoords.add(new int[]{x+1, y+1});
-
-                    Gdx.app.log("Map", "merge tiles");
-                    if (terrainTextureId.equals("P")) {
-                        drawCallCounter ++;
-                        batch.draw(plain, x * TILE_SIZE + offsetX, y * TILE_SIZE + offsetY, TILE_SIZE * 2, TILE_SIZE * 2);
-
-                    }
-
-                    continue;
-                }
+//                if (mergeTiles && x % 2 == 0 && y % 2 == 0 && checkMergeable(x, y)) {
+//                    // Render a 2x2 merged tile
+//                    mergedCoords.add(new int[]{x+1, y});
+//                    mergedCoords.add(new int[]{x, y+1});
+//                    mergedCoords.add(new int[]{x+1, y+1});
+//
+//                    Gdx.app.log("Map", "merge tiles");
+//                    if (terrainTextureId.equals("P")) {
+//                        drawCallCounter ++;
+//                        batch.draw(plain, x * TILE_SIZE + offsetX, y * TILE_SIZE + offsetY, TILE_SIZE * 2, TILE_SIZE * 2);
+//
+//                    }
+//
+//                    continue;
+//                }
 
                 float drawX = x * TILE_SIZE + offsetX;
                 float drawY = y * TILE_SIZE + offsetY;
@@ -173,8 +173,8 @@ public class Map {
                     batch.draw(baseTexture, drawX, drawY, TILE_SIZE, TILE_SIZE);
                 } // if the terrain doesn't begin with S then we draw a base texture
 
-                drawCallCounter++;
                 if (terrainTextureId.equals("S")) {
+                    drawCallCounter++;
                     final TextureRegion region = terrainTexture;
                     applyShader(batch, "sea", () -> {
                         shaderManager.setUniformf("u_time", time);
@@ -183,10 +183,12 @@ public class Map {
 
                 } else {
                     if (terrainTexture != null) {
+                        drawCallCounter++;
                         batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
                     }
 
                     if(tile.getBuilding() != null) {
+                        drawCallCounter++;
                         final TextureRegion buildingTexture = AtlasManager.getInstance().getBuildingTextureRegion(tile.getBuilding().getTextureId());
                         applyShader(batch, "buildingColourChange", () -> {
                             if (tile.getFaction() == 1) {
