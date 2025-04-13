@@ -192,8 +192,6 @@ public class MapMaker implements Screen, InputProcessor {
         renderMap(delta);
         long endRender = TimeUtils.nanoTime();
         mapRenderDuration = (endRender - startRender) / 1_000_000f; // Convert nanoseconds to milliseconds
-        Gdx.app.log("MapMaker", "renderMap duration: " + mapRenderDuration + " ms");
-
 
         // Render the UI layer (toolbar, palette bar, etc.)
         batch.setProjectionMatrix(cameraManager.getUiCamera().combined);
@@ -1558,26 +1556,25 @@ public class MapMaker implements Screen, InputProcessor {
         shapeRenderer.end();
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f)); // Dark background
-        shapeRenderer.rect(startX, tilePickerStartY + 70, pickerWidth, pickerHeight - 70);
+        shapeRenderer.rect(startX, tilePickerStartY + 150, pickerWidth + 230, pickerHeight - 180);
 
         // Draw the header
         shapeRenderer.setColor(new Color(0.0f, 0.3f, 0.8f, 1f)); // Blue background
-        shapeRenderer.rect(startX, tilePickerStartY + pickerHeight - 30, pickerWidth, 30); // Draw header bar with 30 height
+        shapeRenderer.rect(startX, tilePickerStartY + pickerHeight - 30, pickerWidth + 230, 30); // Draw header bar with 30 height
         shapeRenderer.end();
 
         batch.begin();
         font.setColor(Color.WHITE);
         font.draw(batch, "Select Building", startX + 10, tilePickerStartY + pickerHeight - 10); // Slightly below the top of the header
-        batch.draw(closeButton, startX + pickerWidth - 25, tilePickerStartY + pickerHeight - 26, 20, 20); // Close button
+        batch.draw(closeButton, startX + pickerWidth + 200, tilePickerStartY + pickerHeight - 26, 20, 20); // Close button
 
         // Display the grid of tiles
         for (int i = 0; i < numTiles; i++) {
             Building building = paletteBarBuildings.get(i);
             int col = i % numTiles;
-            int row = i / numTiles; // Determine row placement
 
-            float tileX = startX + col * (TILE_SIZE + 10); // Spacing between columns
-            float tileY = tilePickerStartY + pickerHeight - 250; // First row position
+            float tileX = startX + col * (TILE_SIZE + 10) + 5;
+            float tileY = tilePickerStartY + pickerHeight - 100;
 
             // Draw the first row
             ShaderManager.getInstance().useShader("buildingColourChange");
@@ -1594,48 +1591,63 @@ public class MapMaker implements Screen, InputProcessor {
         }
         batch.end();
 
-
-        //Handle clicks
+        // Handle clicks
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             int mouseX = Gdx.input.getX();
-            int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+            int mouseY = Gdx.graphics.getHeight() - Gdx.input.getY(); // Invert Y
 
-            // Check if the click is inside the tile picker grid
-            if (mouseX >= startX && mouseX <= startX + pickerWidth &&
-                mouseY >= tilePickerStartY + 70 && mouseY <= tilePickerStartY + 70 + pickerHeight) {
+            // Handle close button
+            int closeBtnX = startX + pickerWidth + 200;
+            int closeBtnY = tilePickerStartY + pickerHeight - 26;
+            if (mouseX >= closeBtnX && mouseX <= closeBtnX + 20 &&
+                mouseY >= closeBtnY && mouseY <= closeBtnY + 20) {
+                buildingPickerOpen = false;
+                tilePickerActive = false;
+                reloadMapFromBackup();
+                return;
+            }
 
-                int relativeX = mouseX - startX - 10;
-                int relativeY = mouseY - (tilePickerStartY + 70);
+            // Tile layout parameters
+            int tilesPerRow = 8; // Based on your screenshot
+            int tileSpacing = 10;
+            int tileAreaStartX = startX + 5;
+            int tileAreaStartY = tilePickerStartY + pickerHeight - 100;
 
-                int clickedCol = relativeX / TILE_SIZE;
-                int clickedRow = relativeY / TILE_PICKER_HEIGHT;
+            for (int i = 0; i < paletteBarBuildings.size(); i++) {
+                int col = i % tilesPerRow;
+                int row = i / tilesPerRow;
 
-                int clickedIndex = clickedRow * 3 + clickedCol;
+                float tileX = tileAreaStartX + col * (TILE_SIZE + tileSpacing);
+                float tileY = tileAreaStartY - row * (TILE_PICKER_HEIGHT + tileSpacing);
 
-                if (clickedIndex >= 0 && clickedIndex < numTiles) {
-                    Building clickedBuilding = paletteBarBuildings.get(clickedIndex);
-                    selectedBuilding = clickedBuilding;
+                if (mouseX >= tileX && mouseX <= tileX + TILE_SIZE &&
+                    mouseY >= tileY && mouseY <= tileY + TILE_PICKER_HEIGHT) {
+
+                    selectedBuilding = paletteBarBuildings.get(i);
                     buildingPickerOpen = false;
                     isFillAreaActive = false;
-                    tilePickerActive = false; // Reset the flag when the tile picker is closed
-                    justSelectedTile = true; // Prevent map interactions
-                    reloadMapFromBackup(); // Reload the map from the backup
-                    System.out.println("Selected Tile: " + selectedTile);
+                    tilePickerActive = false;
+                    justSelectedTile = true;
+                    reloadMapFromBackup();
+                    System.out.println("Selected Building: " + selectedBuilding.getTextureId());
+                    return;
                 }
-            } else {
-                buildingPickerOpen = false;
-                tilePickerActive = false; // Reset the flag
-                reloadMapFromBackup(); // Reload the map from the backup
+
+                if (mouseX >= startX + pickerWidth - 25 && mouseX <= startX + pickerWidth - 5 &&
+                    mouseY >= tilePickerStartY + pickerHeight - 26 && mouseY <= tilePickerStartY + pickerHeight - 6) {
+                    buildingPickerOpen = false;
+                    tilePickerActive = false; // Reset the flag
+                    reloadMapFromBackup(); // Reload the map from the backup
+                }
             }
 
-            // Handle close button click
-            if (mouseX >= startX + pickerWidth - 25 && mouseX <= startX + pickerWidth - 5 &&
-                mouseY >= tilePickerStartY + pickerHeight - 26 && mouseY <= tilePickerStartY + pickerHeight - 6) {
-                buildingPickerOpen = false;
-                tilePickerActive = false; // Reset the flag
-                reloadMapFromBackup(); // Reload the map from the backup
-            }
         }
+
+
+
+
+
+
     }
 
 

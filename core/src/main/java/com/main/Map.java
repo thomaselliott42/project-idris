@@ -23,7 +23,7 @@ public class Map {
 
     // shaders
     private float time = 0f;
-    ;
+
 
 
     // testing
@@ -125,6 +125,7 @@ public class Map {
                 }
 
                 if (inMergedCoords(x, y)) {
+                    Gdx.app.log("Map", "Merged tile : " + x + "," + y + "," + tile);
                     continue;
                 }
 
@@ -132,8 +133,6 @@ public class Map {
                 String baseTextureId = tile.getBaseTerrainId();
                 if (!terrainTextureId.equals(previousTextureId)) {
                     if (terrainTextureId.contains("S")) {
-                        String cSBT = checkSurroundingBaseTerrain(x, y);
-                        //Gdx.app.log("Map", "Terrain: " + terrainTextureId + " (" + cSBT + ")");
                         terrainTexture = terrainAtlas.getTexture(terrainTextureId, checkSurroundingBaseTerrain(x, y));
                     } else {
                         terrainTexture = terrainAtlas.getTexture(terrainTextureId);
@@ -151,15 +150,15 @@ public class Map {
 
 //                if (mergeTiles && x % 2 == 0 && y % 2 == 0 && checkMergeable(x, y)) {
 //                    // Render a 2x2 merged tile
-//                    mergedCoords.add(new int[]{x+1, y});
-//                    mergedCoords.add(new int[]{x, y+1});
-//                    mergedCoords.add(new int[]{x+1, y+1});
+//                    mergedCoords.add(new int[]{x, y});
+//                    mergedCoords.add(new int[]{x + 1, y});
+//                    mergedCoords.add(new int[]{x, y + 1});
+//                    mergedCoords.add(new int[]{x + 1, y + 1});
 //
-//                    Gdx.app.log("Map", "merge tiles");
+//
 //                    if (terrainTextureId.equals("P")) {
-//                        drawCallCounter ++;
+//                        drawCallCounter++;
 //                        batch.draw(plain, x * TILE_SIZE + offsetX, y * TILE_SIZE + offsetY, TILE_SIZE * 2, TILE_SIZE * 2);
-//
 //                    }
 //
 //                    continue;
@@ -171,37 +170,36 @@ public class Map {
                 if (!terrainTextureId.startsWith("S")) {
                     drawCallCounter++;
                     batch.draw(baseTexture, drawX, drawY, TILE_SIZE, TILE_SIZE);
-                } // if the terrain doesn't begin with S then we draw a base texture
-
-                if (terrainTextureId.equals("S")) {
-                    drawCallCounter++;
+                } else if (terrainTextureId.equals("S")) {
                     final TextureRegion region = terrainTexture;
+                    // Sea shader draw
+                    drawCallCounter++;
                     applyShader(batch, "sea", () -> {
                         shaderManager.setUniformf("u_time", time);
                         batch.draw(region, drawX, drawY, TILE_SIZE, region.getRegionHeight() * (TILE_SIZE / 16f));
                     });
+                }
 
-                } else {
-                    if (terrainTexture != null) {
-                        drawCallCounter++;
-                        batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
-                    }
+                if (terrainTexture != null && !terrainTextureId.equals("P") && !terrainTextureId.equals("D") && !terrainTextureId.equals("W") && !terrainTextureId.equals("S")) {
+                    // Overlay draw, if needed
+                    drawCallCounter++;
+                    batch.draw(terrainTexture, drawX, drawY, TILE_SIZE, terrainTexture.getRegionHeight() * (TILE_SIZE / 16f));
+                }
 
-                    if(tile.getBuilding() != null) {
-                        drawCallCounter++;
-                        final TextureRegion buildingTexture = AtlasManager.getInstance().getBuildingTextureRegion(tile.getBuilding().getTextureId());
-                        applyShader(batch, "buildingColourChange", () -> {
-                            if (tile.getFaction() == 1) {
-                                ShaderManager.getInstance().setUniformf("u_tintColor", 1.0f, 0.0f, 0.0f, 1.0f); // Red tint
-                            } else if (tile.getFaction() == 2) {
-                                ShaderManager.getInstance().setUniformf("u_tintColor", 0.10588f, 0.51765f, 0.91765f, 1.0f); // Blue tint
-                            }
-                            shaderManager.setUniformi("u_ownership", tile.getFaction());
-                            batch.draw(buildingTexture,drawX, drawY, TILE_SIZE, buildingTexture.getRegionHeight() * (TILE_SIZE / 16f) );
 
-                        });
+                if(tile.getBuilding() != null) {
+                    drawCallCounter++;
+                    final TextureRegion buildingTexture = AtlasManager.getInstance().getBuildingTextureRegion(tile.getBuilding().getTextureId());
+                    applyShader(batch, "buildingColourChange", () -> {
+                        if (tile.getFaction() == 1) {
+                            ShaderManager.getInstance().setUniformf("u_tintColor", 1.0f, 0.0f, 0.0f, 1.0f); // Red tint
+                        } else if (tile.getFaction() == 2) {
+                            ShaderManager.getInstance().setUniformf("u_tintColor", 0.10588f, 0.51765f, 0.91765f, 1.0f); // Blue tint
+                        }
+                        shaderManager.setUniformi("u_ownership", tile.getFaction());
+                        batch.draw(buildingTexture,drawX, drawY, TILE_SIZE, buildingTexture.getRegionHeight() * (TILE_SIZE / 16f) );
 
-                    }
+                    });
 
                 }
             }
@@ -209,6 +207,16 @@ public class Map {
 
         // batch.setColor(1, 1, 1, 1); // Reset color back to full opacity
 
+    }
+
+    // debug
+    private void printMergedCoords() {
+        Gdx.app.log("MergedCoords", "Printing merged coordinates:");
+        for (int[] coord : mergedCoords) {
+            if (coord.length >= 2) {
+                Gdx.app.log("MergedCoords", " - (" + coord[0] + ", " + coord[1] + ")");
+            }
+        }
     }
 
     public boolean inMergedCoords(int x, int y) {
