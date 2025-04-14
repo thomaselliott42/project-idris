@@ -34,9 +34,9 @@ public class LoadingScreen implements Screen {
         shaderManager = ShaderManager.getInstance();
 
         // Loading
-        loadAssets();
+//        loadAssets();
         createFonts();
-        compileShaders();
+//        compileShaders();
 
         gameLogo = new Texture("loadingScreen/gameLogo.png");
         loadingBarBg = new Texture("loadingScreen/loading_bar_bg.png");

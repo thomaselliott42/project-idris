@@ -5,9 +5,15 @@ import com.badlogic.gdx.Game;
 public class Main extends Game {
     @Override
     public void create() {
-        // Start with the loading screen
-        AtlasManager.getInstance();
-        //setScreen(new shaderExample(this));
-        setScreen(new LoadingScreen(this));
+
+        // load textures
+        TerrainLoader.loadTerrains();
+        BuildingLoader.loadBuildings();
+
+        // load shaders
+        ShaderManager.getInstance().loadShader("sea","shaders/sea/defaultSea.vert","shaders/sea/sea.frag");
+        ShaderManager.getInstance().loadShader("buildingColourChange","shaders/buildings/defaultColourChange.vert","shaders/buildings/colourChange.frag");
+
+        setScreen(new MainMenu(this));
     }
 }

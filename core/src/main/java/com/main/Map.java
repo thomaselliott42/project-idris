@@ -48,18 +48,28 @@ public class Map {
         this.map = new Tile[MAP_HEIGHT][MAP_WIDTH];
     }
 
-
-    public void generateMap() {
-        String[] tiles = {"P", "F", "M", "D"};
+    public void generateMapRandom() {
+        String[] tiles = {"P", "FD","FP", "MP","MD", "D","S"};
         Random rand = new Random();
 
         for (int x = 0; x < MAP_WIDTH; x++) {
             for (int y = 0; y < MAP_HEIGHT; y++) {
-                map[y][x] = new Tile(TerrainManager.getInstance().getTerrain("P"), null, null);
-                //Gdx.app.log("Map", map[y][x].toString());
+                String tile = tiles[rand.nextInt(tiles.length)];
+                map[y][x] = new Tile(TerrainManager.getInstance().getTerrain(tile), null, null);
             }
         }
 
+        Gdx.app.log("Map", "Generated map");
+    }
+
+    public void generateMapSelected(String tile) {
+
+
+        for (int x = 0; x < MAP_WIDTH; x++) {
+            for (int y = 0; y < MAP_HEIGHT; y++) {
+                map[y][x] = new Tile(TerrainManager.getInstance().getTerrain(tile), null, null);
+            }
+        }
         Gdx.app.log("Map", "Generated map");
     }
 
@@ -79,7 +89,7 @@ public class Map {
         int screenHeight = Gdx.graphics.getHeight();
         int offsetX = (screenWidth - MAP_WIDTH * TILE_SIZE) / 2;
         int offsetY = (screenHeight - MAP_HEIGHT * TILE_SIZE) / 2;
-        time += Gdx.graphics.getDeltaTime(); // Keep increasing time
+
 
         render2DMap(TILE_SIZE, batch, offsetX, offsetY, startX, startY, endX, endY);
 
@@ -96,7 +106,7 @@ public class Map {
     }
 
     public void render2DMap(int TILE_SIZE, Batch batch, int offsetX, int offsetY, int startX, int startY, int endX, int endY) {
-
+        time += Gdx.graphics.getDeltaTime(); // Keep increasing time
         TextureRegion baseTexture = null;
         TextureRegion terrainTexture = null;
         String previousTextureId = null;
@@ -191,12 +201,17 @@ public class Map {
                     drawCallCounter++;
                     final TextureRegion buildingTexture = AtlasManager.getInstance().getBuildingTextureRegion(tile.getBuilding().getTextureId());
                     applyShader(batch, "buildingColourChange", () -> {
-                        if (tile.getFaction() == 1) {
-                            ShaderManager.getInstance().setUniformf("u_tintColor", 1.0f, 0.0f, 0.0f, 1.0f); // Red tint
-                        } else if (tile.getFaction() == 2) {
+                        if (tile.getBuilding().getFaction() != null && tile.getBuilding().getFaction().equals("nato"))
+                        {
                             ShaderManager.getInstance().setUniformf("u_tintColor", 0.10588f, 0.51765f, 0.91765f, 1.0f); // Blue tint
+                        } else if (tile.getFaction() == 2) {
+                            ShaderManager.getInstance().setUniformf("u_tintColor", 1.0f, 0.0f, 0.0f, 1.0f); // Red tint
                         }
-                        shaderManager.setUniformi("u_ownership", tile.getFaction());
+                        if(tile.getBuilding().getFaction()== null) {
+                            shaderManager.setUniformi("u_ownership", 0);
+                        }else {
+                            shaderManager.setUniformi("u_ownership", 1);
+                        }
                         batch.draw(buildingTexture,drawX, drawY, TILE_SIZE, buildingTexture.getRegionHeight() * (TILE_SIZE / 16f) );
 
                     });
@@ -501,10 +516,12 @@ public class Map {
                         break;
                 }
 
+                //font.getData().setScale(4f); // Might need to tweak for exact fit
                 font.setColor(color);
                 float drawX = offsetX + x * tileSize;
-                float drawY = offsetY + y * tileSize;
+                float drawY = offsetY + (y + 1) * tileSize;
                 font.draw(batch, symbol, drawX, drawY);
+
             }
         }
 
@@ -524,6 +541,42 @@ public class Map {
         shapeRenderer.end();
     }
 
+    public void printMiniMap() {
+        final int tileSize = 4;
+        final int miniMapWidth = MAP_WIDTH * tileSize;
+        final int miniMapHeight = MAP_HEIGHT * tileSize;
+
+        float startX = 10f; // Padding from the left edge
+        float startY = (Gdx.graphics.getHeight() - miniMapHeight) / 2f; // Center vertically
+
+        batch.setProjectionMatrix(CameraManager.getInstance().getUiCamera().combined);
+        batch.begin();
+
+        for (int y = 0; y < map.length; y++) {
+            for (int x = 0; x < map[y].length; x++) {
+                String terrain = map[y][x].getTerrainId();
+                String symbol = ".";
+                Color color = Color.LIGHT_GRAY;
+
+                if (terrain.contains("P")) {
+                    color = Color.GREEN;
+                } else if (terrain.contains("D")) {
+                    color = Color.YELLOW;
+                } else if (terrain.contains("S")) {
+                    color = Color.BLUE;
+                } else if (terrain.contains("W")) {
+                    color = Color.WHITE;
+                }
+
+                font.setColor(color);
+                float drawX = startX + x * tileSize;
+                float drawY = startY + (map.length - y - 1) * tileSize; // Flip Y so top of map is at top visually
+                font.draw(batch, symbol, drawX, drawY);
+            }
+        }
+
+        batch.end();
+    }
 
 //
 

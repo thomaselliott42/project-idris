@@ -12,6 +12,7 @@ public class Building {
     private boolean canRefuel;
     private boolean canBeDestroyed;
     private transient List<Texture> damagedTextures;
+    private String faction = null;
 
     // Constructor
     public Building(String name, String textureId, float defense, float speed, boolean canHeal, boolean canRefuel, boolean canBeDestroyed) {
@@ -22,6 +23,14 @@ public class Building {
         this.canHeal = canHeal;
         this.canRefuel = canRefuel;
         this.canBeDestroyed = canBeDestroyed;
+    }
+
+    public void setFaction(String faction) {
+        this.faction = faction;
+    }
+
+    public String getFaction() {
+        return faction;
     }
 
     // Getters

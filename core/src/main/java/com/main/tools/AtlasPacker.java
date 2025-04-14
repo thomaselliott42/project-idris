@@ -13,6 +13,6 @@ public class AtlasPacker {
         // Input folder: "assets/terrain"
         // Output folder: "assets/atlas"
         // Atlas name: "terrain"
-        TexturePacker.process(settings, "assets/buildings", "assets/atlas", "buildings");
+        TexturePacker.process(settings, "assets/menu", "assets/atlas", "menuUi");
     }
 }

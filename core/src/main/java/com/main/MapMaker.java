@@ -25,8 +25,8 @@ public class MapMaker implements Screen, InputProcessor {
     private final Main game;
 
     private final int TILE_SIZE = 32; // 32
-    private final int MAP_WIDTH = 100; // 20
-    private final int MAP_HEIGHT = 100; // 20
+    private final int MAP_WIDTH = 50; // 20
+    private final int MAP_HEIGHT = 50; // 20
 
     private String[][] mapState; // 2D array to store terrain/texture IDs
     private boolean isFillAreaActive = false;
@@ -44,6 +44,7 @@ public class MapMaker implements Screen, InputProcessor {
     private final TextureRegion infoIcon = new TextureRegion(new Texture(Gdx.files.internal("ui/infoIcon.png")));
     private final TextureRegion undoIcon = new TextureRegion(new Texture(Gdx.files.internal("ui/undoIcon.png")));
     private final TextureRegion fillAreaIcon = new TextureRegion(new Texture(Gdx.files.internal("ui/fillAreaIcon.png")));
+    private Texture backgroundTexture;
 
     private final Texture closeButton = new Texture(Gdx.files.internal("ui/closeButton.png"));
 
@@ -121,6 +122,7 @@ public class MapMaker implements Screen, InputProcessor {
         cameraManager = CameraManager.getInstance();
 
         buildingManager = BuildingManager.getInstance();
+        backgroundTexture = new Texture(Gdx.files.internal("mapBackground.jpg"));
 
 
         // Get the first terrain icon from the tile picker
@@ -147,7 +149,7 @@ public class MapMaker implements Screen, InputProcessor {
         cameraManager.getMapCamera().update();
 
         this.map = new Map(MAP_WIDTH, MAP_HEIGHT);
-        map.generateMap();
+        map.generateMapSelected("S");
 
         // Save the initial state of the map
         saveMapState();
@@ -186,6 +188,10 @@ public class MapMaker implements Screen, InputProcessor {
             undoLastAction();
             lastUndoTime = TimeUtils.millis(); // Update the last undo time
         }
+
+        batch.begin();
+        batch.draw(backgroundTexture, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        batch.end();
 
         // Render the map layer
         long startRender = TimeUtils.nanoTime();
@@ -241,7 +247,7 @@ public class MapMaker implements Screen, InputProcessor {
 
         shapeRenderer.setProjectionMatrix(cameraManager.getUiCamera().combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0, 0, 0, 0.7f);
+        shapeRenderer.setColor(new Color(0.1f, 0.1f, 0.1f, 1f));
         shapeRenderer.rect(cameraManager.getUiCamera().viewportWidth - 220 - 5, 0, 260, Gdx.graphics.getHeight());
         shapeRenderer.end();
 
@@ -1528,6 +1534,8 @@ public class MapMaker implements Screen, InputProcessor {
         }
     }
 
+    public String currentFaction = "nato";
+
     private void drawBuildingPicker(int startX, int startY) {
         currentlySelcted = "B";
         if (!buildingPickerOpen) {
@@ -1624,6 +1632,13 @@ public class MapMaker implements Screen, InputProcessor {
                     mouseY >= tileY && mouseY <= tileY + TILE_PICKER_HEIGHT) {
 
                     selectedBuilding = paletteBarBuildings.get(i);
+
+                    // if the top row is selected thats faction specific building
+                    if (row == 0) {
+                        selectedBuilding.setFaction(currentFaction);
+                    }
+
+
                     buildingPickerOpen = false;
                     isFillAreaActive = false;
                     tilePickerActive = false;
