@@ -5,13 +5,17 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 public class MainMenu implements Screen {
@@ -37,6 +41,14 @@ public class MainMenu implements Screen {
     private boolean playingSwipe = false;
     private final float SWIPE_SPEED = 2000f; // pixels per second
 
+    //animation
+    private TextureAtlas atlas;
+    private Animation<TextureRegion> seagullAnimation;
+    private float stateTime = 0f;
+    private Array<Seagull> seagulls;
+    private float spawnTimer;
+    private final float SPAWN_INTERVAL = 1.5f; // spawn every 1.5 seconds
+
     public MainMenu(Main game) {
         this.game = game;
         swipeSlideTexture = new Texture(Gdx.files.internal("menu/swipeSlide.png")); // put the PNG in assets/menu/
@@ -48,6 +60,31 @@ public class MainMenu implements Screen {
         skin = new Skin(Gdx.files.internal("uiskin.json"));
         backgroundTexture = new Texture(Gdx.files.internal("menu/mainMenuBackground1.png"));
 
+        atlas = new TextureAtlas(Gdx.files.internal("environment/animals/seagull.atlas"));
+
+        // Get all frames matching prefix (manually sorted if necessary)
+        Array<TextureAtlas.AtlasRegion> frames = new Array<>();
+        frames.add(atlas.findRegion("seagull1"));
+        frames.add(atlas.findRegion("seagull2"));
+        frames.add(atlas.findRegion("seagull3"));
+        frames.add(atlas.findRegion("seagull4"));
+        frames.add(atlas.findRegion("seagull5"));
+        frames.add(atlas.findRegion("seagull6"));
+        frames.add(atlas.findRegion("seagull7"));
+        frames.add(atlas.findRegion("seagull8"));
+        frames.add(atlas.findRegion("seagull9"));
+        frames.add(atlas.findRegion("seagull10"));
+        frames.add(atlas.findRegion("seagull11"));
+        frames.add(atlas.findRegion("seagull12"));
+        frames.add(atlas.findRegion("seagull13"));
+        frames.add(atlas.findRegion("seagull14"));
+        frames.add(atlas.findRegion("seagull15"));
+        frames.add(atlas.findRegion("seagull16"));
+        seagullAnimation = new Animation<>(0.1f, frames, Animation.PlayMode.LOOP);
+        stateTime = 0f;
+
+        seagulls = new Array<>();
+        spawnTimer = 0f;
 
         CameraManager.getInstance().getMapCamera().position.set(
             (100 * 32) / 2f,
@@ -120,7 +157,6 @@ public class MainMenu implements Screen {
 
     }
 
-
     private void addListeners() {
         quitButton.addListener(new ClickListener() {
             @Override
@@ -139,7 +175,6 @@ public class MainMenu implements Screen {
         });
     }
 
-
     @Override
     public void show() {
         // Set input processor for the stage
@@ -148,6 +183,22 @@ public class MainMenu implements Screen {
 
     @Override
     public void render(float delta) {
+
+        stateTime += delta;
+        spawnTimer += delta;
+        TextureRegion currentFrame = seagullAnimation.getKeyFrame(stateTime, true);
+        if (spawnTimer >= SPAWN_INTERVAL) {
+            spawnTimer = 0f;
+            spawnSeagull();
+        }
+        for (int i = seagulls.size - 1; i >= 0; i--) {
+            Seagull s = seagulls.get(i);
+            s.update(delta);
+            if (s.x > Gdx.graphics.getWidth()) {
+                seagulls.removeIndex(i); // remove if off-screen
+            }
+        }
+
         // Clear the screen
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -161,7 +212,7 @@ public class MainMenu implements Screen {
             batch.draw(swipeSlideTexture, -300, 0, swipeWidth, height);
 
             if (swipeWidth >= Gdx.graphics.getWidth() + 600) {
-                playingSwipe = false;
+                //playingSwipe = false;
                 game.setScreen(new LoadingScreen(game)); // transition
             }
         }
@@ -169,9 +220,17 @@ public class MainMenu implements Screen {
         batch.end();
 
         if (!playingSwipe) {
+
             batch.begin();
+            for (Seagull s : seagulls) {
+                batch.draw(currentFrame, s.x, s.y, 40,40);
+            }
+
             batch.draw(backgroundTexture, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
             batch.end();
+
+
+
             stage.act(Math.min(delta, 1 / 30f));
             stage.draw();
         }
@@ -210,6 +269,35 @@ public class MainMenu implements Screen {
         }
         if (swipeSlideTexture != null) {
             swipeSlideTexture.dispose();
+        }
+        atlas.dispose();
+
+    }
+
+
+    private void spawnSeagull() {
+        float y = MathUtils.random(100, Gdx.graphics.getHeight() - 64); // stay in screen vertically
+        float speed = MathUtils.random(50, 150); // variable speed
+        seagulls.add(new Seagull(seagullAnimation, 0, y, speed));
+    }
+
+    public static class Seagull {
+        Animation<TextureRegion> animation;
+        float x, y;
+        float speed;
+        float stateTime;
+
+        public Seagull(Animation<TextureRegion> animation, float x, float y, float speed) {
+            this.animation = animation;
+            this.x = x;
+            this.y = y;
+            this.speed = speed;
+            this.stateTime = 0f;
+        }
+
+        public void update(float delta) {
+            x += speed * delta;
+            stateTime += delta;
         }
     }
 }

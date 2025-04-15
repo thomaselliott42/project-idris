@@ -14,6 +14,8 @@ public class Main extends Game {
         ShaderManager.getInstance().loadShader("sea","shaders/sea/defaultSea.vert","shaders/sea/sea.frag");
         ShaderManager.getInstance().loadShader("buildingColourChange","shaders/buildings/defaultColourChange.vert","shaders/buildings/colourChange.frag");
 
-        setScreen(new MainMenu(this));
+        setScreen(new SplashScreen(this));
+        //setScreen(new MainMenu(this));
+        //setScreen(new LoadingScreen(this));
     }
 }

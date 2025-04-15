@@ -149,8 +149,8 @@ public class MapMaker implements Screen, InputProcessor {
         cameraManager.getMapCamera().update();
 
         this.map = new Map(MAP_WIDTH, MAP_HEIGHT);
-        map.generateMapSelected("S");
-
+        map.generateMapSelected("P");
+        //map.generateMapRandom();
         // Save the initial state of the map
         saveMapState();
     }
